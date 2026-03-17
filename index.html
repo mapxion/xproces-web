@@ -728,6 +728,21 @@
                   </div>
 
                   <div class="dataset-item">
+                  <div class="dataset-label">Lente</div>
+                  <div class="dataset-value" id="fieldLens">Sin detectar</div>
+                </div>
+
+                <div class="dataset-item">
+                  <div class="dataset-label">Focal</div>
+                  <div class="dataset-value" id="fieldFocal">Sin detectar</div>
+                </div>
+
+                <div class="dataset-item">
+                  <div class="dataset-label">Fecha</div>
+                  <div class="dataset-value" id="fieldDate">Sin detectar</div>
+                </div>
+                  
+                  <div class="dataset-item">
                     <div class="dataset-label">GPS</div>
                     <div class="dataset-value" id="fieldGps">Sin detectar</div>
                   </div>
@@ -923,6 +938,9 @@
     const fieldResolution = document.getElementById("fieldResolution");
     const fieldGps = document.getElementById("fieldGps");
     const fieldCamera = document.getElementById("fieldCamera");
+    const fieldLens = document.getElementById("fieldLens");
+    const fieldFocal = document.getElementById("fieldFocal");
+    const fieldDate = document.getElementById("fieldDate");
     const fieldDrone = document.getElementById("fieldDrone");
     const fieldMission = document.getElementById("fieldMission");
     const fieldOverlap = document.getElementById("fieldOverlap");
@@ -1010,6 +1028,9 @@
       fieldCamera.textContent = "Sin detectar";
       fieldDrone.textContent = "Sin detectar";
       fieldLocation.textContent = "Sin detectar";
+      fieldLens.textContent = "Sin detectar";
+      fieldFocal.textContent = "Sin detectar";
+      fieldDate.textContent = "Sin detectar";
       mapWrap.style.display = "block";
 
       if (map && marker) {
@@ -1639,6 +1660,13 @@
                 resolve({
                   Make: EXIF.getTag(this, "Make"),
                   Model: EXIF.getTag(this, "Model"),
+                  
+                  DeviceModel: EXIF.getTag(this, "Model"),
+                  DeviceMake: EXIF.getTag(this, "Make"),
+                  LensModel: EXIF.getTag(this, "LensModel"),
+                  FocalLength: EXIF.getTag(this, "FocalLength"),
+                  DateTimeOriginal: EXIF.getTag(this, "DateTimeOriginal"),
+                  
                   ExifImageWidth: EXIF.getTag(this, "ExifImageWidth"),
                   ExifImageHeight: EXIF.getTag(this, "ExifImageHeight"),
                   PixelXDimension: EXIF.getTag(this, "PixelXDimension"),
@@ -1685,12 +1713,24 @@
             EXIF.getData(img, function () {
               const make = EXIF.getTag(this, "Make") || "";
               const model = EXIF.getTag(this, "Model") || "";
-
+              const lens = EXIF.getTag(this, "LensModel") || "No detectado";
+              const focal = EXIF.getTag(this, "FocalLength");
+              const date = EXIF.getTag(this, "DateTimeOriginal") || "No detectada";
               const camera = (make + " " + model).trim();
 
               if (camera) {
                 fieldCamera.textContent = camera;
                 detectDrone(camera);
+                fieldLens.textContent = lens;
+
+                if (focal && focal.numerator && focal.denominator) {
+                  fieldFocal.textContent = (focal.numerator / focal.denominator).toFixed(1) + " mm";
+                } else {
+                  fieldFocal.textContent = "No detectada";
+                }
+
+                fieldDate.textContent = date;
+              
               } else {
                 fieldCamera.textContent = "No detectada";
                 fieldDrone.textContent = "No detectado";
