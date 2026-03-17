@@ -925,6 +925,7 @@
     let modalResolver = null;
 
     let latestDataset = null;
+    let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
 
     const drop = document.getElementById("drop");
@@ -1347,6 +1348,18 @@
         detectCamera(files[0]);
 
         const dataset = await analyzeDataset(files);
+        latestExifSummary = {
+          camera: dataset.cameras,
+          megapixels: dataset.megapixels,
+          gpsDetected: dataset.gpsDetected,
+          gpsSpread: dataset.gpsSpread,
+          overlap: dataset.overlap,
+          warnings: dataset.warnings,
+          blockers: dataset.blockers,
+          missionType: detectMissionType(dataset),
+          totalPhotos: files.length,
+          totalSize: totalSize
+        };
         const missionType = detectMissionType(dataset);
 
         latestDataset = dataset;
@@ -1986,7 +1999,10 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({
+          exif_summary: latestExifSummary
+        })
       });
 
       if (!response.ok) {
