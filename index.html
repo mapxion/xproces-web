@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xproces</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg: #f4f6f3;
+      --bg-soft: #eef2ee;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-solid: #ffffff;
+      --border: #dde5df;
+      --text: #18211d;
+      --muted: #6f7d75;
+      --accent: #b8ff1a;
+      --accent-2: #9ee000;
+      --ok: #22a34a;
+      --warning: #d49a11;
+      --danger: #d45555;
+      --shadow: 0 10px 30px rgba(24, 33, 29, 0.08);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(184, 255, 26, 0.10), transparent 25%),
+        linear-gradient(180deg, #f7f9f7 0%, #eef2ee 100%);
+    }
+
+    body {
+      padding: 18px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(221, 229, 223, 0.95);
+      border-radius: 24px;
+      padding: 18px 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+    }
+
+    .brand-copy h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .brand-copy h1 .brand-x {
+      color: #86c600;
+    }
+
+    .brand-copy p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .left-stack,
+    .right-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-inner {
+      padding: 18px;
+    }
+
+    .drop {
+      width: 100%;
+      min-height: 390px;
+      border: 2px dashed rgba(110, 166, 0, 0.24);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(184, 255, 26, 0.05), rgba(184, 255, 26, 0.02)),
+        #fbfcfb;
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .drop.dragover {
+      border-color: rgba(110, 166, 0, 0.45);
+      background:
+        linear-gradient(180deg, rgba(184, 255, 26, 0.08), rgba(184, 255, 26, 0.04)),
+        #f9fcf6;
+      transform: translateY(-1px);
+    }
+
+    .drop-content {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .drop-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    .drop-subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-line;
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .dataset-grid {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .dataset-item {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 78px;
+    }
+
+    .dataset-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .dataset-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
+
+    .dataset-value {
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-line;
+    }
+
+    .dataset-highlight {
+      display: none;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .dataset-highlight-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 163, 74, 0.24);
+      background: rgba(34, 163, 74, 0.08);
+      color: var(--ok);
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .dataset-highlight-badge.warn {
+      border-color: rgba(212, 154, 17, 0.24);
+      background: rgba(212, 154, 17, 0.08);
+      color: var(--warning);
+    }
+
+    .dataset-highlight-badge.bad {
+      border-color: rgba(212, 85, 85, 0.24);
+      background: rgba(212, 85, 85, 0.08);
+      color: var(--danger);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #18210e;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-2);
+    }
+
+    .btn-success {
+      background: var(--accent);
+      color: #18210e;
+    }
+
+    .btn-success:hover {
+      background: var(--accent-2);
+    }
+
+    .btn-secondary {
+      background: #f4f6f4;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #ecefec;
+    }
+
+    .btn-danger {
+      background: #fff4f4;
+      color: #9b3737;
+      border: 1px solid #f1d7d7;
+    }
+
+    .btn-danger:hover {
+      background: #ffecec;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .price-time-box,
+    .job-status-box,
+    .future-box {
+      background: rgba(255,255,255,0.76);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .price-time-header,
+    .future-header,
+    .job-status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .price-time-title,
+    .job-status-title,
+    .future-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .price-time-badge,
+    .future-badge {
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      border: 1px solid rgba(34, 163, 74, 0.24);
+      color: var(--ok);
+      background: rgba(34, 163, 74, 0.08);
+      white-space: nowrap;
+    }
+
+    .future-badge {
+      color: var(--muted);
+      background: #f5f7f5;
+      border-color: var(--border);
+    }
+
+    .price-time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .price-card {
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .price-card-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .price-card-value {
+      color: var(--ok);
+      font-size: 30px;
+      font-weight: bold;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .future-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 24px;
+    }
+
+    .progress-wrap {
+      display: none;
+      margin-top: 2px;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 14px;
+      background: #edf1ed;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 0.2s ease;
+    }
+
+    .status {
+      color: var(--text);
+      min-height: 92px;
+      white-space: pre-line;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .process-stage-wrap {
+      display: none;
+      gap: 8px;
+      margin-bottom: 14px;
+      grid-template-columns: 1fr;
+    }
+
+    .process-stage {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 36px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #fafcf9;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .process-stage-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #c9d3cc;
+      flex: 0 0 10px;
+    }
+
+    .process-stage.active {
+      color: var(--text);
+      border-color: rgba(184, 255, 26, 0.65);
+      background: rgba(184, 255, 26, 0.12);
+    }
+
+    .process-stage.active .process-stage-dot {
+      background: #95db00;
+    }
+
+    .process-stage.done {
+      color: var(--ok);
+      border-color: rgba(34, 163, 74, 0.24);
+      background: rgba(34, 163, 74, 0.06);
+    }
+
+    .process-stage.done .process-stage-dot {
+      background: var(--ok);
+    }
+
+    .process-stage.error {
+      color: var(--danger);
+      border-color: rgba(212, 85, 85, 0.24);
+      background: rgba(212, 85, 85, 0.06);
+    }
+
+    .process-stage.error .process-stage-dot {
+      background: var(--danger);
+    }
+
+    .process-download-wrap {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .process-download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #18210e;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      border: 1px solid rgba(158, 224, 0, 0.5);
+      transition: 0.2s ease;
+    }
+
+    .process-download-btn:hover {
+      background: var(--accent-2);
+    }
+
+    #mapWrap {
+      display: block;
+    }
+
+    #map {
+      width: 100%;
+      height: 560px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #edf2ee;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 6px 0 0;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 24, 18, 0.18);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      background: rgba(255,255,255,0.94);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(24, 33, 29, 0.14);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 20px 22px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 22px;
+      color: var(--text);
+    }
+
+    .modal-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .modal-body {
+      padding: 18px 22px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .modal-card {
+      background: #fafcf9;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .modal-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .modal-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .modal-value {
+      color: var(--text);
+      font-size: 18px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .modal-note {
+      background: #f9fbf9;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 22px 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal-warning .modal-title {
+      color: var(--warning);
+    }
+
+    .modal-error .modal-title {
+      color: var(--danger);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        height: 300px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .topbar {
+        padding: 14px;
+      }
+
+      .brand-copy h1 {
+        font-size: 28px;
+      }
+
+      .dataset-grid,
+      .price-time-grid,
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .drop {
+        min-height: 280px;
+      }
+
+      .drop-title {
+        font-size: 22px;
+      }
+
+      .drop-subtitle {
+        min-height: 100px;
+        font-size: 14px;
+      }
+
+      #map {
+        height: 220px;
+      }
+
+      .modal-footer {
+        flex-direction: column;
+      }
+
+      .modal-footer .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-copy">
+          <h1><span class="brand-x">X</span>proces</h1>
+          <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="left-stack">
+        <div class="panel">
+          <div class="panel-inner">
+            <label class="drop" id="drop" for="fileInput">
+              <div class="drop-content">
+                <div class="drop-title" id="dropTitle">Arrastra tus fotos aquí</div>
+
+                <div class="drop-subtitle" id="dropSubtitle">
+                  Sube las fotografías originales del dron para calcular precio, tiempo, analizar EXIF, validar el dataset y preparar el procesado.
+                </div>
+
+                <div class="dataset-grid" id="datasetGrid">
+                  <div class="dataset-item">
+                    <div class="dataset-label">Tamaño total</div>
+                    <div class="dataset-value" id="fieldSize">0 MB</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Resolución media</div>
+                    <div class="dataset-value" id="fieldResolution">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">GPS</div>
+                    <div class="dataset-value" id="fieldGps">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Cámara</div>
+                    <div class="dataset-value" id="fieldCamera">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Equipo de captura</div>
+                    <div class="dataset-value" id="fieldDrone">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Tipo de misión</div>
+                    <div class="dataset-value" id="fieldMission">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Solape</div>
+                    <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
+                  </div>
+
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Ubicación</div>
+                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+                  </div>
+                </div>
+
+                <div class="dataset-highlight" id="datasetHighlight">
+                  <div class="dataset-highlight-badge" id="datasetHighlightBadge">
+                    Dataset válido para fotogrametría
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
+                  <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
+                </div>
+              </div>
+            </label>
+
+            <input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
+
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-top">
+                <span id="progressLabel">Subiendo...</span>
+                <span id="progressPercent">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="price-time-box">
+              <div class="price-time-header">
+                <div class="price-time-title">Precio y tiempo</div>
+                <div class="price-time-badge">Listo</div>
+              </div>
+
+              <div class="price-time-grid">
+                <div class="price-card">
+                  <div class="price-card-label">Precio</div>
+                  <div class="price-card-value" id="priceBig">0 €</div>
+                </div>
+
+                <div class="price-card">
+                  <div class="price-card-label">Tiempo</div>
+                  <div class="price-card-value" id="etaBig">Sin calcular</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="job-status-box">
+              <div class="job-status-header">
+                <div class="job-status-title">Estado del procesado</div>
+              </div>
+
+              <div class="process-stage-wrap" id="processStageWrap">
+                <div class="process-stage" data-stage="matching">
+                  <div class="process-stage-dot"></div>
+                  <div>Matching photos</div>
+                </div>
+                <div class="process-stage" data-stage="aligning">
+                  <div class="process-stage-dot"></div>
+                  <div>Aligning cameras</div>
+                </div>
+                <div class="process-stage" data-stage="depth">
+                  <div class="process-stage-dot"></div>
+                  <div>Depth maps</div>
+                </div>
+                <div class="process-stage" data-stage="pointcloud">
+                  <div class="process-stage-dot"></div>
+                  <div>Point cloud</div>
+                </div>
+                <div class="process-stage" data-stage="export">
+                  <div class="process-stage-dot"></div>
+                  <div>Export</div>
+                </div>
+              </div>
+
+              <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
+
+              <div class="process-download-wrap" id="processDownloadWrap">
+                <a class="process-download-btn" id="processDownloadBtn" href="#" target="_blank">Descargar resultados</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="future-box">
+              <div class="future-header">
+                <div class="future-title">Análisis del dataset</div>
+                <div class="future-badge" id="analysisBadge">Próximamente</div>
+              </div>
+              <div class="future-text" id="status"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-stack">
+        <div class="panel" id="mapWrap">
+          <div class="panel-inner">
+            <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
+            <div id="map"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modalBox">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Confirmación</h2>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+
+      <div class="modal-body" id="modalBody"></div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+        <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://162.55.57.82:3010";
+    const BATCH_SIZE = 20;
+    const POLL_INTERVAL_MS = 3000;
+    const DATASET_SAMPLE_SIZE = 8;
+    const PREVIEW_DEBOUNCE_MS = 400;
+
+    let files = [];
+    let totalSize = 0;
+    let map = null;
+    let baseLayer = null;
+    let marker = null;
+    let pollTimer = null;
+    let previewTimer = null;
+    let lastPreview = null;
+    let previewRequestId = 0;
+    let modalResolver = null;
+
+    let latestDataset = null;
+    let latestMissionType = "Sin detectar";
+
+    const drop = document.getElementById("drop");
+    const dropTitle = document.getElementById("dropTitle");
+    const dropSubtitle = document.getElementById("dropSubtitle");
+    const datasetGrid = document.getElementById("datasetGrid");
+    const datasetHighlight = document.getElementById("datasetHighlight");
+    const datasetHighlightBadge = document.getElementById("datasetHighlightBadge");
+
+    const fieldSize = document.getElementById("fieldSize");
+    const fieldResolution = document.getElementById("fieldResolution");
+    const fieldGps = document.getElementById("fieldGps");
+    const fieldCamera = document.getElementById("fieldCamera");
+    const fieldDrone = document.getElementById("fieldDrone");
+    const fieldMission = document.getElementById("fieldMission");
+    const fieldOverlap = document.getElementById("fieldOverlap");
+    const fieldLocation = document.getElementById("fieldLocation");
+
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    const statusEl = document.getElementById("status");
+    const jobStatusEl = document.getElementById("jobStatus");
+    const analysisBadgeEl = document.getElementById("analysisBadge");
+
+    const priceBig = document.getElementById("priceBig");
+    const etaBig = document.getElementById("etaBig");
+
+    const progressWrap = document.getElementById("progressWrap");
+    const progressFill = document.getElementById("progressFill");
+    const progressLabel = document.getElementById("progressLabel");
+    const progressPercent = document.getElementById("progressPercent");
+
+    const processStageWrap = document.getElementById("processStageWrap");
+    const processDownloadWrap = document.getElementById("processDownloadWrap");
+    const processDownloadBtn = document.getElementById("processDownloadBtn");
+
+    const mapWrap = document.getElementById("mapWrap");
+
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalBox = document.getElementById("modalBox");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalBody = document.getElementById("modalBody");
+    const modalCancelBtn = document.getElementById("modalCancelBtn");
+    const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+    function formatBytes(bytes) {
+      const mb = bytes / 1024 / 1024;
+      const gb = mb / 1024;
+      if (gb >= 1) return gb.toFixed(2) + " GB";
+      return mb.toFixed(2) + " MB";
+    }
+
+    function formatEtaText(seconds) {
+      const total = Math.max(0, Number(seconds || 0));
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.ceil((total % 3600) / 60);
+      if (hours <= 0) return `${minutes} min`;
+      return `${hours} h ${minutes} min`;
+    }
+
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function stopPolling() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
+
+    function enableUploadButton() {
+      uploadBtn.disabled = false;
+    }
+
+    function disableUploadButton() {
+      uploadBtn.disabled = true;
+    }
+
+    function hideDownloadButton() {
+      processDownloadWrap.style.display = "none";
+      processDownloadBtn.href = "#";
+    }
+
+    function showDownloadButton(jobId) {
+      processDownloadBtn.href = `${API_BASE}/jobs/${jobId}/download`;
+      processDownloadWrap.style.display = "block";
+    }
+
+    function resetDetectionInfo() {
+      fieldCamera.textContent = "Sin detectar";
+      fieldDrone.textContent = "Sin detectar";
+      fieldLocation.textContent = "Sin detectar";
+      mapWrap.style.display = "block";
+
+      if (map && marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+    }
+
+    function resetPreviewState() {
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+      previewRequestId++;
+      lastPreview = null;
+      priceBig.textContent = "0 €";
+      etaBig.textContent = "Sin calcular";
+    }
+
+    function closeModal(result = false) {
+      modalBackdrop.classList.remove("show");
+      modalBox.className = "modal";
+
+      if (modalResolver) {
+        modalResolver(result);
+        modalResolver = null;
+      }
+    }
+
+    function openModal({
+      title = "Mensaje",
+      subtitle = "",
+      body = "",
+      confirmText = "Aceptar",
+      cancelText = "Cancelar",
+      showCancel = true,
+      tone = "default"
+    }) {
+      return new Promise((resolve) => {
+        modalResolver = resolve;
+
+        modalTitle.textContent = title;
+        modalSubtitle.textContent = subtitle;
+        modalBody.innerHTML = body;
+        modalConfirmBtn.textContent = confirmText;
+        modalCancelBtn.textContent = cancelText;
+        modalCancelBtn.style.display = showCancel ? "inline-block" : "none";
+
+        modalBox.className = "modal";
+        if (tone === "warning") modalBox.classList.add("modal-warning");
+        if (tone === "error") modalBox.classList.add("modal-error");
+
+        modalBackdrop.classList.add("show");
+      });
+    }
+
+    async function showInfoModal(title, subtitle, message, tone = "default") {
+      await openModal({
+        title,
+        subtitle,
+        body: `<div class="modal-note">${message}</div>`,
+        confirmText: "Entendido",
+        showCancel: false,
+        tone
+      });
+    }
+
+    modalCancelBtn.addEventListener("click", () => closeModal(false));
+    modalConfirmBtn.addEventListener("click", () => closeModal(true));
+
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) {
+        closeModal(false);
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
+        closeModal(false);
+      }
+    });
+
+    async function fetchPricingPreview(photoCount, totalBytes) {
+      try {
+        const response = await fetch(`${API_BASE}/pricing/preview`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            photos_count: photoCount,
+            total_bytes: totalBytes
+          })
+        });
+
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function refreshPricingPreviewDebounced() {
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+
+      if (files.length === 0) {
+        lastPreview = null;
+        priceBig.textContent = "0 €";
+        etaBig.textContent = "Sin calcular";
+        return;
+      }
+
+      const requestId = ++previewRequestId;
+      jobStatusEl.textContent = "Calculando precio y tiempo...";
+
+      previewTimer = setTimeout(async () => {
+        try {
+          const preview = await fetchPricingPreview(files.length, totalSize);
+
+          if (requestId !== previewRequestId) return;
+
+          if (preview && preview.ok) {
+            lastPreview = preview;
+            priceBig.textContent = `${preview.price} €`;
+            etaBig.textContent = preview.estimated_human || "No disponible";
+            jobStatusEl.textContent = "Pendiente de inicio. El trabajo todavía no se ha enviado a procesado.";
+          } else {
+            lastPreview = null;
+            priceBig.textContent = "No disponible";
+            etaBig.textContent = "No disponible";
+            jobStatusEl.textContent = "No se pudo obtener el precio y el tiempo.";
+          }
+        } catch (_) {
+          if (requestId !== previewRequestId) return;
+          lastPreview = null;
+          priceBig.textContent = "No disponible";
+          etaBig.textContent = "No disponible";
+          jobStatusEl.textContent = "No se pudo obtener el precio y el tiempo.";
+        }
+      }, PREVIEW_DEBOUNCE_MS);
+    }
+
+    function setDatasetHighlight(text, type = "ok") {
+      datasetHighlight.style.display = "flex";
+      datasetHighlightBadge.textContent = text;
+      datasetHighlightBadge.className = "dataset-highlight-badge";
+
+      if (type === "warn") datasetHighlightBadge.classList.add("warn");
+      if (type === "bad") datasetHighlightBadge.classList.add("bad");
+    }
+
+    function hideDatasetHighlight() {
+      datasetHighlight.style.display = "none";
+      datasetHighlightBadge.textContent = "";
+      datasetHighlightBadge.className = "dataset-highlight-badge";
+    }
+
+    function fillDatasetGrid(dataset, missionType) {
+      fieldSize.textContent = formatBytes(totalSize);
+      fieldResolution.textContent = dataset.megapixels > 0 ? `${dataset.megapixels} MP` : "Sin detectar";
+      fieldGps.textContent = dataset.gpsDetected ? "Detectado" : "No detectado";
+
+      if (dataset.cameras.length === 1) {
+        fieldCamera.textContent = dataset.cameras[0];
+      } else if (dataset.cameras.length > 1) {
+        fieldCamera.textContent = "Múltiples cámaras";
+      } else {
+        fieldCamera.textContent = "Sin detectar";
+      }
+
+      fieldMission.textContent = missionType || "Sin detectar";
+      fieldOverlap.textContent = dataset.overlap?.message || "Sin detectar";
+    }
+
+    function setAnalysisPlaceholder() {
+      analysisBadgeEl.textContent = "Próximamente";
+      statusEl.textContent = "";
+    }
+
+    function resetStageClasses() {
+      processStageWrap.querySelectorAll(".process-stage").forEach((el) => {
+        el.classList.remove("active", "done", "error");
+      });
+    }
+
+    function mapJobToStage(job) {
+      const stage = String(job.stage || "").toLowerCase();
+
+      if (
+        stage === "matching" ||
+        stage === "aligning" ||
+        stage === "report" ||
+        stage === "depth" ||
+        stage === "pointcloud" ||
+        stage === "export"
+      ) {
+        return stage;
+      }
+
+      return null;
+    }
+
+    function updateProcessStages(job) {
+      if (job.status === "queued" || job.status === "running" || job.status === "done" || job.status === "failed") {
+        processStageWrap.style.display = "grid";
+      } else {
+        processStageWrap.style.display = "none";
+      }
+
+      resetStageClasses();
+
+      const order = ["matching", "aligning", "report", "depth", "pointcloud", "export"];
+      const currentStage = mapJobToStage(job);
+
+      if (!currentStage && job.status !== "done" && job.status !== "failed") return;
+
+      if (job.status === "done") {
+        order.forEach((stage) => {
+          const el = processStageWrap.querySelector(`[data-stage="${stage}"]`);
+          if (el) el.classList.add("done");
+        });
+        return;
+      }
+
+      if (job.status === "failed") {
+        const idx = currentStage ? order.indexOf(currentStage) : -1;
+        order.forEach((stage, i) => {
+          const el = processStageWrap.querySelector(`[data-stage="${stage}"]`);
+          if (!el) return;
+          if (idx >= 0 && i < idx) el.classList.add("done");
+          if (stage === currentStage) el.classList.add("error");
+        });
+        return;
+      }
+
+      const currentIdx = currentStage ? order.indexOf(currentStage) : -1;
+
+      order.forEach((stage, i) => {
+        const el = processStageWrap.querySelector(`[data-stage="${stage}"]`);
+        if (!el) return;
+        if (currentIdx >= 0 && i < currentIdx) el.classList.add("done");
+        if (stage === currentStage) el.classList.add("active");
+      });
+    }
+
+    function resetAll() {
+      stopPolling();
+      resetPreviewState();
+
+      files = [];
+      totalSize = 0;
+      latestDataset = null;
+      latestMissionType = "Sin detectar";
+      fileInput.value = "";
+
+      dropTitle.textContent = "Arrastra tus fotos aquí";
+      dropSubtitle.textContent =
+        "Sube las fotografías originales del dron para calcular precio, tiempo, analizar EXIF, validar el dataset y preparar el procesado.";
+
+      datasetGrid.style.display = "none";
+      hideDatasetHighlight();
+
+      fieldSize.textContent = "0 MB";
+      fieldResolution.textContent = "Sin detectar";
+      fieldGps.textContent = "Sin detectar";
+      fieldMission.textContent = "Sin detectar";
+      fieldOverlap.textContent = "Sin detectar";
+
+      resetDetectionInfo();
+      enableUploadButton();
+      setAnalysisPlaceholder();
+      hideDownloadButton();
+
+      processStageWrap.style.display = "none";
+      resetStageClasses();
+
+      jobStatusEl.textContent = "Aquí se mostrará el estado real del trabajo una vez iniciado.";
+
+      progressWrap.style.display = "none";
+      progressFill.style.width = "0%";
+      progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+      progressLabel.textContent = "Subiendo...";
+      progressPercent.textContent = "0%";
+    }
+
+    function applyDatasetVisualState(dataset) {
+      if (dataset.missingExifCore || dataset.blockers.length > 0) {
+        setDatasetHighlight("Dataset no válido para procesado", "bad");
+        disableUploadButton();
+        return;
+      }
+
+      if (dataset.warnings.length > 0) {
+        setDatasetHighlight("Dataset con advertencias", "warn");
+        enableUploadButton();
+        return;
+      }
+
+      setDatasetHighlight("Dataset válido para fotogrametría", "ok");
+      enableUploadButton();
+    }
+
+    async function updateUI() {
+      totalSize = files.reduce((acc, file) => acc + file.size, 0);
+
+      if (files.length > 0) {
+        dropTitle.textContent = `${files.length} archivos seleccionados`;
+        datasetGrid.style.display = "grid";
+
+        refreshPricingPreviewDebounced();
+        detectCamera(files[0]);
+
+        const dataset = await analyzeDataset(files);
+        const missionType = detectMissionType(dataset);
+
+        latestDataset = dataset;
+        latestMissionType = missionType;
+
+        fillDatasetGrid(dataset, missionType);
+        applyDatasetVisualState(dataset);
+
+        dropSubtitle.textContent =
+          `Dataset analizado\n\nFotos analizadas: ${Math.min(files.length, DATASET_SAMPLE_SIZE)}\nExtensión GPS: ${dataset.gpsSpread?.maxDistanceMeters || 0} m`;
+
+        setAnalysisPlaceholder();
+      } else {
+        resetAll();
+      }
+    }
+
+    function detectDrone(cameraText) {
+      const c = (cameraText || "").toUpperCase();
+      let drone = "Desconocido";
+
+      if (c.includes("L1D-20C") || c.includes("L1D-20")) {
+        drone = "DJI Mavic 2 Pro";
+      } else if (c.includes("FC220")) {
+        drone = "DJI Mavic Pro / Spark / Mavic Air";
+      } else if (c.includes("FC6310")) {
+        drone = "DJI Phantom 4 Pro";
+      } else if (c.includes("FC6520")) {
+        drone = "DJI Phantom 4 RTK";
+      } else if (c.includes("M3E") || c.includes("FC3411")) {
+        drone = "DJI Mavic 3 Enterprise";
+      } else if (c.includes("M3T")) {
+        drone = "DJI Mavic 3 Thermal";
+      } else if (c.includes("M3P")) {
+        drone = "DJI Mavic 3 Pro";
+      } else if (c.includes("FC3582") || c.includes("FC3582C")) {
+        drone = "DJI Air 2S";
+      } else if (c.includes("FC8482")) {
+        drone = "DJI Mini 3 / Mini 4 Pro";
+      } else if (c.includes("P1")) {
+        drone = "DJI Matrice + Zenmuse P1";
+      } else if (c.includes("H20")) {
+        drone = "DJI Matrice + Zenmuse H20";
+      } else if (c.includes("M300")) {
+        drone = "DJI Matrice 300 RTK";
+      } else if (c.includes("M350")) {
+        drone = "DJI Matrice 350 RTK";
+      } else if (c.includes("AUTEL") && c.includes("EVO II")) {
+        drone = "Autel EVO II";
+      } else if (c.includes("EVO II RTK")) {
+        drone = "Autel EVO II RTK";
+      } else if (c.includes("ANAFI AI")) {
+        drone = "Parrot Anafi Ai";
+      } else if (c.includes("ANAFI")) {
+        drone = "Parrot Anafi";
+      } else if (c.includes("SKYDIO")) {
+        drone = "Skydio (serie 2 / X2)";
+      } else if (c.includes("SONY")) {
+        drone = "Drone profesional con cámara Sony";
+      } else if (c.includes("ZENMUSE")) {
+        drone = "DJI Matrice con cámara Zenmuse";
+      }
+
+      fieldDrone.textContent = drone;
+    }
+
+    async function analyzeDataset(fileList) {
+      const sample = fileList.slice(0, DATASET_SAMPLE_SIZE);
+
+      const cameras = new Set();
+      const widths = [];
+      const heights = [];
+      const gpsPoints = [];
+      let gpsDetected = false;
+
+      for (const file of sample) {
+        const data = await readExif(file);
+        if (!data) continue;
+
+        const make = (data.Make || "").trim();
+        const model = (data.Model || "").trim();
+        const cameraName = `${make} ${model}`.trim();
+
+        if (cameraName) {
+          cameras.add(cameraName);
+        }
+
+        const width = Number(data.ExifImageWidth || data.PixelXDimension || 0);
+        const height = Number(data.ExifImageHeight || data.PixelYDimension || 0);
+
+        if (width > 0 && height > 0) {
+          widths.push(width);
+          heights.push(height);
+        }
+
+        if (data.GPSLatitude && data.GPSLongitude) {
+          gpsDetected = true;
+
+          const lat = convertGPS(data.GPSLatitude, data.GPSLatitudeRef);
+          const lon = convertGPS(data.GPSLongitude, data.GPSLongitudeRef);
+
+          if (
+            lat !== null &&
+            lon !== null &&
+            !Number.isNaN(lat) &&
+            !Number.isNaN(lon)
+          ) {
+            gpsPoints.push({ lat, lon });
+          }
+        }
+      }
+
+      const cameraCount = cameras.size;
+
+      const avgWidth =
+        widths.length > 0
+          ? widths.reduce((a, b) => a + b, 0) / widths.length
+          : 0;
+
+      const avgHeight =
+        heights.length > 0
+          ? heights.reduce((a, b) => a + b, 0) / heights.length
+          : 0;
+
+      const megapixels =
+        avgWidth > 0 && avgHeight > 0
+          ? Number(((avgWidth * avgHeight) / 1000000).toFixed(1))
+          : 0;
+
+      const overlapInfo = estimateOverlapFromGps(gpsPoints);
+      const gpsSpread = estimateGpsSpread(gpsPoints);
+
+      const warnings = [];
+      const blockers = [];
+
+      const missingExifCore =
+        cameras.size === 0 && megapixels === 0 && !gpsDetected;
+
+      if (cameraCount > 1) {
+        warnings.push("Se detectaron múltiples cámaras");
+      }
+
+      if (megapixels > 0 && megapixels < 8) {
+        warnings.push("Resolución baja para fotogrametría");
+      }
+
+      if (!gpsDetected) {
+        warnings.push("No se ha detectado GPS en la muestra analizada");
+      }
+
+      if (overlapInfo.status === "low") {
+        warnings.push("El solape estimado parece bajo");
+      }
+
+      if (missingExifCore) {
+        blockers.push("No se han encontrado metadatos EXIF suficientes");
+      }
+
+      if (megapixels > 0 && megapixels < 3) {
+        blockers.push("La resolución es demasiado baja para un procesado fiable");
+      }
+
+      return {
+        cameraCount,
+        cameras: [...cameras],
+        megapixels,
+        gpsDetected,
+        gpsPointsCount: gpsPoints.length,
+        overlap: overlapInfo,
+        gpsSpread,
+        warnings,
+        blockers,
+        missingExifCore,
+        isValidForProcessing: blockers.length === 0
+      };
+    }
+
+    function estimateOverlapFromGps(points) {
+      if (!points || points.length < 3) {
+        return {
+          status: "unknown",
+          message: "No se ha podido estimar el solape"
+        };
+      }
+
+      const distances = [];
+
+      for (let i = 1; i < points.length; i++) {
+        const d = haversineMeters(points[i - 1], points[i]);
+        if (Number.isFinite(d) && d > 0) {
+          distances.push(d);
+        }
+      }
+
+      if (!distances.length) {
+        return {
+          status: "unknown",
+          message: "No se ha podido estimar el solape"
+        };
+      }
+
+      const avgDistance =
+        distances.reduce((a, b) => a + b, 0) / distances.length;
+
+      if (avgDistance <= 5) {
+        return {
+          status: "high",
+          message: "Solape estimado alto"
+        };
+      }
+
+      if (avgDistance <= 15) {
+        return {
+          status: "medium",
+          message: "Solape estimado medio"
+        };
+      }
+
+      return {
+        status: "low",
+        message: "Solape estimado bajo"
+      };
+    }
+
+    function estimateGpsSpread(points) {
+      if (!points || points.length < 2) {
+        return {
+          maxDistanceMeters: 0,
+          spreadLabel: "desconocido"
+        };
+      }
+
+      let maxDistance = 0;
+
+      for (let i = 0; i < points.length; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+          const d = haversineMeters(points[i], points[j]);
+          if (Number.isFinite(d) && d > maxDistance) {
+            maxDistance = d;
+          }
+        }
+      }
+
+      let spreadLabel = "bajo";
+      if (maxDistance > 80) spreadLabel = "alto";
+      else if (maxDistance > 25) spreadLabel = "medio";
+
+      return {
+        maxDistanceMeters: Math.round(maxDistance),
+        spreadLabel
+      };
+    }
+
+    function haversineMeters(a, b) {
+      const R = 6371000;
+      const toRad = (deg) => (deg * Math.PI) / 180;
+
+      const dLat = toRad(b.lat - a.lat);
+      const dLon = toRad(b.lon - a.lon);
+
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+
+      const x =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) *
+          Math.cos(lat2) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+
+      return R * c;
+    }
+
+    function detectMissionType(dataset) {
+      if (!dataset.gpsDetected) {
+        return "Objeto / escaneo cercano";
+      }
+
+      const spread = Number(dataset.gpsSpread?.maxDistanceMeters || 0);
+      const overlapStatus = dataset.overlap?.status || "unknown";
+      const cameraCount = Number(dataset.cameraCount || 0);
+      const mp = Number(dataset.megapixels || 0);
+
+      if (spread > 0 && spread <= 30 && cameraCount === 1) {
+        return "Inspección de torre / estructura vertical";
+      }
+
+      if (spread > 30 && spread <= 80 && overlapStatus !== "low") {
+        return "Fachada / estructura";
+      }
+
+      if (spread > 80 && mp >= 8) {
+        return "Fotogrametría aérea";
+      }
+
+      return "Escaneo general";
+    }
+
+    function readExif(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const img = new Image();
+
+          img.onload = function () {
+            try {
+              EXIF.getData(img, function () {
+                resolve({
+                  Make: EXIF.getTag(this, "Make"),
+                  Model: EXIF.getTag(this, "Model"),
+                  ExifImageWidth: EXIF.getTag(this, "ExifImageWidth"),
+                  ExifImageHeight: EXIF.getTag(this, "ExifImageHeight"),
+                  PixelXDimension: EXIF.getTag(this, "PixelXDimension"),
+                  PixelYDimension: EXIF.getTag(this, "PixelYDimension"),
+                  GPSLatitude: EXIF.getTag(this, "GPSLatitude"),
+                  GPSLongitude: EXIF.getTag(this, "GPSLongitude"),
+                  GPSLatitudeRef: EXIF.getTag(this, "GPSLatitudeRef"),
+                  GPSLongitudeRef: EXIF.getTag(this, "GPSLongitudeRef")
+                });
+              });
+            } catch (_) {
+              resolve(null);
+            }
+          };
+
+          img.onerror = function () {
+            resolve(null);
+          };
+
+          reader.onerror = function () {
+            resolve(null);
+          };
+
+          img.src = e.target.result;
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function detectCamera(file) {
+      if (!file) {
+        resetDetectionInfo();
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const img = new Image();
+
+        img.onload = function () {
+          try {
+            EXIF.getData(img, function () {
+              const make = EXIF.getTag(this, "Make") || "";
+              const model = EXIF.getTag(this, "Model") || "";
+
+              const camera = (make + " " + model).trim();
+
+              if (camera) {
+                fieldCamera.textContent = camera;
+                detectDrone(camera);
+              } else {
+                fieldCamera.textContent = "No detectada";
+                fieldDrone.textContent = "No detectado";
+              }
+
+              detectGPS(this);
+            });
+          } catch (_) {
+            fieldCamera.textContent = "No detectada";
+            fieldDrone.textContent = "No detectado";
+            fieldLocation.textContent = "No detectada";
+            mapWrap.style.display = "block";
+          }
+        };
+
+        img.onerror = function () {
+          fieldCamera.textContent = "No detectada";
+          fieldDrone.textContent = "No detectado";
+          fieldLocation.textContent = "No detectada";
+          mapWrap.style.display = "block";
+        };
+
+        reader.onerror = function () {
+          fieldCamera.textContent = "No detectada";
+          fieldDrone.textContent = "No detectado";
+          fieldLocation.textContent = "No detectada";
+          mapWrap.style.display = "block";
+        };
+
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function gpsPartToNumber(part) {
+      if (typeof part === "number") return part;
+
+      if (part && typeof part === "object") {
+        if (
+          typeof part.numerator === "number" &&
+          typeof part.denominator === "number" &&
+          part.denominator !== 0
+        ) {
+          return part.numerator / part.denominator;
+        }
+      }
+
+      return 0;
+    }
+
+    function convertGPS(coord, ref) {
+      if (!coord || coord.length < 3) return null;
+
+      const d = gpsPartToNumber(coord[0]);
+      const m = gpsPartToNumber(coord[1]);
+      const s = gpsPartToNumber(coord[2]);
+
+      let dec = d + (m / 60) + (s / 3600);
+
+      if (ref === "S" || ref === "W") {
+        dec *= -1;
+      }
+
+      return dec;
+    }
+
+    function showMap(lat, lon) {
+      mapWrap.style.display = "block";
+
+      if (!map) {
+        map = L.map("map", {
+          zoomControl: true
+        }).setView([lat, lon], 16);
+
+        baseLayer = L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+          }
+        );
+
+        baseLayer.on("tileerror", function () {
+          jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
+        });
+
+        baseLayer.addTo(map);
+      }
+
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      marker = L.marker([lat, lon]).addTo(map);
+      map.setView([lat, lon], 16);
+
+      setTimeout(() => {
+        map.invalidateSize();
+        if (baseLayer) baseLayer.redraw();
+      }, 300);
+
+      setTimeout(() => {
+        map.invalidateSize();
+        if (baseLayer) baseLayer.redraw();
+      }, 800);
+    }
+
+    async function reverseGeocode(lat, lon) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=12&addressdetails=1`;
+
+        const response = await fetch(url, {
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          fieldLocation.textContent = "Ubicación no disponible";
+          return;
+        }
+
+        const data = await response.json();
+        const address = data.address || {};
+
+        const municipality =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.municipality ||
+          address.hamlet ||
+          address.county ||
+          "";
+
+        const province =
+          address.state ||
+          address.province ||
+          address.region ||
+          "";
+
+        const country = address.country || "";
+
+        const parts = [municipality, province, country].filter(Boolean);
+
+        if (parts.length > 0) {
+          fieldLocation.textContent = parts.join(", ");
+        } else if (data.display_name) {
+          fieldLocation.textContent = data.display_name;
+        } else {
+          fieldLocation.textContent = "Ubicación no disponible";
+        }
+      } catch (_) {
+        fieldLocation.textContent = "Ubicación no disponible";
+      }
+    }
+
+    async function detectGPS(exifContext) {
+      const lat = EXIF.getTag(exifContext, "GPSLatitude");
+      const lon = EXIF.getTag(exifContext, "GPSLongitude");
+      const latRef = EXIF.getTag(exifContext, "GPSLatitudeRef");
+      const lonRef = EXIF.getTag(exifContext, "GPSLongitudeRef");
+
+      if (!lat || !lon || !latRef || !lonRef) {
+        fieldLocation.textContent = "No detectada";
+        return;
+      }
+
+      const latitude = convertGPS(lat, latRef);
+      const longitude = convertGPS(lon, lonRef);
+
+      if (
+        latitude === null ||
+        longitude === null ||
+        Number.isNaN(latitude) ||
+        Number.isNaN(longitude)
+      ) {
+        fieldLocation.textContent = "No detectada";
+        return;
+      }
+
+      fieldLocation.textContent = "Buscando ubicación...";
+      showMap(latitude, longitude);
+      await reverseGeocode(latitude, longitude);
+    }
+
+    async function setFiles(fileList) {
+      files = Array.from(fileList || []).filter((file) => {
+        const name = file.name.toLowerCase();
+        return (
+          name.endsWith(".jpg") ||
+          name.endsWith(".jpeg") ||
+          name.endsWith(".png") ||
+          name.endsWith(".tif") ||
+          name.endsWith(".tiff") ||
+          name.endsWith(".dng")
+        );
+      });
+
+      statusEl.textContent = "";
+      hideDownloadButton();
+      await updateUI();
+    }
+
+    drop.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      drop.classList.add("dragover");
+    });
+
+    drop.addEventListener("dragleave", () => {
+      drop.classList.remove("dragover");
+    });
+
+    drop.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      drop.classList.remove("dragover");
+      await setFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener("change", async (e) => {
+      await setFiles(e.target.files);
+    });
+
+    clearBtn.addEventListener("click", async () => {
+      if (files.length === 0) {
+        resetAll();
+        return;
+      }
+
+      const ok = await openModal({
+        title: "Borrar selección",
+        subtitle: "Se eliminarán los archivos cargados en esta vista.",
+        body: `
+          <div class="modal-note">
+            Va a borrar la selección actual de fotografías y se reiniciará el panel de análisis.
+          </div>
+        `,
+        confirmText: "Sí, borrar",
+        cancelText: "Cancelar",
+        showCancel: true,
+        tone: "warning"
+      });
+
+      if (ok) {
+        resetAll();
+      }
+    });
+
+    uploadBtn.addEventListener("click", upload);
+
+    async function createJob() {
+      const response = await fetch(`${API_BASE}/jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`No se pudo crear el job (${response.status}) ${text}`);
+      }
+
+      return response.json();
+    }
+
+    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches) {
+      return new Promise((resolve, reject) => {
+        const form = new FormData();
+        batchFiles.forEach((file) => form.append("photos", file));
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
+
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable) {
+            const batchPercent = e.loaded / e.total;
+            const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
+            const rounded = Math.round(overallPercent);
+
+            progressFill.style.width = `${rounded}%`;
+            progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
+            progressPercent.textContent = `${rounded}%`;
+          }
+        };
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = function () {
+          reject(new Error(`Error de red en lote ${batchIndex + 1}`));
+        };
+
+        xhr.send(form);
+      });
+    }
+
+    async function submitJob(jobId) {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`No se pudo enviar el job a procesado (${response.status}) ${text}`);
+      }
+
+      return response.json();
+    }
+
+    async function getJob(jobId) {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+
+      if (!response.ok) {
+        throw new Error(`No se pudo consultar el job (${response.status})`);
+      }
+
+      return response.json();
+    }
+
+    async function getJobEta(jobId) {
+      try {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`);
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function buildQueuedOrRunningMessage(job) {
+      const eta = await getJobEta(job.id);
+
+      if (!eta || !eta.ok) {
+        return `Job ${job.id}\nEstado: ${job.status}\n${job.message || ""}`.trim();
+      }
+
+      if (job.status === "queued") {
+        return `Job ${job.id}\nEstado: en cola\nSu proyecto está en cola.\nTiempo estimado: ${eta.total_estimated_human}`;
+      }
+
+      if (job.status === "running") {
+        const remaining = Math.max(
+          0,
+          Number(eta.total_estimated_seconds || 0) - Number(job.total_seconds || 0)
+        );
+
+        const remainingText =
+          remaining > 0 ? formatEtaText(remaining) : eta.total_estimated_human;
+
+        return `Job ${job.id}\nEstado: procesando\n${job.message || "Procesando proyecto"}\nTiempo restante estimado: ${remainingText}`;
+      }
+
+      return `Job ${job.id}\nEstado: ${job.status}\n${job.message || ""}`.trim();
+    }
+
+    function startPolling(jobId) {
+      stopPolling();
+
+      pollTimer = setInterval(async () => {
+        try {
+          const job = await getJob(jobId);
+
+          const progress = Number(job.progress ?? 0);
+          const status = String(job.status ?? "");
+          const message = job.message || "";
+
+          progressWrap.style.display = "block";
+          progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+          progressLabel.textContent = `Estado: ${status}`;
+          progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
+
+          updateProcessStages(job);
+
+          if (status === "queued" || status === "running") {
+            jobStatusEl.textContent = await buildQueuedOrRunningMessage(job);
+          } else {
+            jobStatusEl.textContent = `Job ${job.id}\nEstado: ${status}\n${message}`;
+          }
+
+          if (status === "done") {
+            stopPolling();
+
+            progressFill.style.width = "100%";
+            progressLabel.textContent = "Trabajo procesado correctamente";
+            progressPercent.textContent = "100%";
+
+            jobStatusEl.textContent =
+              `✔ Procesado completado\n\nEl trabajo se ha generado correctamente y ya puede descargarse.`;
+
+            showDownloadButton(job.id);
+          }
+
+          if (status === "failed") {
+            stopPolling();
+
+            progressFill.style.width = "100%";
+            progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
+            progressLabel.textContent = "Procesado fallido";
+            progressPercent.textContent = "100%";
+
+            const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
+
+            let msg = "El procesado no se pudo completar.";
+
+            if (rawError.includes("no_input_files")) {
+              msg = "No se encontraron imágenes válidas en el proyecto.";
+            } else if (
+              rawError.includes("muy pocas cámaras alineadas") ||
+              rawError.includes("cámaras alineadas")
+            ) {
+              msg = "No hay suficiente solape entre las fotos para generar el modelo.";
+            } else if (
+              rawError.includes("point cloud densa") ||
+              rawError.includes("depth maps")
+            ) {
+              msg = "No se ha podido generar la nube de puntos. Revise calidad, solape y resolución de las fotos.";
+            }
+
+            jobStatusEl.textContent =
+              `Job ${job.id}\nEstado: error\n${msg}`;
+
+            hideDownloadButton();
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, POLL_INTERVAL_MS);
+    }
+
+    async function upload() {
+      if (files.length === 0) {
+        await showInfoModal(
+          "No hay fotos seleccionadas",
+          "Debe subir imágenes antes de iniciar el procesado.",
+          "Seleccione o arrastre las fotografías originales del dron para poder calcular el precio, el tiempo y preparar el proyecto.",
+          "warning"
+        );
+        return;
+      }
+
+      if (uploadBtn.disabled) {
+        return;
+      }
+
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+      previewRequestId++;
+
+      let preview = lastPreview;
+
+      if (!preview || !preview.ok) {
+        preview = await fetchPricingPreview(files.length, totalSize);
+      }
+
+      if (!preview || !preview.ok) {
+        await showInfoModal(
+          "No se pudo calcular la previsualización",
+          "Precio y tiempo no están disponibles en este momento.",
+          "Revise la conexión con la API e inténtelo de nuevo.",
+          "error"
+        );
+        return;
+      }
+
+      lastPreview = preview;
+
+      const timeText = preview.estimated_human || "No disponible";
+      const priceText = `${preview.price} €`;
+
+      const ok = await openModal({
+        title: "Confirmar procesado",
+        subtitle: "Revise el resumen antes de enviar el proyecto.",
+        body: `
+          <div class="modal-grid">
+            <div class="modal-card">
+              <div class="modal-label">Fotos</div>
+              <div class="modal-value">${files.length}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Tamaño total</div>
+              <div class="modal-value">${formatBytes(totalSize)}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Precio</div>
+              <div class="modal-value">${priceText}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Tiempo</div>
+              <div class="modal-value">${timeText}</div>
+            </div>
+            <div class="modal-card full">
+              <div class="modal-note">
+                Se creará un nuevo proyecto, se subirán las fotografías al servidor y el trabajo entrará en cola para su procesado automático.
+              </div>
+            </div>
+          </div>
+        `,
+        confirmText: "Sí, iniciar procesado",
+        cancelText: "Cancelar",
+        showCancel: true,
+        tone: "default"
+      });
+
+      if (!ok) return;
+
+      try {
+        stopPolling();
+        hideDownloadButton();
+        processStageWrap.style.display = "grid";
+        resetStageClasses();
+
+        progressWrap.style.display = "block";
+        progressFill.style.width = "0%";
+        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+        progressLabel.textContent = "Creando proyecto...";
+        progressPercent.textContent = "0%";
+        jobStatusEl.textContent = "Creando job...";
+
+        const createdJob = await createJob();
+        const jobId = createdJob.id;
+
+        jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
+
+        const batches = chunkArray(files, BATCH_SIZE);
+
+        for (let i = 0; i < batches.length; i++) {
+          await uploadBatch(jobId, batches[i], i, batches.length);
+        }
+
+        progressFill.style.width = "100%";
+        progressLabel.textContent = "Subida completada";
+        progressPercent.textContent = "100%";
+        jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
+
+        await submitJob(jobId);
+
+        jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
+        progressLabel.textContent = "En cola...";
+        progressPercent.textContent = "0%";
+        startPolling(jobId);
+      } catch (error) {
+        console.error(error);
+        jobStatusEl.textContent = error.message || "Error durante la subida";
+        progressLabel.textContent = "Error";
+      }
+    }
+
+    resetAll();
+  </script>
+</body>
+</html>
