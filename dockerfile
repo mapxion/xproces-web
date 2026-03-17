@@ -2,4 +2,4 @@ FROM nginx:alpine
 
 COPY . /usr/share/nginx/html
 
-EXPOSE 3010
+EXPOSE 80
