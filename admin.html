@@ -1,1 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xproces Admin</title>
 
+  <style>
+    :root {
+      --bg: #f4f6f3;
+      --bg-soft: #eef2ee;
+      --panel: rgba(255, 255, 255, 0.9);
+      --border: #dde5df;
+      --text: #18211d;
+      --muted: #6f7d75;
+      --accent: #b8ff1a;
+      --accent-2: #9ee000;
+      --ok: #22a34a;
+      --warning: #d49a11;
+      --danger: #d45555;
+      --info: #2d7ff9;
+      --shadow: 0 10px 30px rgba(24, 33, 29, 0.08);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(184, 255, 26, 0.10), transparent 25%),
+        linear-gradient(180deg, #f7f9f7 0%, #eef2ee 100%);
+    }
+
+    body {
+      padding: 18px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(221, 229, 223, 0.95);
+      border-radius: 24px;
+      padding: 18px 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      flex-wrap: wrap;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .brand h1 .brand-x {
+      color: #86c600;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #18210e;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-2);
+    }
+
+    .btn-secondary {
+      background: #f4f6f4;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #ecefec;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-inner {
+      padding: 18px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0 0 14px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 92px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0 12px;
+      background: white;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fbfcfb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1250px;
+    }
+
+    thead {
+      background: #f3f7f2;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    td {
+      color: var(--text);
+    }
+
+    .mono {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .badge-created,
+    .badge-receiving {
+      background: #f5f7f5;
+      color: var(--muted);
+    }
+
+    .badge-queued {
+      background: rgba(45, 127, 249, 0.08);
+      color: var(--info);
+      border-color: rgba(45, 127, 249, 0.18);
+    }
+
+    .badge-running {
+      background: rgba(212, 154, 17, 0.08);
+      color: var(--warning);
+      border-color: rgba(212, 154, 17, 0.18);
+    }
+
+    .badge-done {
+      background: rgba(34, 163, 74, 0.08);
+      color: var(--ok);
+      border-color: rgba(34, 163, 74, 0.18);
+    }
+
+    .badge-failed {
+      background: rgba(212, 85, 85, 0.08);
+      color: var(--danger);
+      border-color: rgba(212, 85, 85, 0.18);
+    }
+
+    .mini-progress {
+      width: 140px;
+      height: 10px;
+      background: #edf1ed;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      width: 0%;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .msg {
+      max-width: 260px;
+      white-space: pre-line;
+      line-height: 1.4;
+    }
+
+    .error-text {
+      color: var(--danger);
+      max-width: 260px;
+      white-space: pre-line;
+      line-height: 1.4;
+    }
+
+    .small-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #18210e;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(158, 224, 0, 0.5);
+    }
+
+    .small-btn:hover {
+      background: var(--accent-2);
+    }
+
+    .small-btn.disabled {
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 6px 0 0;
+    }
+
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .topbar {
+        padding: 14px;
+      }
+
+      .brand h1 {
+        font-size: 28px;
+      }
+
+      .stats-grid,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1><span class="brand-x">X</span>proces Admin</h1>
+        <p>Monitor de trabajos, cola, progreso y resultados</p>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn btn-secondary" id="autoRefreshBtn" type="button">Auto: ON</button>
+        <button class="btn btn-primary" id="refreshBtn" type="button">Actualizar</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-inner">
+        <h2 class="panel-title">Resumen</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">En cola</div>
+            <div class="stat-value" id="statQueued">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Procesando</div>
+            <div class="stat-value" id="statRunning">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Completados</div>
+            <div class="stat-value" id="statDone">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fallidos</div>
+            <div class="stat-value" id="statFailed">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fotos totales</div>
+            <div class="stat-value" id="statPhotos">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-inner">
+        <h2 class="panel-title">Filtros</h2>
+        <div class="toolbar">
+          <div class="field">
+            <label for="searchInput">Buscar</label>
+            <input id="searchInput" type="text" placeholder="ID, mensaje, error, stage..." />
+          </div>
+
+          <div class="field">
+            <label for="statusFilter">Estado</label>
+            <select id="statusFilter">
+              <option value="">Todos</option>
+              <option value="created">Created</option>
+              <option value="receiving">Receiving</option>
+              <option value="queued">Queued</option>
+              <option value="running">Running</option>
+              <option value="done">Done</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="stageFilter">Stage</label>
+            <select id="stageFilter">
+              <option value="">Todos</option>
+              <option value="matching">Matching</option>
+              <option value="aligning">Aligning</option>
+              <option value="report">Report</option>
+              <option value="depth">Depth</option>
+              <option value="pointcloud">Point cloud</option>
+              <option value="export">Export</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="sortFilter">Orden</label>
+            <select id="sortFilter">
+              <option value="newest">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="progress_desc">Más progreso</option>
+              <option value="photos_desc">Más fotos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-inner">
+        <h2 class="panel-title">Trabajos</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Estado</th>
+                <th>Stage</th>
+                <th>Progreso</th>
+                <th>Fotos</th>
+                <th>Precio</th>
+                <th>Mensaje</th>
+                <th>Error</th>
+                <th>Creado</th>
+                <th>Iniciado</th>
+                <th>Finalizado</th>
+                <th>Descarga</th>
+              </tr>
+            </thead>
+            <tbody id="jobsTableBody">
+              <tr>
+                <td colspan="12" class="muted">Cargando trabajos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Panel de administración inicial. Luego se puede proteger con login, añadir workers, métricas y acciones.
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://api.xproces.com";
+    const REFRESH_MS = 5000;
+
+    let jobsCache = [];
+    let autoRefresh = true;
+    let timer = null;
+
+    const refreshBtn = document.getElementById("refreshBtn");
+    const autoRefreshBtn = document.getElementById("autoRefreshBtn");
+
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const stageFilter = document.getElementById("stageFilter");
+    const sortFilter = document.getElementById("sortFilter");
+
+    const jobsTableBody = document.getElementById("jobsTableBody");
+
+    const statTotal = document.getElementById("statTotal");
+    const statQueued = document.getElementById("statQueued");
+    const statRunning = document.getElementById("statRunning");
+    const statDone = document.getElementById("statDone");
+    const statFailed = document.getElementById("statFailed");
+    const statPhotos = document.getElementById("statPhotos");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleString("es-ES");
+    }
+
+    function statusBadgeClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (s === "queued") return "badge badge-queued";
+      if (s === "running") return "badge badge-running";
+      if (s === "done") return "badge badge-done";
+      if (s === "failed") return "badge badge-failed";
+      if (s === "receiving") return "badge badge-receiving";
+      return "badge badge-created";
+    }
+
+    function getFilteredJobs() {
+      const q = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const stage = stageFilter.value;
+      const sort = sortFilter.value;
+
+      let rows = [...jobsCache];
+
+      if (q) {
+        rows = rows.filter((job) => {
+          const bag = [
+            job.id,
+            job.status,
+            job.stage,
+            job.message,
+            job.error,
+            job.photos_count,
+            job.price
+          ].join(" ").toLowerCase();
+
+          return bag.includes(q);
+        });
+      }
+
+      if (status) {
+        rows = rows.filter((job) => String(job.status || "") === status);
+      }
+
+      if (stage) {
+        rows = rows.filter((job) => String(job.stage || "") === stage);
+      }
+
+      if (sort === "oldest") {
+        rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      } else if (sort === "progress_desc") {
+        rows.sort((a, b) => Number(b.progress || 0) - Number(a.progress || 0));
+      } else if (sort === "photos_desc") {
+        rows.sort((a, b) => Number(b.photos_count || 0) - Number(a.photos_count || 0));
+      } else {
+        rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+
+      return rows;
+    }
+
+    function renderStats(rows) {
+      statTotal.textContent = rows.length;
+      statQueued.textContent = rows.filter(j => j.status === "queued").length;
+      statRunning.textContent = rows.filter(j => j.status === "running").length;
+      statDone.textContent = rows.filter(j => j.status === "done").length;
+      statFailed.textContent = rows.filter(j => j.status === "failed").length;
+
+      const totalPhotos = rows.reduce((acc, j) => acc + Number(j.photos_count || 0), 0);
+      statPhotos.textContent = totalPhotos;
+    }
+
+    function renderTable() {
+      const rows = getFilteredJobs();
+      renderStats(jobsCache);
+
+      if (!rows.length) {
+        jobsTableBody.innerHTML = `
+          <tr>
+            <td colspan="12" class="muted">No hay trabajos para mostrar.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      jobsTableBody.innerHTML = rows.map((job) => {
+        const progress = Math.max(0, Math.min(100, Number(job.progress || 0)));
+        const canDownload = String(job.status || "") === "done";
+
+        return `
+          <tr>
+            <td class="mono">${escapeHtml(job.id)}</td>
+            <td><span class="${statusBadgeClass(job.status)}">${escapeHtml(job.status || "—")}</span></td>
+            <td>${escapeHtml(job.stage || "—")}</td>
+            <td>
+              <div class="mini-progress">
+                <div class="mini-progress-fill" style="width:${progress}%"></div>
+              </div>
+              <div class="muted">${progress}%</div>
+            </td>
+            <td>${escapeHtml(job.photos_count ?? "0")}</td>
+            <td>${job.price != null ? escapeHtml(job.price) + " €" : "—"}</td>
+            <td class="msg">${escapeHtml(job.message || "—")}</td>
+            <td class="error-text">${escapeHtml(job.error || "—")}</td>
+            <td>${formatDate(job.created_at)}</td>
+            <td>${formatDate(job.started_at)}</td>
+            <td>${formatDate(job.finished_at)}</td>
+            <td>
+              <a
+                class="small-btn ${canDownload ? "" : "disabled"}"
+                href="${canDownload ? `${API_BASE}/jobs/${job.id}/download` : "#"}"
+                target="_blank"
+              >
+                Descargar
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadJobs() {
+      try {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = "Actualizando...";
+
+        const response = await fetch(`${API_BASE}/admin/jobs`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        jobsCache = Array.isArray(data.jobs) ? data.jobs : [];
+        renderTable();
+      } catch (error) {
+        console.error(error);
+        jobsTableBody.innerHTML = `
+          <tr>
+            <td colspan="12" class="error-text">No se pudieron cargar los trabajos.</td>
+          </tr>
+        `;
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Actualizar";
+      }
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      timer = setInterval(() => {
+        if (autoRefresh) loadJobs();
+      }, REFRESH_MS);
+    }
+
+    function stopAutoRefresh() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    refreshBtn.addEventListener("click", loadJobs);
+
+    autoRefreshBtn.addEventListener("click", () => {
+      autoRefresh = !autoRefresh;
+      autoRefreshBtn.textContent = autoRefresh ? "Auto: ON" : "Auto: OFF";
+    });
+
+    searchInput.addEventListener("input", renderTable);
+    statusFilter.addEventListener("change", renderTable);
+    stageFilter.addEventListener("change", renderTable);
+    sortFilter.addEventListener("change", renderTable);
+
+    loadJobs();
+    startAutoRefresh();
+  </script>
+</body>
+</html>
