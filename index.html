@@ -66,6 +66,26 @@
       backdrop-filter: blur(12px);
     }
 
+    .topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #f4f6f4;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
     .brand {
       display: flex;
       align-items: center;
@@ -696,13 +716,19 @@
 <body>
   <div class="app">
     <div class="topbar">
-      <div class="brand">
-        <div class="brand-copy">
-          <h1><span class="brand-x">X</span>proces</h1>
-          <p>Procesado automático de fotogrametría con validación previa del dataset</p>
-        </div>
-      </div>
+  <div class="brand">
+    <div class="brand-copy">
+      <h1><span class="brand-x">X</span>proces</h1>
+      <p>Procesado automático de fotogrametría con validación previa del dataset</p>
     </div>
+  </div>
+
+  <div class="topbar-actions" id="topbarActions">
+    <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
+    <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
+    <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
+  </div>
+</div>
 
     <div class="layout">
       <div class="left-stack">
@@ -906,21 +932,43 @@
     </div>
   </div>
 
-  <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal" id="modalBox">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modalTitle">Confirmación</h2>
-        <div class="modal-subtitle" id="modalSubtitle"></div>
-      </div>
+ <div class="modal-backdrop" id="authBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="authTitle">Acceso</h2>
+      <div class="modal-subtitle" id="authSubtitle">Identifíquese para asociar sus trabajos.</div>
+    </div>
 
-      <div class="modal-body" id="modalBody"></div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-card full">
+          <div class="modal-label">Email</div>
+          <input id="authEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+        </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
-        <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
+        <div class="modal-card full">
+          <div class="modal-label">Nombre o empresa</div>
+          <input id="authName" type="text" placeholder="Nombre del cliente o empresa" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+        </div>
+
+        <div class="modal-card full" id="authPasswordWrap">
+          <div class="modal-label">Contraseña</div>
+          <input id="authPassword" type="password" placeholder="Mínimo 6 caracteres" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+        </div>
+
+        <div class="modal-card full" id="authCodeWrap" style="display:none;">
+          <div class="modal-label">Código invitado</div>
+          <input id="authCode" type="text" placeholder="Introduzca su código" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; text-transform:uppercase;">
+        </div>
       </div>
     </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="authCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-success" id="authSaveBtn" type="button">Continuar</button>
+    </div>
   </div>
+</div>
 
   <script>
     const API_BASE = "https://api.xproces.com";
