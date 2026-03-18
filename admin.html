@@ -504,6 +504,23 @@
     <div class="panel">
       <div class="panel-inner">
         <h2 class="panel-title">Trabajos</h2>
+        <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+          <select id="sortField" style="height:36px; border-radius:8px; padding:0 10px;">
+            <option value="created_at">Fecha creación</option>
+            <option value="client_email">Email</option>
+            <option value="project_name">Proyecto</option>
+            <option value="client_name">Cliente</option>
+            <option value="status">Estado</option>
+            <option value="progress">Progreso</option>
+            <option value="photos_count">Fotos</option>
+            <option value="price">Precio</option>
+          </select>
+
+  <select id="sortDirection" style="height:36px; border-radius:8px; padding:0 10px;">
+    <option value="desc">↓ Descendente</option>
+    <option value="asc">↑ Ascendente</option>
+  </select>
+</div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -551,6 +568,18 @@
     let currentSortDirection = "desc";
     let autoRefresh = true;
     let timer = null;
+    const sortFieldSelect = document.getElementById("sortField");
+    const sortDirectionSelect = document.getElementById("sortDirection");
+
+    sortFieldSelect.addEventListener("change", () => {
+      currentSortField = sortFieldSelect.value;
+      renderTable();
+    });
+
+    sortDirectionSelect.addEventListener("change", () => {
+      currentSortDirection = sortDirectionSelect.value;
+      renderTable();
+    });
 
     const refreshBtn = document.getElementById("refreshBtn");
     const autoRefreshBtn = document.getElementById("autoRefreshBtn");
