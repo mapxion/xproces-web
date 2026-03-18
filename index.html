@@ -807,18 +807,8 @@
                 
                 <div class="dataset-grid" id="clientInfoGrid" style="display:grid; margin-top:12px;">
                   <div class="dataset-item full">
-                    <div class="dataset-label">Email del cliente</div>
-                    <input id="clientEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
-
-                  <div class="dataset-item">
                     <div class="dataset-label">Nombre del proyecto</div>
                     <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
-
-                  <div class="dataset-item">
-                    <div class="dataset-label">Nombre del cliente</div>
-                    <input id="clientName" type="text" placeholder="Empresa o persona" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
                   </div>
                 </div>
                 <div class="actions">
@@ -1030,9 +1020,7 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
-    const clientEmailInput = document.getElementById("clientEmail");
     const projectNameInput = document.getElementById("projectName");
-    const clientNameInput = document.getElementById("clientName");
 
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1108,9 +1096,6 @@ function clearStoredUser() {
 function syncStoredUserToForm() {
   const user = getStoredUser();
   if (!user) return;
-
-  clientEmailInput.value = user.email || "";
-  clientNameInput.value = user.name || "";
 }
 
 function renderTopbarUser() {
@@ -1139,8 +1124,6 @@ function renderTopbarUser() {
   document.getElementById("logoutBtn").addEventListener("click", () => {
     clearStoredUser();
     renderTopbarUser();
-    clientEmailInput.value = "";
-    clientNameInput.value = "";
   });
 }
 
@@ -2298,12 +2281,12 @@ authSaveBtn.addEventListener("click", async () => {
           "Content-Type": "application/json"
         },
        body: JSON.stringify({
-  exif_summary: latestExifSummary,
-  client_email: clientEmailInput.value.trim(),
-  project_name: projectNameInput.value.trim(),
-  client_name: clientNameInput.value.trim(),
-  user_id: getStoredUser()?.id || null
-})
+         exif_summary: latestExifSummary,
+         client_email: getStoredUser()?.email || "",
+         project_name: projectNameInput.value.trim(),
+         client_name: getStoredUser()?.name || "",
+         user_id: getStoredUser()?.id || null
+       })
       });
 
       if (!response.ok) {
@@ -2497,26 +2480,17 @@ authSaveBtn.addEventListener("click", async () => {
         return;
       }
 
-      if (!clientEmailInput.value.trim()) {
-        await showInfoModal(
-          "Falta el email del cliente",
-          "Debe indicar a qué cliente pertenece este trabajo.",
-          "Introduzca el email del cliente antes de iniciar el procesado.",
-          "warning"
-        );
-        return;
-      }
+     const currentUser = getStoredUser();
 
-      if (!isValidEmail(clientEmailInput.value.trim())) {
-        await showInfoModal(
-          "Email no válido",
-          "El correo del cliente no tiene un formato correcto.",
-          "Introduzca un email válido, por ejemplo: cliente@empresa.com",
-          "warning"
-        );
-        return;
-      }
-
+     if (!currentUser || !currentUser.email) {
+       await showInfoModal(
+         "Debe identificarse",
+         "Necesita iniciar sesión, registrarse o usar un código invitado.",
+         "Use uno de los botones de la parte superior derecha antes de iniciar el procesado.",
+         "warning"
+       );
+       return;
+     }
       if (!projectNameInput.value.trim()) {
         await showInfoModal(
           "Falta el nombre del proyecto",
