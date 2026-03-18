@@ -932,14 +932,21 @@
     </div>
   </div>
 
- <div class="modal-backdrop" id="authBackdrop">
-  <div class="modal">
+ <div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBox">
     <div class="modal-header">
-      <h2 class="modal-title" id="authTitle">Acceso</h2>
-      <div class="modal-subtitle" id="authSubtitle">Identifíquese para asociar sus trabajos.</div>
+      <h2 class="modal-title" id="modalTitle">Confirmación</h2>
+      <div class="modal-subtitle" id="modalSubtitle"></div>
     </div>
 
-    <div class="modal-body">
+    <div class="modal-body" id="modalBody"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
+    </div>
+  </div>
+</div>
       <div class="modal-grid">
         <div class="modal-card full">
           <div class="modal-label">Email</div>
