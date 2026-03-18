@@ -335,6 +335,26 @@
       background: var(--accent-2);
     }
 
+    .small-btn-danger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: #fff4f4;
+      color: #9b3737;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid #f1d7d7;
+      cursor: pointer;
+    }
+
+.small-btn-danger:hover {
+  background: #ffecec;
+}
+    
     .small-btn.disabled {
       pointer-events: none;
       opacity: 0.4;
@@ -490,7 +510,9 @@
                 <th>Iniciado</th>
                 <th>Finalizado</th>
                 <th>Descarga</th>
+                <th>Acciones</th>
               </tr>
+            </thead>
             </thead>
             <tbody id="jobsTableBody">
               <tr>
@@ -621,7 +643,7 @@
       if (!rows.length) {
         jobsTableBody.innerHTML = `
           <tr>
-            <td colspan="12" class="muted">No hay trabajos para mostrar.</td>
+            <td colspan="13" class="muted">No hay trabajos para mostrar.</td>
           </tr>
         `;
         return;
@@ -658,11 +680,40 @@
                 Descargar
               </a>
             </td>
+            <td>
+              ${
+                ["created", "receiving", "queued", "running"].includes(String(job.status || "").toLowerCase())
+                  ? `<button class="small-btn-danger" onclick="cancelJob('${job.id}')">Cancelar</button>`
+                  : "—"
+              }
+            </td>
           </tr>
         `;
       }).join("");
     }
 
+    async function cancelJob(id) {
+      const ok = window.confirm(`¿Cancelar el trabajo ${id}?`);
+      if (!ok) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/jobs/${id}/cancel`, {
+          method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.message || data.error || `Error ${response.status}`);
+        }
+
+        await loadJobs();
+      } catch (error) {
+        console.error(error);
+        alert("No se pudo cancelar el trabajo.");
+      }
+    }
+    
     async function loadJobs() {
       try {
         refreshBtn.disabled = true;
@@ -680,7 +731,7 @@
         console.error(error);
         jobsTableBody.innerHTML = `
           <tr>
-            <td colspan="12" class="error-text">No se pudieron cargar los trabajos.</td>
+            <td colspan="13" class="error-text">No se pudieron cargar los trabajos.</td>
           </tr>
         `;
       } finally {
