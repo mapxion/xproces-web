@@ -1010,7 +1010,10 @@
       if (hours <= 0) return `${minutes} min`;
       return `${hours} h ${minutes} min`;
     }
-
+    function isValidEmail(email) {
+      const value = String(email || "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) {
