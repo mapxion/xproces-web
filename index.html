@@ -947,6 +947,15 @@
     </div>
   </div>
 </div>
+
+<div class="modal-backdrop" id="authBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="authTitle">Acceso</h2>
+      <div class="modal-subtitle" id="authSubtitle">Identifíquese para asociar sus trabajos.</div>
+    </div>
+
+    <div class="modal-body">
       <div class="modal-grid">
         <div class="modal-card full">
           <div class="modal-label">Email</div>
@@ -1383,6 +1392,12 @@ authSaveBtn.addEventListener("click", async () => {
         closeModal(false);
       }
     });
+
+    authBackdrop.addEventListener("click", (e) => {
+  if (e.target === authBackdrop) {
+    closeAuthModal();
+  }
+});
 
    document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
@@ -2283,12 +2298,12 @@ authSaveBtn.addEventListener("click", async () => {
           "Content-Type": "application/json"
         },
        body: JSON.stringify({
-         exif_summary: latestExifSummary,
-         client_email: clientEmailInput.value.trim(),
-         project_name: projectNameInput.value.trim(),
-         client_name: clientNameInput.value.trim(),
-         user_id: getStoredUser()?.id || null
-       })
+  exif_summary: latestExifSummary,
+  client_email: clientEmailInput.value.trim(),
+  project_name: projectNameInput.value.trim(),
+  client_name: clientNameInput.value.trim(),
+  user_id: getStoredUser()?.id || null
+})
       });
 
       if (!response.ok) {
@@ -2622,6 +2637,8 @@ authSaveBtn.addEventListener("click", async () => {
     }
 
     resetAll();
+    renderTopbarUser();
+    syncStoredUserToForm();
   </script>
 </body>
 </html>
