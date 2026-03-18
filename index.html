@@ -778,7 +778,23 @@
                     Dataset válido para fotogrametría
                   </div>
                 </div>
+                
+                <div class="dataset-grid" id="clientInfoGrid" style="display:grid; margin-top:12px;">
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Email del cliente</div>
+                    <input id="clientEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
 
+                  <div class="dataset-item">
+                    <div class="dataset-label">Nombre del proyecto</div>
+                    <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Nombre del cliente</div>
+                    <input id="clientName" type="text" placeholder="Empresa o persona" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
+                </div>
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
@@ -950,6 +966,9 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const clientEmailInput = document.getElementById("clientEmail");
+    const projectNameInput = document.getElementById("projectName");
+    const clientNameInput = document.getElementById("clientName");
 
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -2001,7 +2020,10 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          exif_summary: latestExifSummary
+          exif_summary: latestExifSummary,
+          client_email: clientEmailInput.value.trim(),
+          project_name: projectNameInput.value.trim(),
+          client_name: clientNameInput.value.trim()
         })
       });
 
@@ -2196,6 +2218,26 @@
         return;
       }
 
+      if (!clientEmailInput.value.trim()) {
+        await showInfoModal(
+          "Falta el email del cliente",
+          "Debe indicar a qué cliente pertenece este trabajo.",
+          "Introduzca el email del cliente antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+
+if (!projectNameInput.value.trim()) {
+  await showInfoModal(
+    "Falta el nombre del proyecto",
+    "Debe indicar un nombre para identificar el trabajo.",
+    "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+    "warning"
+  );
+  return;
+}
+      
       if (uploadBtn.disabled) {
         return;
       }
