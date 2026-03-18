@@ -283,6 +283,12 @@
       border-color: rgba(212, 85, 85, 0.18);
     }
 
+    .badge-cancelled {
+      background: rgba(111, 125, 117, 0.10);
+      color: #55615b;
+      border-color: rgba(111, 125, 117, 0.18);
+    }
+    
     .mini-progress {
       width: 140px;
       height: 10px;
@@ -462,6 +468,7 @@
               <option value="running">Running</option>
               <option value="done">Done</option>
               <option value="failed">Failed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
 
@@ -576,6 +583,7 @@
       if (s === "running") return "badge badge-running";
       if (s === "done") return "badge badge-done";
       if (s === "failed") return "badge badge-failed";
+      if (s === "cancelled") return "badge badge-cancelled";
       if (s === "receiving") return "badge badge-receiving";
       return "badge badge-created";
     }
