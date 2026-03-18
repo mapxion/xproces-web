@@ -1044,6 +1044,25 @@
     const modalCancelBtn = document.getElementById("modalCancelBtn");
     const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const inviteBtn = document.getElementById("inviteBtn");
+
+    const authBackdrop = document.getElementById("authBackdrop");
+    const authTitle = document.getElementById("authTitle");
+    const authSubtitle = document.getElementById("authSubtitle");
+    const authEmail = document.getElementById("authEmail");
+    const authName = document.getElementById("authName");
+    const authPassword = document.getElementById("authPassword");
+    const authCode = document.getElementById("authCode");
+
+    const authPasswordWrap = document.getElementById("authPasswordWrap");
+    const authCodeWrap = document.getElementById("authCodeWrap");
+
+    const authCancelBtn = document.getElementById("authCancelBtn");
+    const authSaveBtn = document.getElementById("authSaveBtn");
+    const topbarActions = document.getElementById("topbarActions");
+    
     function formatBytes(bytes) {
       const mb = bytes / 1024 / 1024;
       const gb = mb / 1024;
@@ -1051,6 +1070,94 @@
       return mb.toFixed(2) + " MB";
     }
 
+    let authMode = "login";
+
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem("xproces_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function setStoredUser(user) {
+  localStorage.setItem("xproces_user", JSON.stringify(user));
+}
+
+function clearStoredUser() {
+  localStorage.removeItem("xproces_user");
+}
+
+function syncStoredUserToForm() {
+  const user = getStoredUser();
+  if (!user) return;
+
+  clientEmailInput.value = user.email || "";
+  clientNameInput.value = user.name || "";
+}
+
+function renderTopbarUser() {
+  const user = getStoredUser();
+
+  if (!user || !user.email) {
+    topbarActions.innerHTML = `
+      <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
+      <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
+      <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
+    `;
+
+    document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
+    document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
+    document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
+    return;
+  }
+
+  const userType = user.auth_type === "invite" ? "Invitado" : "Usuario";
+
+  topbarActions.innerHTML = `
+    <div class="user-pill">${userType} · ${user.name || "Usuario"} · ${user.email}</div>
+    <button class="btn btn-secondary" id="logoutBtn" type="button">Salir</button>
+  `;
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    clearStoredUser();
+    renderTopbarUser();
+    clientEmailInput.value = "";
+    clientNameInput.value = "";
+  });
+}
+
+function openAuthModal(mode = "login") {
+  authMode = mode;
+
+  authTitle.textContent =
+    mode === "register" ? "Registrarse" :
+    mode === "invite" ? "Código invitado" :
+    "Iniciar sesión";
+
+  authSubtitle.textContent =
+    mode === "register"
+      ? "Cree su cuenta para asociar sus trabajos."
+      : mode === "invite"
+      ? "Acceda con un código de un solo uso."
+      : "Introduzca sus credenciales para continuar.";
+
+  const user = getStoredUser();
+  authEmail.value = user?.email || "";
+  authName.value = user?.name || "";
+  authPassword.value = "";
+  authCode.value = "";
+
+  authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
+  authCodeWrap.style.display = mode === "invite" ? "block" : "none";
+
+  authBackdrop.classList.add("show");
+}
+
+function closeAuthModal() {
+  authBackdrop.classList.remove("show");
+}
     function formatEtaText(seconds) {
       const total = Math.max(0, Number(seconds || 0));
       const hours = Math.floor(total / 3600);
@@ -1172,17 +1279,113 @@
     modalCancelBtn.addEventListener("click", () => closeModal(false));
     modalConfirmBtn.addEventListener("click", () => closeModal(true));
 
+    authCancelBtn.addEventListener("click", closeAuthModal);
+
+authSaveBtn.addEventListener("click", async () => {
+  const email = authEmail.value.trim();
+  const name = authName.value.trim();
+  const password = authPassword.value;
+  const code = authCode.value.trim().toUpperCase();
+
+  if (!email || !isValidEmail(email)) {
+    await showInfoModal(
+      "Email no válido",
+      "Introduzca un correo correcto.",
+      "Ejemplo: cliente@empresa.com",
+      "warning"
+    );
+    return;
+  }
+
+  if (!name) {
+    await showInfoModal(
+      "Falta el nombre o empresa",
+      "Debe identificar a la persona o empresa.",
+      "Introduzca un nombre o empresa para continuar.",
+      "warning"
+    );
+    return;
+  }
+
+  if (authMode === "invite") {
+    if (!code) {
+      await showInfoModal(
+        "Falta el código",
+        "Debe introducir un código invitado.",
+        "Introduzca un código válido para continuar.",
+        "warning"
+      );
+      return;
+    }
+  } else {
+    if (!password || password.length < 6) {
+      await showInfoModal(
+        "Contraseña no válida",
+        "La contraseña debe tener al menos 6 caracteres.",
+        "Introduzca una contraseña válida para continuar.",
+        "warning"
+      );
+      return;
+    }
+  }
+
+  try {
+    let endpoint = "";
+    let payload = {};
+
+    if (authMode === "register") {
+      endpoint = `${API_BASE}/auth/register`;
+      payload = { email, password, name };
+    } else if (authMode === "invite") {
+      endpoint = `${API_BASE}/auth/invite-login`;
+      payload = { email, name, code };
+    } else {
+      endpoint = `${API_BASE}/auth/login`;
+      payload = { email, password };
+    }
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || data.error || "Error de acceso");
+    }
+
+    setStoredUser(data.user);
+    syncStoredUserToForm();
+    renderTopbarUser();
+    closeAuthModal();
+  } catch (error) {
+    console.error(error);
+    await showInfoModal(
+      "No se pudo completar el acceso",
+      "Revise sus datos e inténtelo de nuevo.",
+      error.message || "Error inesperado",
+      "error"
+    );
+  }
+});
+
     modalBackdrop.addEventListener("click", (e) => {
       if (e.target === modalBackdrop) {
         closeModal(false);
       }
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
-        closeModal(false);
-      }
-    });
+   document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
+    closeModal(false);
+  }
+
+  if (e.key === "Escape" && authBackdrop.classList.contains("show")) {
+    closeAuthModal();
+  }
+});
 
     async function fetchPricingPreview(photoCount, totalBytes) {
       try {
@@ -1444,6 +1647,8 @@
         setAnalysisPlaceholder();
       } else {
         resetAll();
+        renderTopbarUser();
+        syncStoredUserToForm();
       }
     }
 
@@ -2070,12 +2275,13 @@
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          exif_summary: latestExifSummary,
-          client_email: clientEmailInput.value.trim(),
-          project_name: projectNameInput.value.trim(),
-          client_name: clientNameInput.value.trim()
-        })
+       body: JSON.stringify({
+         exif_summary: latestExifSummary,
+         client_email: clientEmailInput.value.trim(),
+         project_name: projectNameInput.value.trim(),
+         client_name: clientNameInput.value.trim(),
+         user_id: getStoredUser()?.id || null
+       })
       });
 
       if (!response.ok) {
