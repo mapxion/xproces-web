@@ -2231,15 +2231,25 @@
         return;
       }
 
-if (!projectNameInput.value.trim()) {
-  await showInfoModal(
-    "Falta el nombre del proyecto",
-    "Debe indicar un nombre para identificar el trabajo.",
-    "Introduzca el nombre del proyecto antes de iniciar el procesado.",
-    "warning"
-  );
-  return;
-}
+      if (!isValidEmail(clientEmailInput.value.trim())) {
+        await showInfoModal(
+          "Email no válido",
+          "El correo del cliente no tiene un formato correcto.",
+          "Introduzca un email válido, por ejemplo: cliente@empresa.com",
+          "warning"
+        );
+        return;
+      }
+
+      if (!projectNameInput.value.trim()) {
+        await showInfoModal(
+          "Falta el nombre del proyecto",
+          "Debe indicar un nombre para identificar el trabajo.",
+          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
       
       if (uploadBtn.disabled) {
         return;
