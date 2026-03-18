@@ -194,13 +194,31 @@
       font-size: 14px;
     }
 
+    .table-scroll-top {
+      overflow-x: auto;
+      overflow-y: hidden;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 18px 18px 0 0;
+      background: #fbfcfb;
+    }
+
+    #tableScrollTopInner {
+      height: 1px;
+    }
+
     .table-wrap {
       overflow-x: auto;
       overflow-y: auto;
       max-height: 65vh;
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 0 0 18px 18px;
       background: #fbfcfb;
+    }
+
+    .table-wrap table {
+      min-width: 1600px;
     }
 
     table {
@@ -529,8 +547,12 @@
     <option value="asc">↑ Ascendente</option>
   </select>
 </div>
-        <div class="table-wrap">
-          <table>
+        <div class="table-scroll-top" id="tableScrollTop">
+          <div id="tableScrollTopInner"></div>
+        </div>
+
+        <div class="table-wrap" id="tableWrap">
+        <table id="jobsTable">
             <thead>
               <<thead>
               <tr>
