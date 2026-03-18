@@ -506,6 +506,9 @@
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Email</th>
+                <th>Proyecto</th>
+                <th>Cliente</th>
                 <th>Estado</th>
                 <th>Stage</th>
                 <th>Progreso</th>
@@ -523,7 +526,7 @@
             </thead>
             <tbody id="jobsTableBody">
               <tr>
-                <td colspan="12" class="muted">Cargando trabajos...</td>
+                <td colspan="16" class="muted">Cargando trabajos...</td>
               </tr>
             </tbody>
           </table>
@@ -651,7 +654,7 @@
       if (!rows.length) {
         jobsTableBody.innerHTML = `
           <tr>
-            <td colspan="13" class="muted">No hay trabajos para mostrar.</td>
+            <td colspan="16" class="muted">No hay trabajos para mostrar.</td>
           </tr>
         `;
         return;
@@ -664,6 +667,9 @@
         return `
           <tr>
             <td class="mono">${escapeHtml(job.id)}</td>
+            <td>${escapeHtml(job.client_email || "—")}</td>
+            <td>${escapeHtml(job.project_name || "—")}</td>
+            <td>${escapeHtml(job.client_name || "—")}</td>
             <td><span class="${statusBadgeClass(job.status)}">${escapeHtml(job.status || "—")}</span></td>
             <td>${escapeHtml(job.stage || "—")}</td>
             <td>
