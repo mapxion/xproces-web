@@ -620,6 +620,10 @@
     const sortFilter = document.getElementById("sortFilter");
 
     const jobsTableBody = document.getElementById("jobsTableBody");
+    const tableWrap = document.getElementById("tableWrap");
+    const tableScrollTop = document.getElementById("tableScrollTop");
+    const tableScrollTopInner = document.getElementById("tableScrollTopInner");
+    const jobsTable = document.getElementById("jobsTable");
 
     const statTotal = document.getElementById("statTotal");
     const statQueued = document.getElementById("statQueued");
@@ -731,6 +735,22 @@
 
       renderTable();
     }
+
+    function syncHorizontalScroll() {
+      if (!jobsTable || !tableWrap || !tableScrollTop || !tableScrollTopInner) return;
+
+      tableScrollTopInner.style.width = `${jobsTable.scrollWidth}px`;
+    }
+
+    tableScrollTop.addEventListener("scroll", () => {
+      tableWrap.scrollLeft = tableScrollTop.scrollLeft;
+    });
+
+    tableWrap.addEventListener("scroll", () => {
+      tableScrollTop.scrollLeft = tableWrap.scrollLeft;
+    });
+
+    window.addEventListener("resize", syncHorizontalScroll);
     
     function renderTable() {
       const rows = getFilteredJobs();
@@ -795,6 +815,7 @@
           </tr>
         `;
       }).join("");
+      syncHorizontalScroll();
     }
 
     async function cancelJob(id) {
