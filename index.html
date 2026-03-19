@@ -46,9 +46,8 @@
     }
 
     .app {
-      width: 100%;
-      max-width: none;
-      padding: 0 24px;
+      width: min(1800px, calc(100vw - 32px));
+      margin: 0 auto;
       display: grid;
       gap: 16px;
     }
@@ -111,10 +110,11 @@
     }
 
     .layout {
-      display: grid;
-      grid-template-columns: minmax(900px, 1.5fr) minmax(500px, 1fr);
-      gap: 20px;
-    }
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) minmax(560px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
 
     .left-stack,
     .right-stack {
@@ -526,33 +526,39 @@
 }
 
 .processing-layout-active .layout {
-  grid-template-columns: minmax(760px, 1.35fr) minmax(480px, 1fr);
-}
-
-.processing-layout-active #uploadPanel {
-  grid-column: 1;
-}
-
-.processing-layout-active #pricingPanel {
-  grid-column: 1;
-}
-
-.processing-layout-active #processPanel {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-}
-
-.processing-layout-active #analysisPanel {
-  display: none;
-}
-
-.processing-layout-active #mapWrap {
-  grid-column: 2;
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) minmax(520px, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
 .processing-layout-active .left-stack,
 .processing-layout-active .right-stack {
-  align-content: start;
+  display: contents;
+}
+
+.processing-layout-active #uploadPanel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.processing-layout-active #pricingPanel {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.processing-layout-active #processPanel {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.processing-layout-active #mapWrap {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.processing-layout-active #analysisPanel {
+  display: none;
 }
 
 .processing-layout-active .drop {
@@ -566,11 +572,11 @@
 }
 
 .processing-layout-active #map {
-  height: 280px;
+  height: 260px;
 }
 
 .processing-layout-active .job-status-box {
-  min-height: 620px;
+  min-height: 520px;
 }
     
     .process-download-wrap {
@@ -730,16 +736,21 @@
       color: var(--danger);
     }
 
-    @media (max-width: 1250px) {
+    @media (max-width: 1200px) {
   .layout,
   .processing-layout-active .layout {
     grid-template-columns: 1fr;
   }
 
-  .processing-layout-active #processPanel,
-  .processing-layout-active #mapWrap,
+  .processing-layout-active .left-stack,
+  .processing-layout-active .right-stack {
+    display: grid;
+  }
+
   .processing-layout-active #uploadPanel,
-  .processing-layout-active #pricingPanel {
+  .processing-layout-active #pricingPanel,
+  .processing-layout-active #processPanel,
+  .processing-layout-active #mapWrap {
     grid-column: auto;
     grid-row: auto;
   }
