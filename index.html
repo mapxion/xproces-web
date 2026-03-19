@@ -2269,8 +2269,12 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          exif_summary: latestExifSummary
-        })
+  exif_summary: latestExifSummary,
+  client_email: getStoredUser()?.email || "",
+  project_name: projectNameInput.value.trim(),
+  client_name: getStoredUser()?.name || "",
+  user_id: getStoredUser()?.id || null
+})
       });
 
       if (!response.ok) {
