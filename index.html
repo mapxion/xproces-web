@@ -68,21 +68,27 @@
     .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.topbar-actions .btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 12px;
 }
 
 .user-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 34px;
+  padding: 0 12px;
   border-radius: 999px;
   background: #f4f6f4;
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
 }
     .brand {
@@ -191,17 +197,17 @@
     .dataset-grid {
       display: none;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
       text-align: left;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
     }
 
     .dataset-item {
       background: rgba(255,255,255,0.8);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
-      min-height: 78px;
+      border-radius: 12px;
+      padding: 8px 10px;
+      min-height: auto;
     }
 
     .dataset-item.full {
@@ -210,17 +216,17 @@
 
     .dataset-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 7px;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
     }
 
     .dataset-value {
       color: var(--text);
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.25;
       word-break: break-word;
       white-space: pre-line;
     }
@@ -324,8 +330,8 @@
     .future-box {
       background: rgba(255,255,255,0.76);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
+      border-radius: 16px;
+      padding: 12px;
     }
 
     .price-time-header,
@@ -334,8 +340,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     .price-time-title,
@@ -372,9 +378,9 @@
     .price-card {
       background: #fbfcfb;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      min-height: 98px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-height: 72px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -382,15 +388,15 @@
 
     .price-card-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
     }
 
     .price-card-value {
       color: var(--ok);
-      font-size: 30px;
+      font-size: 24px;
       font-weight: bold;
       line-height: 1.1;
       word-break: break-word;
@@ -795,12 +801,7 @@
                     <div class="dataset-label">Solape</div>
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
-
-                  <div class="dataset-item full">
-                    <div class="dataset-label">Ubicación</div>
-                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
-                  </div>
-                </div>
+</div>
 
                 <div class="dataset-highlight" id="datasetHighlight">
                   <div class="dataset-highlight-badge" id="datasetHighlightBadge">
@@ -844,7 +845,7 @@
                 </div>
 
                 <div class="price-card">
-                  <div class="price-card-label">Tiempo</div>
+                  <div class="price-card-label">Tiempo estimado</div>
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
