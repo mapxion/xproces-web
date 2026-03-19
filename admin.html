@@ -658,7 +658,32 @@
       if (s === "receiving") return "badge badge-receiving";
       return "badge badge-created";
     }
+    function translateStatus(status) {
+  const s = String(status || "").toLowerCase();
 
+  if (s === "created") return "Creado";
+  if (s === "receiving") return "Recibiendo fotos";
+  if (s === "queued") return "En cola";
+  if (s === "running") return "Procesando";
+  if (s === "done") return "Completado";
+  if (s === "failed") return "Error";
+  if (s === "cancelled") return "Cancelado";
+
+  return status || "—";
+}
+
+function translateStage(stage) {
+  const s = String(stage || "").toLowerCase();
+
+  if (s === "matching") return "Alineación inicial";
+  if (s === "aligning") return "Alineando cámaras";
+  if (s === "report") return "Generando informe";
+  if (s === "depth") return "Mapas de profundidad";
+  if (s === "pointcloud") return "Nube de puntos";
+  if (s === "export") return "Exportación";
+
+  return stage || "—";
+}
     function getFilteredJobs() {
       const q = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
@@ -775,8 +800,8 @@
             <td>${escapeHtml(job.client_email || "—")}</td>
             <td>${escapeHtml(job.project_name || "—")}</td>
             <td>${escapeHtml(job.client_name || "—")}</td>
-            <td><span class="${statusBadgeClass(job.status)}">${escapeHtml(job.status || "—")}</span></td>
-            <td>${escapeHtml(job.stage || "—")}</td>
+            <td><span class="${statusBadgeClass(job.status)}">${escapeHtml(translateStatus(job.status))}</span></td>
+            <td>${escapeHtml(translateStage(job.stage))}</td>
             <td>
               <div class="mini-progress">
                 <div class="mini-progress-fill" style="width:${progress}%"></div>
