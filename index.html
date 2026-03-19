@@ -404,7 +404,12 @@
 
     .progress-wrap {
       display: none;
-      margin-top: 2px;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.92);
+      box-shadow: var(--shadow);
     }
 
     .progress-top {
@@ -412,14 +417,15 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 10px;
-      font-size: 13px;
-      color: var(--muted);
+      margin-bottom: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
     }
 
     .progress-bar {
       width: 100%;
-      height: 14px;
+      height: 28px;
       background: #edf1ed;
       border-radius: 999px;
       overflow: hidden;
@@ -435,31 +441,32 @@
 
     .status {
       color: var(--text);
-      min-height: 92px;
+      min-height: 120px;
       white-space: pre-line;
-      line-height: 1.55;
-      font-size: 14px;
+      line-height: 1.6;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     .process-stage-wrap {
       display: none;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 18px;
       grid-template-columns: 1fr;
     }
 
     .process-stage {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 36px;
-      padding: 8px 10px;
-      border-radius: 12px;
+      gap: 12px;
+      min-height: 48px;
+      padding: 12px 14px;
+      border-radius: 14px;
       background: #fafcf9;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
     }
 
     .process-stage-dot {
@@ -500,6 +507,25 @@
       background: var(--danger);
     }
 
+    .job-status-box.processing-focus {
+  border: 2px solid rgba(184, 255, 26, 0.55);
+  background: rgba(255,255,255,0.94);
+}
+
+.exif-hidden {
+  display: none !important;
+}
+
+.processing-layout-active .drop {
+  min-height: auto;
+  padding: 18px;
+}
+
+.processing-layout-active .drop-subtitle {
+  min-height: auto;
+  margin-bottom: 10px;
+}
+    
     .process-download-wrap {
       display: none;
       margin-top: 16px;
@@ -742,58 +768,58 @@
                   Sube las fotografías originales del dron para calcular precio, tiempo, analizar EXIF, validar el dataset y preparar el procesado.
                 </div>
 
-                <div class="dataset-grid" id="datasetGrid">
+                <div class="dataset-item" id="itemSize">
                   <div class="dataset-item">
                     <div class="dataset-label">Tamaño total</div>
                     <div class="dataset-value" id="fieldSize">0 MB</div>
                   </div>
 
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemResolution">
                     <div class="dataset-label">Resolución media</div>
                     <div class="dataset-value" id="fieldResolution">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item">
-                  <div class="dataset-label">Lente</div>
+                  <div class="dataset-item" id="itemLens">
+                    <div class="dataset-label">Lente</div>
                   <div class="dataset-value" id="fieldLens">Sin detectar</div>
                 </div>
 
-                <div class="dataset-item">
+                <div class="dataset-item" id="itemFocal">
                   <div class="dataset-label">Focal</div>
                   <div class="dataset-value" id="fieldFocal">Sin detectar</div>
                 </div>
 
-                <div class="dataset-item">
+                <div class="dataset-item" id="itemDate">
                   <div class="dataset-label">Fecha</div>
                   <div class="dataset-value" id="fieldDate">Sin detectar</div>
                 </div>
                   
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemGps">
                     <div class="dataset-label">GPS</div>
                     <div class="dataset-value" id="fieldGps">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemCamera">
                     <div class="dataset-label">Cámara</div>
                     <div class="dataset-value" id="fieldCamera">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemDrone">
                     <div class="dataset-label">Equipo de captura</div>
                     <div class="dataset-value" id="fieldDrone">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemMission">
                     <div class="dataset-label">Tipo de misión</div>
                     <div class="dataset-value" id="fieldMission">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item">
+                  <div class="dataset-item" id="itemOverlap">
                     <div class="dataset-label">Solape</div>
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item full">
+                  <div class="dataset-item full" id="itemLocation">
                     <div class="dataset-label">Ubicación</div>
                     <div class="dataset-value" id="fieldLocation">Sin detectar</div>
                   </div>
@@ -811,7 +837,7 @@
                     <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
                   </div>
                 </div>
-                <div class="actions">
+                <div class="actions" id="actionButtons">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
                 </div>
@@ -857,31 +883,31 @@
 
         <div class="panel">
           <div class="panel-inner">
-            <div class="job-status-box">
+            <div class="job-status-box" id="jobStatusBox">
               <div class="job-status-header">
                 <div class="job-status-title">Estado del procesado</div>
               </div>
 
               <div class="process-stage" data-stage="matching">
-  <div class="process-stage-dot"></div>
-  <div>Alineación inicial</div>
-</div>
-<div class="process-stage" data-stage="aligning">
-  <div class="process-stage-dot"></div>
-  <div>Alineando cámaras</div>
-</div>
-<div class="process-stage" data-stage="depth">
-  <div class="process-stage-dot"></div>
-  <div>Generando mapas de profundidad</div>
-</div>
-<div class="process-stage" data-stage="pointcloud">
-  <div class="process-stage-dot"></div>
-  <div>Generando nube de puntos</div>
-</div>
-<div class="process-stage" data-stage="export">
-  <div class="process-stage-dot"></div>
-  <div>Exportando resultados</div>
-</div>
+                <div class="process-stage-dot"></div>
+                <div>Alineación inicial</div>
+              </div>
+              <div class="process-stage" data-stage="aligning">
+              <div class="process-stage-dot"></div>
+              <div>Alineando cámaras</div>
+              </div>
+              <div class="process-stage" data-stage="depth">
+              <div class="process-stage-dot"></div>
+              <div>Generando mapas de profundidad</div>
+            </div>
+              <div class="process-stage" data-stage="pointcloud">
+              <div class="process-stage-dot"></div>
+              <div>Generando nube de puntos</div>
+            </div>
+            <div class="process-stage" data-stage="export">
+              <div class="process-stage-dot"></div>
+              <div>Exportando resultados</div>
+            </div>
               </div>
 
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
@@ -1003,7 +1029,20 @@
     const datasetGrid = document.getElementById("datasetGrid");
     const datasetHighlight = document.getElementById("datasetHighlight");
     const datasetHighlightBadge = document.getElementById("datasetHighlightBadge");
+    const actionButtons = document.getElementById("actionButtons");
+    const jobStatusBox = document.getElementById("jobStatusBox");
 
+    const itemSize = document.getElementById("itemSize");
+    const itemResolution = document.getElementById("itemResolution");
+    const itemLens = document.getElementById("itemLens");
+    const itemFocal = document.getElementById("itemFocal");
+    const itemDate = document.getElementById("itemDate");
+    const itemGps = document.getElementById("itemGps");
+    const itemCamera = document.getElementById("itemCamera");
+    const itemDrone = document.getElementById("itemDrone");
+    const itemMission = document.getElementById("itemMission");
+    const itemOverlap = document.getElementById("itemOverlap");
+    const itemLocation = document.getElementById("itemLocation");
     const fieldSize = document.getElementById("fieldSize");
     const fieldResolution = document.getElementById("fieldResolution");
     const fieldGps = document.getElementById("fieldGps");
@@ -1239,6 +1278,59 @@ function closeAuthModal() {
       etaBig.textContent = "Sin calcular";
     }
 
+    function enterProcessingMode() {
+  document.body.classList.add("processing-layout-active");
+
+  datasetHighlight.style.display = "none";
+  actionButtons.style.display = "none";
+
+  [
+    itemResolution,
+    itemLens,
+    itemFocal,
+    itemDate,
+    itemGps,
+    itemCamera,
+    itemDrone,
+    itemMission,
+    itemOverlap
+  ].forEach((el) => {
+    if (el) el.classList.add("exif-hidden");
+  });
+
+  if (itemSize) itemSize.classList.remove("exif-hidden");
+  if (itemLocation) itemLocation.classList.remove("exif-hidden");
+
+  progressWrap.style.display = "block";
+  processStageWrap.style.display = "grid";
+  jobStatusBox.classList.add("processing-focus");
+}
+
+function exitProcessingMode() {
+  document.body.classList.remove("processing-layout-active");
+
+  datasetHighlight.style.display = "";
+  actionButtons.style.display = "flex";
+
+  [
+    itemResolution,
+    itemLens,
+    itemFocal,
+    itemDate,
+    itemGps,
+    itemCamera,
+    itemDrone,
+    itemMission,
+    itemOverlap,
+    itemSize,
+    itemLocation
+  ].forEach((el) => {
+    if (el) el.classList.remove("exif-hidden");
+  });
+
+  jobStatusBox.classList.remove("processing-focus");
+}
+    
     function closeModal(result = false) {
       modalBackdrop.classList.remove("show");
       modalBox.className = "modal";
@@ -1573,6 +1665,7 @@ authSaveBtn.addEventListener("click", async () => {
     function resetAll() {
       stopPolling();
       resetPreviewState();
+      exitProcessingMode();
 
       files = [];
       totalSize = 0;
@@ -2592,7 +2685,12 @@ authSaveBtn.addEventListener("click", async () => {
         progressLabel.textContent = "Creando proyecto...";
         progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
-
+        
+        enterProcessingMode();
+        jobStatusEl.textContent = "Preparando proyecto y enviando fotografías...";
+        progressLabel.textContent = "Preparando envío";
+        progressPercent.textContent = "0%";
+        progressFill.style.width = "0%";
         const createdJob = await createJob();
         const jobId = createdJob.id;
 
