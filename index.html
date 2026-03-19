@@ -2289,7 +2289,26 @@ function closeAuthModal() {
         );
         return;
       }
+ const currentUser = getStoredUser();
 
+     if (!currentUser || !currentUser.email) {
+       await showInfoModal(
+         "Debe identificarse",
+         "Necesita iniciar sesión, registrarse o usar un código invitado.",
+         "Use uno de los botones de la parte superior derecha antes de iniciar el procesado.",
+         "warning"
+       );
+       return;
+     }
+      if (!projectNameInput.value.trim()) {
+        await showInfoModal(
+          "Falta el nombre del proyecto",
+          "Debe indicar un nombre para identificar el trabajo.",
+          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
       if (uploadBtn.disabled) {
         return;
       }
@@ -2399,7 +2418,10 @@ function closeAuthModal() {
       }
     }
 
-    resetAll();
+        resetAll();
+    // INIT UI
+    renderTopbarUser();
+    syncStoredUserToForm();
   </script>
 </body>
 </html>
