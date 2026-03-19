@@ -527,7 +527,28 @@
 }
 
 .processing-layout-active .layout {
-  grid-template-columns: minmax(720px, 1.25fr) minmax(560px, 1fr);
+  grid-template-columns: minmax(760px, 1.35fr) minmax(480px, 1fr);
+}
+
+.processing-layout-active #uploadPanel {
+  grid-column: 1;
+}
+
+.processing-layout-active #pricingPanel {
+  grid-column: 1;
+}
+
+.processing-layout-active #processPanel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.processing-layout-active #analysisPanel {
+  display: none;
+}
+
+.processing-layout-active #mapWrap {
+  grid-column: 2;
 }
 
 .processing-layout-active .left-stack,
@@ -540,8 +561,9 @@
   padding: 18px;
 }
 
-.processing-layout-active .future-box {
-  display: none;
+.processing-layout-active .drop-subtitle {
+  min-height: auto;
+  margin-bottom: 10px;
 }
 
 .processing-layout-active #map {
