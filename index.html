@@ -68,21 +68,27 @@
     .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.topbar-actions .btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 12px;
 }
 
 .user-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 12px;
   border-radius: 999px;
   background: #f4f6f4;
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
     .brand {
@@ -208,19 +214,47 @@
       grid-column: 1 / -1;
     }
 
+    #clientInfoGrid {
+      margin-top: 8px !important;
+      margin-bottom: 0;
+    }
+
+    #clientInfoGrid .dataset-item {
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    #clientInfoGrid input {
+      min-height: 38px !important;
+      padding: 0 10px !important;
+      font-size: 13px !important;
+      border-radius: 10px !important;
+    }
+
+    #itemLocation,
+    #analysisPanel {
+      display: none !important;
+    }
+
+
+    #itemLocation {
+      display: none !important;
+    }
+
+
     .dataset-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 7px;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
     }
 
     .dataset-value {
       color: var(--text);
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.2;
       word-break: break-word;
       white-space: pre-line;
     }
@@ -325,7 +359,7 @@
       background: rgba(255,255,255,0.76);
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 18px;
+      padding: 14px;
     }
 
     .price-time-header,
@@ -334,8 +368,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     .price-time-title,
@@ -366,15 +400,15 @@
     .price-time-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
     }
 
     .price-card {
       background: #fbfcfb;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      min-height: 98px;
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 74px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -382,17 +416,17 @@
 
     .price-card-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
     }
 
     .price-card-value {
       color: var(--ok);
-      font-size: 30px;
+      font-size: 24px;
       font-weight: bold;
-      line-height: 1.1;
+      line-height: 1.05;
       word-break: break-word;
     }
 
@@ -796,7 +830,7 @@
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item full">
+                  <div class="dataset-item full" id="itemLocation">
                     <div class="dataset-label">Ubicación</div>
                     <div class="dataset-value" id="fieldLocation">Sin detectar</div>
                   </div>
@@ -844,7 +878,7 @@
                 </div>
 
                 <div class="price-card">
-                  <div class="price-card-label">Tiempo</div>
+                  <div class="price-card-label">Tiempo estimado</div>
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
@@ -900,20 +934,7 @@
           </div>
         </div>
 
-<div class="panel" id="analysisPanel">
-          <div class="panel-inner">
-            <div class="future-box">
-              <div class="future-header">
-                <div class="future-title">Análisis del dataset</div>
-                <div class="future-badge" id="analysisBadge">Próximamente</div>
-              </div>
-              <div class="future-text" id="status"></div>
-            </div>
-          </div>
-        </div>
       </div>
-      </div>
-    </div>
 
     <div class="footer-note">
       Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
