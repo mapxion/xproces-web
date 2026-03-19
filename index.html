@@ -855,16 +855,6 @@
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
-
-              <div style="margin-top:12px;">
-                <div class="dataset-label">Nombre del proyecto</div>
-                <input
-                  id="projectName"
-                  type="text"
-                  placeholder="Ej: Torre Barcelona Norte"
-                  style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:#fff;"
-                >
-              </div>
             </div>
           </div>
         </div>
@@ -1012,6 +1002,7 @@
     let latestDataset = null;
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
+    let pendingProjectName = "";
 
     const drop = document.getElementById("drop");
     const dropTitle = document.getElementById("dropTitle");
@@ -1565,6 +1556,7 @@
       totalSize = 0;
       latestDataset = null;
       latestMissionType = "Sin detectar";
+      pendingProjectName = "";
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -2281,7 +2273,7 @@
         body: JSON.stringify({
   exif_summary: latestExifSummary,
   client_email: getStoredUser()?.email || "",
-  project_name: projectNameInput.value.trim(),
+  project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null
 })
@@ -2531,6 +2523,15 @@
               <div class="modal-value">${timeText}</div>
             </div>
             <div class="modal-card full">
+              <div class="modal-label">Nombre del proyecto</div>
+              <input
+                id="modalProjectName"
+                type="text"
+                placeholder="Ej: Torre Barcelona Norte"
+                style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white;"
+              >
+            </div>
+            <div class="modal-card full">
               <div class="modal-note">
                 Se creará un nuevo proyecto, se subirán las fotografías al servidor y el trabajo entrará en cola para su procesado automático.
               </div>
@@ -2544,6 +2545,20 @@
       });
 
       if (!ok) return;
+
+      const projectNameValue = document.getElementById("modalProjectName")?.value?.trim() || "";
+
+      if (!projectNameValue) {
+        await showInfoModal(
+          "Falta el nombre del proyecto",
+          "Debe indicar un nombre para identificar el trabajo.",
+          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+
+      pendingProjectName = projectNameValue;
 
       try {
         stopPolling();
