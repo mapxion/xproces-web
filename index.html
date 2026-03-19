@@ -68,27 +68,21 @@
     .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-}
-
-.topbar-actions .btn {
-  padding: 8px 12px;
-  font-size: 12px;
-  border-radius: 12px;
 }
 
 .user-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 42px;
+  padding: 0 14px;
   border-radius: 999px;
   background: #f4f6f4;
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
     .brand {
@@ -197,17 +191,17 @@
     .dataset-grid {
       display: none;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
       text-align: left;
-      margin-bottom: 12px;
+      margin-bottom: 18px;
     }
 
     .dataset-item {
       background: rgba(255,255,255,0.8);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 10px;
-      min-height: auto;
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 78px;
     }
 
     .dataset-item.full {
@@ -216,17 +210,17 @@
 
     .dataset-label {
       color: var(--muted);
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
     }
 
     .dataset-value {
       color: var(--text);
-      font-size: 13px;
+      font-size: 16px;
       font-weight: 700;
-      line-height: 1.25;
+      line-height: 1.35;
       word-break: break-word;
       white-space: pre-line;
     }
@@ -330,8 +324,8 @@
     .future-box {
       background: rgba(255,255,255,0.76);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
+      border-radius: 18px;
+      padding: 18px;
     }
 
     .price-time-header,
@@ -340,8 +334,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .price-time-title,
@@ -378,9 +372,9 @@
     .price-card {
       background: #fbfcfb;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      min-height: 72px;
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 98px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -388,15 +382,15 @@
 
     .price-card-label {
       color: var(--muted);
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
     }
 
     .price-card-value {
       color: var(--ok);
-      font-size: 24px;
+      font-size: 30px;
       font-weight: bold;
       line-height: 1.1;
       word-break: break-word;
@@ -664,8 +658,6 @@
       color: var(--danger);
     }
 
-    #analysisPanel { display: none !important; }
-
     @media (max-width: 1100px) {
       .layout {
         grid-template-columns: 1fr;
@@ -801,14 +793,35 @@
                     <div class="dataset-label">Solape</div>
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
-</div>
+
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Ubicación</div>
+                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+                  </div>
+                </div>
 
                 <div class="dataset-highlight" id="datasetHighlight">
                   <div class="dataset-highlight-badge" id="datasetHighlightBadge">
                     Dataset válido para fotogrametría
                   </div>
                 </div>
+                
+                <div class="dataset-grid" id="clientInfoGrid" style="display:grid; margin-top:12px;">
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Email del cliente</div>
+                    <input id="clientEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
 
+                  <div class="dataset-item">
+                    <div class="dataset-label">Nombre del proyecto</div>
+                    <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
+
+                  <div class="dataset-item">
+                    <div class="dataset-label">Nombre del cliente</div>
+                    <input id="clientName" type="text" placeholder="Empresa o persona" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
+                  </div>
+                </div>
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
@@ -829,7 +842,6 @@
             </div>
           </div>
         </div>
-
 <div class="panel" id="pricingPanel">
           <div class="panel-inner">
             <div class="price-time-box">
@@ -845,7 +857,7 @@
                 </div>
 
                 <div class="price-card">
-                  <div class="price-card-label">Tiempo estimado</div>
+                  <div class="price-card-label">Tiempo</div>
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
@@ -865,23 +877,23 @@
               <div class="process-stage-wrap" id="processStageWrap">
                 <div class="process-stage" data-stage="matching">
                   <div class="process-stage-dot"></div>
-                  <div>Alineación inicial</div>
+                  <div>Matching photos</div>
                 </div>
                 <div class="process-stage" data-stage="aligning">
                   <div class="process-stage-dot"></div>
-                  <div>Alineando cámaras</div>
+                  <div>Aligning cameras</div>
                 </div>
                 <div class="process-stage" data-stage="depth">
                   <div class="process-stage-dot"></div>
-                  <div>Mapas de profundidad</div>
+                  <div>Depth maps</div>
                 </div>
                 <div class="process-stage" data-stage="pointcloud">
                   <div class="process-stage-dot"></div>
-                  <div>Nube de puntos</div>
+                  <div>Point cloud</div>
                 </div>
                 <div class="process-stage" data-stage="export">
                   <div class="process-stage-dot"></div>
-                  <div>Exportación</div>
+                  <div>Export</div>
                 </div>
               </div>
 
@@ -893,15 +905,13 @@
             </div>
           </div>
         </div>
-
 <div class="panel" id="mapWrap">
           <div class="panel-inner">
             <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
             <div id="map"></div>
           </div>
         </div>
-
-<div class="panel" id="analysisPanel">
+<div class="panel" id="analysisPanel" style="display:none;">
           <div class="panel-inner">
             <div class="future-box">
               <div class="future-header">
@@ -913,31 +923,12 @@
           </div>
         </div>
       </div>
-      </div>
     </div>
 
-    <div class="footer-note">
-      Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
-    </div>
+    <div class="footer-note" style="display:none;"></div>
   </div>
 
-  <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal" id="modalBox">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modalTitle">Confirmación</h2>
-        <div class="modal-subtitle" id="modalSubtitle"></div>
-      </div>
-
-      <div class="modal-body" id="modalBody"></div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
-        <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="authBackdrop">
+ <div class="modal-backdrop" id="authBackdrop">
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title" id="authTitle">Acceso</h2>
@@ -975,8 +966,7 @@
   </div>
 </div>
 
-  
-<script>
+  <script>
     const API_BASE = "https://api.xproces.com";
     const BATCH_SIZE = 20;
     const POLL_INTERVAL_MS = 3000;
@@ -1020,6 +1010,9 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const clientEmailInput = document.getElementById("clientEmail");
+    const projectNameInput = document.getElementById("projectName");
+    const clientNameInput = document.getElementById("clientName");
 
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1095,6 +1088,9 @@ function clearStoredUser() {
 function syncStoredUserToForm() {
   const user = getStoredUser();
   if (!user) return;
+
+  clientEmailInput.value = user.email || "";
+  clientNameInput.value = user.name || "";
 }
 
 function renderTopbarUser() {
@@ -1123,6 +1119,8 @@ function renderTopbarUser() {
   document.getElementById("logoutBtn").addEventListener("click", () => {
     clearStoredUser();
     renderTopbarUser();
+    clientEmailInput.value = "";
+    clientNameInput.value = "";
   });
 }
 
@@ -1156,14 +1154,6 @@ function openAuthModal(mode = "login") {
 function closeAuthModal() {
   authBackdrop.classList.remove("show");
 }
-
-    function formatBytes(bytes) {
-      const mb = bytes / 1024 / 1024;
-      const gb = mb / 1024;
-      if (gb >= 1) return gb.toFixed(2) + " GB";
-      return mb.toFixed(2) + " MB";
-    }
-
     function formatEtaText(seconds) {
       const total = Math.max(0, Number(seconds || 0));
       const hours = Math.floor(total / 3600);
@@ -1171,7 +1161,10 @@ function closeAuthModal() {
       if (hours <= 0) return `${minutes} min`;
       return `${hours} h ${minutes} min`;
     }
-
+    function isValidEmail(email) {
+      const value = String(email || "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) {
@@ -1379,12 +1372,6 @@ authSaveBtn.addEventListener("click", async () => {
         closeModal(false);
       }
     });
-
-    authBackdrop.addEventListener("click", (e) => {
-  if (e.target === authBackdrop) {
-    closeAuthModal();
-  }
-});
 
    document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
@@ -1656,6 +1643,8 @@ authSaveBtn.addEventListener("click", async () => {
         setAnalysisPlaceholder();
       } else {
         resetAll();
+        renderTopbarUser();
+        syncStoredUserToForm();
       }
     }
 
@@ -2282,9 +2271,13 @@ authSaveBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          exif_summary: latestExifSummary
-        })
+       body: JSON.stringify({
+         exif_summary: latestExifSummary,
+         client_email: clientEmailInput.value.trim(),
+         project_name: projectNameInput.value.trim(),
+         client_name: clientNameInput.value.trim(),
+         user_id: getStoredUser()?.id || null
+       })
       });
 
       if (!response.ok) {
@@ -2478,6 +2471,36 @@ authSaveBtn.addEventListener("click", async () => {
         return;
       }
 
+      if (!clientEmailInput.value.trim()) {
+        await showInfoModal(
+          "Falta el email del cliente",
+          "Debe indicar a qué cliente pertenece este trabajo.",
+          "Introduzca el email del cliente antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+
+      if (!isValidEmail(clientEmailInput.value.trim())) {
+        await showInfoModal(
+          "Email no válido",
+          "El correo del cliente no tiene un formato correcto.",
+          "Introduzca un email válido, por ejemplo: cliente@empresa.com",
+          "warning"
+        );
+        return;
+      }
+
+      if (!projectNameInput.value.trim()) {
+        await showInfoModal(
+          "Falta el nombre del proyecto",
+          "Debe indicar un nombre para identificar el trabajo.",
+          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+      
       if (uploadBtn.disabled) {
         return;
       }
@@ -2588,8 +2611,6 @@ authSaveBtn.addEventListener("click", async () => {
     }
 
     resetAll();
-    renderTopbarUser();
-    syncStoredUserToForm();
   </script>
 </body>
 </html>
