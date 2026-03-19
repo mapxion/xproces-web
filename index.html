@@ -1167,6 +1167,19 @@ function closeAuthModal() {
       const value = String(email || "").trim();
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     }
+    function translateStatus(status) {
+      const s = String(status || "").toLowerCase();
+
+      if (s === "created") return "Creado";
+      if (s === "receiving") return "Recibiendo fotos";
+      if (s === "queued") return "En cola";
+      if (s === "running") return "Procesando";
+      if (s === "done") return "Completado";
+      if (s === "failed") return "Error";
+      if (s === "cancelled") return "Cancelado";
+
+      return status || "—";
+    }
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) {
@@ -2407,7 +2420,7 @@ authSaveBtn.addEventListener("click", async () => {
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-          progressLabel.textContent = `Estado: ${status}`;
+          progressLabel.textContent = `Estado: ${translateStatus(status)}`;
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
@@ -2415,7 +2428,7 @@ authSaveBtn.addEventListener("click", async () => {
           if (status === "queued" || status === "running") {
             jobStatusEl.textContent = await buildQueuedOrRunningMessage(job);
           } else {
-            jobStatusEl.textContent = `Job ${job.id}\nEstado: ${status}\n${message}`;
+            jobStatusEl.textContent = `Trabajo ${job.id}\nEstado: ${translateStatus(status)}\n${message}`;
           }
 
           if (status === "done") {
