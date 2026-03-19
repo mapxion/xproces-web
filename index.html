@@ -2674,40 +2674,36 @@ authSaveBtn.addEventListener("click", async () => {
       if (!ok) return;
 
       try {
-        stopPolling();
-        hideDownloadButton();
-        processStageWrap.style.display = "grid";
-        resetStageClasses();
+  stopPolling();
+  hideDownloadButton();
+  processStageWrap.style.display = "grid";
+  resetStageClasses();
 
-        progressWrap.style.display = "block";
-        progressFill.style.width = "0%";
-        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
-        progressLabel.textContent = "Creando proyecto...";
-        progressPercent.textContent = "0%";
-        jobStatusEl.textContent = "Creando job...";
-        
-        enterProcessingMode();
-        jobStatusEl.textContent = "Preparando proyecto y enviando fotografías...";
-        progressLabel.textContent = "Preparando envío";
-        progressPercent.textContent = "0%";
-        progressFill.style.width = "0%";
-        const createdJob = await createJob();
-        const jobId = createdJob.id;
+  enterProcessingMode();
 
-        jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
+  progressFill.style.width = "0%";
+  progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+  progressLabel.textContent = "Preparando envío";
+  progressPercent.textContent = "0%";
+  jobStatusEl.textContent = "Preparando proyecto y enviando fotografías...";
 
-        const batches = chunkArray(files, BATCH_SIZE);
+  const createdJob = await createJob();
+  const jobId = createdJob.id;
 
-        for (let i = 0; i < batches.length; i++) {
-          await uploadBatch(jobId, batches[i], i, batches.length);
-        }
+  jobStatusEl.textContent = `Trabajo ${jobId}\nProyecto creado. Preparando subida por lotes...`;
 
-        progressFill.style.width = "100%";
-        progressLabel.textContent = "Subida completada";
-        progressPercent.textContent = "100%";
-        jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
+  const batches = chunkArray(files, BATCH_SIZE);
 
-        await submitJob(jobId);
+  for (let i = 0; i < batches.length; i++) {
+    await uploadBatch(jobId, batches[i], i, batches.length);
+  }
+
+  progressFill.style.width = "100%";
+  progressLabel.textContent = "Subida completada";
+  progressPercent.textContent = "100%";
+  jobStatusEl.textContent = `Trabajo ${jobId}\nSubida completada. Enviando a procesado...`;
+
+  await submitJob(jobId);
 
         jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
