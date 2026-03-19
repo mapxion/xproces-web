@@ -46,8 +46,8 @@
     }
 
     .app {
-      width: 100%;
-      max-width: 1400px;
+      width: calc(100vw - 24px);
+      max-width: 1920px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
@@ -112,7 +112,7 @@
 
     .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  grid-template-columns: minmax(780px, 1.45fr) minmax(520px, 0.95fr);
   gap: 16px;
   align-items: start;
 }
@@ -121,6 +121,7 @@
     .right-stack {
       display: grid;
       gap: 16px;
+      align-content: start;
     }
 
     .panel {
@@ -327,6 +328,10 @@
       padding: 18px;
     }
 
+    .job-status-box {
+      min-height: 520px;
+    }
+
     .price-time-header,
     .future-header,
     .job-status-header {
@@ -516,14 +521,30 @@
   display: none !important;
 }
 
+.processing-layout-active .layout {
+  grid-template-columns: minmax(720px, 1.25fr) minmax(560px, 1fr);
+}
+
+.processing-layout-active .left-stack,
+.processing-layout-active .right-stack {
+  align-content: start;
+}
+
 .processing-layout-active .drop {
   min-height: auto;
   padding: 18px;
 }
 
-.processing-layout-active .drop-subtitle {
-  min-height: auto;
-  margin-bottom: 10px;
+.processing-layout-active .future-box {
+  display: none;
+}
+
+.processing-layout-active #map {
+  height: 280px;
+}
+
+.processing-layout-active .job-status-box {
+  min-height: 620px;
 }
     
     .process-download-wrap {
@@ -557,7 +578,7 @@
 
     #map {
       width: 100%;
-      height: 560px;
+      height: 320px;
       border-radius: 18px;
       border: 1px solid var(--border);
       overflow: hidden;
@@ -683,7 +704,7 @@
       color: var(--danger);
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1180px) {
   .layout {
     grid-template-columns: 1fr;
   }
@@ -941,9 +962,7 @@
       </div>
     </div>
 
-    <div class="footer-note">
-      Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
-    </div>
+    <div class="footer-note" style="display:none;"></div>
   </div>
 
  <div class="modal-backdrop" id="modalBackdrop">
