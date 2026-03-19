@@ -65,26 +65,6 @@
       backdrop-filter: blur(12px);
     }
 
-    .topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.user-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: #f4f6f4;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 700;
-}
     .brand {
       display: flex;
       align-items: center;
@@ -658,6 +638,8 @@
       color: var(--danger);
     }
 
+    #analysisPanel { display: none !important; }
+
     @media (max-width: 1100px) {
       .layout {
         grid-template-columns: 1fr;
@@ -717,19 +699,13 @@
 <body>
   <div class="app">
     <div class="topbar">
-  <div class="brand">
-    <div class="brand-copy">
-      <h1><span class="brand-x">X</span>proces</h1>
-      <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+      <div class="brand">
+        <div class="brand-copy">
+          <h1><span class="brand-x">X</span>proces</h1>
+          <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div class="topbar-actions" id="topbarActions">
-    <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
-    <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
-    <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
-  </div>
-</div>
 
     <div class="layout">
       <div class="left-stack">
@@ -805,23 +781,7 @@
                     Dataset válido para fotogrametría
                   </div>
                 </div>
-                
-                <div class="dataset-grid" id="clientInfoGrid" style="display:grid; margin-top:12px;">
-                  <div class="dataset-item full">
-                    <div class="dataset-label">Email del cliente</div>
-                    <input id="clientEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
 
-                  <div class="dataset-item">
-                    <div class="dataset-label">Nombre del proyecto</div>
-                    <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
-
-                  <div class="dataset-item">
-                    <div class="dataset-label">Nombre del cliente</div>
-                    <input id="clientName" type="text" placeholder="Empresa o persona" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
-                </div>
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
@@ -842,6 +802,7 @@
             </div>
           </div>
         </div>
+
 <div class="panel" id="pricingPanel">
           <div class="panel-inner">
             <div class="price-time-box">
@@ -877,23 +838,23 @@
               <div class="process-stage-wrap" id="processStageWrap">
                 <div class="process-stage" data-stage="matching">
                   <div class="process-stage-dot"></div>
-                  <div>Matching photos</div>
+                  <div>Alineación inicial</div>
                 </div>
                 <div class="process-stage" data-stage="aligning">
                   <div class="process-stage-dot"></div>
-                  <div>Aligning cameras</div>
+                  <div>Alineando cámaras</div>
                 </div>
                 <div class="process-stage" data-stage="depth">
                   <div class="process-stage-dot"></div>
-                  <div>Depth maps</div>
+                  <div>Mapas de profundidad</div>
                 </div>
                 <div class="process-stage" data-stage="pointcloud">
                   <div class="process-stage-dot"></div>
-                  <div>Point cloud</div>
+                  <div>Nube de puntos</div>
                 </div>
                 <div class="process-stage" data-stage="export">
                   <div class="process-stage-dot"></div>
-                  <div>Export</div>
+                  <div>Exportación</div>
                 </div>
               </div>
 
@@ -905,13 +866,15 @@
             </div>
           </div>
         </div>
+
 <div class="panel" id="mapWrap">
           <div class="panel-inner">
             <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
             <div id="map"></div>
           </div>
         </div>
-<div class="panel" id="analysisPanel" style="display:none;">
+
+<div class="panel" id="analysisPanel">
           <div class="panel-inner">
             <div class="future-box">
               <div class="future-header">
@@ -923,48 +886,29 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="footer-note" style="display:none;"></div>
-  </div>
-
- <div class="modal-backdrop" id="authBackdrop">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="authTitle">Acceso</h2>
-      <div class="modal-subtitle" id="authSubtitle">Identifíquese para asociar sus trabajos.</div>
-    </div>
-
-    <div class="modal-body">
-      <div class="modal-grid">
-        <div class="modal-card full">
-          <div class="modal-label">Email</div>
-          <input id="authEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
-
-        <div class="modal-card full">
-          <div class="modal-label">Nombre o empresa</div>
-          <input id="authName" type="text" placeholder="Nombre del cliente o empresa" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
-
-        <div class="modal-card full" id="authPasswordWrap">
-          <div class="modal-label">Contraseña</div>
-          <input id="authPassword" type="password" placeholder="Mínimo 6 caracteres" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
-
-        <div class="modal-card full" id="authCodeWrap" style="display:none;">
-          <div class="modal-label">Código invitado</div>
-          <input id="authCode" type="text" placeholder="Introduzca su código" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; text-transform:uppercase;">
-        </div>
       </div>
     </div>
 
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="authCancelBtn" type="button">Cancelar</button>
-      <button class="btn btn-success" id="authSaveBtn" type="button">Continuar</button>
+    <div class="footer-note">
+      Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
     </div>
   </div>
-</div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modalBox">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Confirmación</h2>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+
+      <div class="modal-body" id="modalBody"></div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+        <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API_BASE = "https://api.xproces.com";
@@ -1010,9 +954,6 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
-    const clientEmailInput = document.getElementById("clientEmail");
-    const projectNameInput = document.getElementById("projectName");
-    const clientNameInput = document.getElementById("clientName");
 
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1040,25 +981,6 @@
     const modalCancelBtn = document.getElementById("modalCancelBtn");
     const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 
-    const loginBtn = document.getElementById("loginBtn");
-    const registerBtn = document.getElementById("registerBtn");
-    const inviteBtn = document.getElementById("inviteBtn");
-
-    const authBackdrop = document.getElementById("authBackdrop");
-    const authTitle = document.getElementById("authTitle");
-    const authSubtitle = document.getElementById("authSubtitle");
-    const authEmail = document.getElementById("authEmail");
-    const authName = document.getElementById("authName");
-    const authPassword = document.getElementById("authPassword");
-    const authCode = document.getElementById("authCode");
-
-    const authPasswordWrap = document.getElementById("authPasswordWrap");
-    const authCodeWrap = document.getElementById("authCodeWrap");
-
-    const authCancelBtn = document.getElementById("authCancelBtn");
-    const authSaveBtn = document.getElementById("authSaveBtn");
-    const topbarActions = document.getElementById("topbarActions");
-    
     function formatBytes(bytes) {
       const mb = bytes / 1024 / 1024;
       const gb = mb / 1024;
@@ -1066,94 +988,6 @@
       return mb.toFixed(2) + " MB";
     }
 
-    let authMode = "login";
-
-function getStoredUser() {
-  try {
-    const raw = localStorage.getItem("xproces_user");
-    return raw ? JSON.parse(raw) : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function setStoredUser(user) {
-  localStorage.setItem("xproces_user", JSON.stringify(user));
-}
-
-function clearStoredUser() {
-  localStorage.removeItem("xproces_user");
-}
-
-function syncStoredUserToForm() {
-  const user = getStoredUser();
-  if (!user) return;
-
-  clientEmailInput.value = user.email || "";
-  clientNameInput.value = user.name || "";
-}
-
-function renderTopbarUser() {
-  const user = getStoredUser();
-
-  if (!user || !user.email) {
-    topbarActions.innerHTML = `
-      <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
-      <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
-      <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
-    `;
-
-    document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
-    document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
-    document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
-    return;
-  }
-
-  const userType = user.auth_type === "invite" ? "Invitado" : "Usuario";
-
-  topbarActions.innerHTML = `
-    <div class="user-pill">${userType} · ${user.name || "Usuario"} · ${user.email}</div>
-    <button class="btn btn-secondary" id="logoutBtn" type="button">Salir</button>
-  `;
-
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    clearStoredUser();
-    renderTopbarUser();
-    clientEmailInput.value = "";
-    clientNameInput.value = "";
-  });
-}
-
-function openAuthModal(mode = "login") {
-  authMode = mode;
-
-  authTitle.textContent =
-    mode === "register" ? "Registrarse" :
-    mode === "invite" ? "Código invitado" :
-    "Iniciar sesión";
-
-  authSubtitle.textContent =
-    mode === "register"
-      ? "Cree su cuenta para asociar sus trabajos."
-      : mode === "invite"
-      ? "Acceda con un código de un solo uso."
-      : "Introduzca sus credenciales para continuar.";
-
-  const user = getStoredUser();
-  authEmail.value = user?.email || "";
-  authName.value = user?.name || "";
-  authPassword.value = "";
-  authCode.value = "";
-
-  authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
-  authCodeWrap.style.display = mode === "invite" ? "block" : "none";
-
-  authBackdrop.classList.add("show");
-}
-
-function closeAuthModal() {
-  authBackdrop.classList.remove("show");
-}
     function formatEtaText(seconds) {
       const total = Math.max(0, Number(seconds || 0));
       const hours = Math.floor(total / 3600);
@@ -1161,10 +995,7 @@ function closeAuthModal() {
       if (hours <= 0) return `${minutes} min`;
       return `${hours} h ${minutes} min`;
     }
-    function isValidEmail(email) {
-      const value = String(email || "").trim();
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    }
+
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) {
@@ -1275,113 +1106,17 @@ function closeAuthModal() {
     modalCancelBtn.addEventListener("click", () => closeModal(false));
     modalConfirmBtn.addEventListener("click", () => closeModal(true));
 
-    authCancelBtn.addEventListener("click", closeAuthModal);
-
-authSaveBtn.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  const name = authName.value.trim();
-  const password = authPassword.value;
-  const code = authCode.value.trim().toUpperCase();
-
-  if (!email || !isValidEmail(email)) {
-    await showInfoModal(
-      "Email no válido",
-      "Introduzca un correo correcto.",
-      "Ejemplo: cliente@empresa.com",
-      "warning"
-    );
-    return;
-  }
-
-  if (!name) {
-    await showInfoModal(
-      "Falta el nombre o empresa",
-      "Debe identificar a la persona o empresa.",
-      "Introduzca un nombre o empresa para continuar.",
-      "warning"
-    );
-    return;
-  }
-
-  if (authMode === "invite") {
-    if (!code) {
-      await showInfoModal(
-        "Falta el código",
-        "Debe introducir un código invitado.",
-        "Introduzca un código válido para continuar.",
-        "warning"
-      );
-      return;
-    }
-  } else {
-    if (!password || password.length < 6) {
-      await showInfoModal(
-        "Contraseña no válida",
-        "La contraseña debe tener al menos 6 caracteres.",
-        "Introduzca una contraseña válida para continuar.",
-        "warning"
-      );
-      return;
-    }
-  }
-
-  try {
-    let endpoint = "";
-    let payload = {};
-
-    if (authMode === "register") {
-      endpoint = `${API_BASE}/auth/register`;
-      payload = { email, password, name };
-    } else if (authMode === "invite") {
-      endpoint = `${API_BASE}/auth/invite-login`;
-      payload = { email, name, code };
-    } else {
-      endpoint = `${API_BASE}/auth/login`;
-      payload = { email, password };
-    }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.message || data.error || "Error de acceso");
-    }
-
-    setStoredUser(data.user);
-    syncStoredUserToForm();
-    renderTopbarUser();
-    closeAuthModal();
-  } catch (error) {
-    console.error(error);
-    await showInfoModal(
-      "No se pudo completar el acceso",
-      "Revise sus datos e inténtelo de nuevo.",
-      error.message || "Error inesperado",
-      "error"
-    );
-  }
-});
-
     modalBackdrop.addEventListener("click", (e) => {
       if (e.target === modalBackdrop) {
         closeModal(false);
       }
     });
 
-   document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
-    closeModal(false);
-  }
-
-  if (e.key === "Escape" && authBackdrop.classList.contains("show")) {
-    closeAuthModal();
-  }
-});
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
+        closeModal(false);
+      }
+    });
 
     async function fetchPricingPreview(photoCount, totalBytes) {
       try {
@@ -1643,8 +1378,6 @@ authSaveBtn.addEventListener("click", async () => {
         setAnalysisPlaceholder();
       } else {
         resetAll();
-        renderTopbarUser();
-        syncStoredUserToForm();
       }
     }
 
@@ -2271,13 +2004,9 @@ authSaveBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-       body: JSON.stringify({
-         exif_summary: latestExifSummary,
-         client_email: clientEmailInput.value.trim(),
-         project_name: projectNameInput.value.trim(),
-         client_name: clientNameInput.value.trim(),
-         user_id: getStoredUser()?.id || null
-       })
+        body: JSON.stringify({
+          exif_summary: latestExifSummary
+        })
       });
 
       if (!response.ok) {
@@ -2471,36 +2200,6 @@ authSaveBtn.addEventListener("click", async () => {
         return;
       }
 
-      if (!clientEmailInput.value.trim()) {
-        await showInfoModal(
-          "Falta el email del cliente",
-          "Debe indicar a qué cliente pertenece este trabajo.",
-          "Introduzca el email del cliente antes de iniciar el procesado.",
-          "warning"
-        );
-        return;
-      }
-
-      if (!isValidEmail(clientEmailInput.value.trim())) {
-        await showInfoModal(
-          "Email no válido",
-          "El correo del cliente no tiene un formato correcto.",
-          "Introduzca un email válido, por ejemplo: cliente@empresa.com",
-          "warning"
-        );
-        return;
-      }
-
-      if (!projectNameInput.value.trim()) {
-        await showInfoModal(
-          "Falta el nombre del proyecto",
-          "Debe indicar un nombre para identificar el trabajo.",
-          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
-          "warning"
-        );
-        return;
-      }
-      
       if (uploadBtn.disabled) {
         return;
       }
