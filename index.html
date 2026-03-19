@@ -65,26 +65,6 @@
       backdrop-filter: blur(12px);
     }
 
-    .topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.user-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: #f4f6f4;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 700;
-}
     .brand {
       display: flex;
       align-items: center;
@@ -110,11 +90,11 @@
     }
 
     .layout {
-  display: grid;
-  grid-template-columns: minmax(560px, 1fr) minmax(560px, 1fr);
-  gap: 20px;
-  align-items: start;
-}
+      display: grid;
+      grid-template-columns: minmax(620px, 1fr) minmax(620px, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
 
     .left-stack,
     .right-stack {
@@ -189,12 +169,12 @@
     }
 
     .dataset-grid {
-  display: none;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  text-align: left;
-  margin-bottom: 18px;
-}
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      text-align: left;
+      margin-bottom: 18px;
+    }
 
     .dataset-item {
       background: rgba(255,255,255,0.8);
@@ -328,14 +308,6 @@
       padding: 18px;
     }
 
-    .job-status-box {
-      min-height: 240px;
-    }
-
-    .processing-layout-active .job-status-box {
-      min-height: 620px;
-    }
-
     .price-time-header,
     .future-header,
     .job-status-header {
@@ -413,12 +385,7 @@
 
     .progress-wrap {
       display: none;
-      margin-top: 18px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.92);
-      box-shadow: var(--shadow);
+      margin-top: 2px;
     }
 
     .progress-top {
@@ -426,15 +393,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 14px;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text);
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: var(--muted);
     }
 
     .progress-bar {
       width: 100%;
-      height: 28px;
+      height: 14px;
       background: #edf1ed;
       border-radius: 999px;
       overflow: hidden;
@@ -450,32 +416,31 @@
 
     .status {
       color: var(--text);
-      min-height: 120px;
+      min-height: 92px;
       white-space: pre-line;
-      line-height: 1.6;
-      font-size: 16px;
-      font-weight: 600;
+      line-height: 1.55;
+      font-size: 14px;
     }
 
     .process-stage-wrap {
       display: none;
-      gap: 10px;
-      margin-bottom: 18px;
+      gap: 8px;
+      margin-bottom: 14px;
       grid-template-columns: 1fr;
     }
 
     .process-stage {
       display: flex;
       align-items: center;
-      gap: 12px;
-      min-height: 48px;
-      padding: 12px 14px;
-      border-radius: 14px;
+      gap: 10px;
+      min-height: 36px;
+      padding: 8px 10px;
+      border-radius: 12px;
       background: #fafcf9;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .process-stage-dot {
@@ -516,73 +481,6 @@
       background: var(--danger);
     }
 
-    .job-status-box.processing-focus {
-  border: 2px solid rgba(184, 255, 26, 0.55);
-  background: rgba(255,255,255,0.94);
-}
-
-.exif-hidden {
-  display: none !important;
-}
-
-.processing-layout-active .layout {
-  display: grid;
-  grid-template-columns: minmax(520px, 1fr) minmax(520px, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-
-.processing-layout-active .left-stack,
-.processing-layout-active .right-stack {
-  display: contents;
-}
-
-.processing-layout-active #uploadPanel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.processing-layout-active #pricingPanel {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.processing-layout-active #processPanel {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.processing-layout-active #mapWrap {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.processing-layout-active #analysisPanel {
-  display: none;
-}
-
-.processing-layout-active .drop {
-  min-height: auto;
-  padding: 18px;
-}
-
-.processing-layout-active .dataset-grid {
-  display: none !important;
-}
-    
-.processing-layout-active .drop-subtitle {
-  min-height: auto;
-  margin-bottom: 10px;
-}
-
-.processing-layout-active #map {
-  height: 260px;
-}
-
-.processing-layout-active .job-status-box {
-  min-height: 520px;
-}
-    
     .process-download-wrap {
       display: none;
       margin-top: 16px;
@@ -614,7 +512,7 @@
 
     #map {
       width: 100%;
-      height: 260px;
+      height: 320px;
       border-radius: 18px;
       border: 1px solid var(--border);
       overflow: hidden;
@@ -740,29 +638,17 @@
       color: var(--danger);
     }
 
-    @media (max-width: 1200px) {
-  .layout,
-  .processing-layout-active .layout {
-    grid-template-columns: 1fr;
-  }
+    #analysisPanel { display: none !important; }
 
-  .processing-layout-active .left-stack,
-  .processing-layout-active .right-stack {
-    display: grid;
-  }
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
 
-  .processing-layout-active #uploadPanel,
-  .processing-layout-active #pricingPanel,
-  .processing-layout-active #processPanel,
-  .processing-layout-active #mapWrap {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  #map {
-    height: 300px;
-  }
-}
+      #map {
+        height: 300px;
+      }
+    }
 
     @media (max-width: 760px) {
       body {
@@ -813,23 +699,17 @@
 <body>
   <div class="app">
     <div class="topbar">
-  <div class="brand">
-    <div class="brand-copy">
-      <h1><span class="brand-x">X</span>proces</h1>
-      <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+      <div class="brand">
+        <div class="brand-copy">
+          <h1><span class="brand-x">X</span>proces</h1>
+          <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div class="topbar-actions" id="topbarActions">
-    <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
-    <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
-    <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
-  </div>
-</div>
 
     <div class="layout">
       <div class="left-stack">
-        <div class="panel" id="uploadPanel">
+<div class="panel" id="uploadPanel">
           <div class="panel-inner">
             <label class="drop" id="drop" for="fileInput">
               <div class="drop-content">
@@ -840,75 +720,69 @@
                 </div>
 
                 <div class="dataset-grid" id="datasetGrid">
-  <div class="dataset-item" id="itemSize">
-    <div class="dataset-label">Tamaño total</div>
-    <div class="dataset-value" id="fieldSize">0 MB</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Tamaño total</div>
+                    <div class="dataset-value" id="fieldSize">0 MB</div>
+                  </div>
 
-  <div class="dataset-item" id="itemResolution">
-    <div class="dataset-label">Resolución media</div>
-    <div class="dataset-value" id="fieldResolution">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Resolución media</div>
+                    <div class="dataset-value" id="fieldResolution">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemLens">
-    <div class="dataset-label">Lente</div>
-    <div class="dataset-value" id="fieldLens">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                  <div class="dataset-label">Lente</div>
+                  <div class="dataset-value" id="fieldLens">Sin detectar</div>
+                </div>
 
-  <div class="dataset-item" id="itemFocal">
-    <div class="dataset-label">Focal</div>
-    <div class="dataset-value" id="fieldFocal">Sin detectar</div>
-  </div>
+                <div class="dataset-item">
+                  <div class="dataset-label">Focal</div>
+                  <div class="dataset-value" id="fieldFocal">Sin detectar</div>
+                </div>
 
-  <div class="dataset-item" id="itemDate">
-    <div class="dataset-label">Fecha</div>
-    <div class="dataset-value" id="fieldDate">Sin detectar</div>
-  </div>
+                <div class="dataset-item">
+                  <div class="dataset-label">Fecha</div>
+                  <div class="dataset-value" id="fieldDate">Sin detectar</div>
+                </div>
+                  
+                  <div class="dataset-item">
+                    <div class="dataset-label">GPS</div>
+                    <div class="dataset-value" id="fieldGps">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemGps">
-    <div class="dataset-label">GPS</div>
-    <div class="dataset-value" id="fieldGps">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Cámara</div>
+                    <div class="dataset-value" id="fieldCamera">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemCamera">
-    <div class="dataset-label">Cámara</div>
-    <div class="dataset-value" id="fieldCamera">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Equipo de captura</div>
+                    <div class="dataset-value" id="fieldDrone">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemDrone">
-    <div class="dataset-label">Equipo de captura</div>
-    <div class="dataset-value" id="fieldDrone">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Tipo de misión</div>
+                    <div class="dataset-value" id="fieldMission">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemMission">
-    <div class="dataset-label">Tipo de misión</div>
-    <div class="dataset-value" id="fieldMission">Sin detectar</div>
-  </div>
+                  <div class="dataset-item">
+                    <div class="dataset-label">Solape</div>
+                    <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
+                  </div>
 
-  <div class="dataset-item" id="itemOverlap">
-    <div class="dataset-label">Solape</div>
-    <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
-  </div>
-
-  <div class="dataset-item full" id="itemLocation">
-    <div class="dataset-label">Ubicación</div>
-    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
-  </div>
-</div>
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Ubicación</div>
+                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+                  </div>
+                </div>
 
                 <div class="dataset-highlight" id="datasetHighlight">
                   <div class="dataset-highlight-badge" id="datasetHighlightBadge">
                     Dataset válido para fotogrametría
                   </div>
                 </div>
-                
-                <div class="dataset-grid" id="clientInfoGrid" style="display:grid; margin-top:12px;">
-                  <div class="dataset-item full">
-                    <div class="dataset-label">Nombre del proyecto</div>
-                    <input id="projectName" type="text" placeholder="Torre Barcelona Norte" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-                  </div>
-                </div>
-                <div class="actions" id="actionButtons">
+
+                <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
                 </div>
@@ -929,7 +803,7 @@
           </div>
         </div>
 
-        <div class="panel" id="pricingPanel">
+<div class="panel" id="pricingPanel">
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-header">
@@ -951,45 +825,56 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="panel" id="processPanel">
+      <div class="right-stack">
+<div class="panel" id="processPanel">
           <div class="panel-inner">
-            <div class="job-status-box" id="jobStatusBox">
-  <div class="job-status-header">
-    <div class="job-status-title">Estado del procesado</div>
-  </div>
+            <div class="job-status-box">
+              <div class="job-status-header">
+                <div class="job-status-title">Estado del procesado</div>
+              </div>
 
-  <div class="process-stage-wrap" id="processStageWrap">
-    <div class="process-stage" data-stage="matching">
-      <div class="process-stage-dot"></div>
-      <div>Alineación inicial</div>
-    </div>
-    <div class="process-stage" data-stage="aligning">
-      <div class="process-stage-dot"></div>
-      <div>Alineando cámaras</div>
-    </div>
-    <div class="process-stage" data-stage="depth">
-      <div class="process-stage-dot"></div>
-      <div>Generando mapas de profundidad</div>
-    </div>
-    <div class="process-stage" data-stage="pointcloud">
-      <div class="process-stage-dot"></div>
-      <div>Generando nube de puntos</div>
-    </div>
-    <div class="process-stage" data-stage="export">
-      <div class="process-stage-dot"></div>
-      <div>Exportando resultados</div>
-    </div>
-  </div>
+              <div class="process-stage-wrap" id="processStageWrap">
+                <div class="process-stage" data-stage="matching">
+                  <div class="process-stage-dot"></div>
+                  <div>Alineación inicial</div>
+                </div>
+                <div class="process-stage" data-stage="aligning">
+                  <div class="process-stage-dot"></div>
+                  <div>Alineando cámaras</div>
+                </div>
+                <div class="process-stage" data-stage="depth">
+                  <div class="process-stage-dot"></div>
+                  <div>Mapas de profundidad</div>
+                </div>
+                <div class="process-stage" data-stage="pointcloud">
+                  <div class="process-stage-dot"></div>
+                  <div>Nube de puntos</div>
+                </div>
+                <div class="process-stage" data-stage="export">
+                  <div class="process-stage-dot"></div>
+                  <div>Exportación</div>
+                </div>
+              </div>
 
-  <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
+              <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
-  <div class="process-download-wrap" id="processDownloadWrap">
-    <a class="process-download-btn" id="processDownloadBtn" href="#" target="_blank">Descargar resultados</a>
-  </div>
-</div>
+              <div class="process-download-wrap" id="processDownloadWrap">
+                <a class="process-download-btn" id="processDownloadBtn" href="#" target="_blank">Descargar resultados</a>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="panel" id="analysisPanel">
+<div class="panel" id="mapWrap">
+          <div class="panel-inner">
+            <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
+            <div id="map"></div>
+          </div>
+        </div>
+
+<div class="panel" id="analysisPanel">
           <div class="panel-inner">
             <div class="future-box">
               <div class="future-header">
@@ -1001,73 +886,29 @@
           </div>
         </div>
       </div>
-
-      <div class="right-stack">
-        <div class="panel" id="mapWrap">
-          <div class="panel-inner">
-            <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
-            <div id="map"></div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <div class="footer-note" style="display:none;"></div>
-  </div>
-
- <div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal" id="modalBox">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modalTitle">Confirmación</h2>
-      <div class="modal-subtitle" id="modalSubtitle"></div>
-    </div>
-
-    <div class="modal-body" id="modalBody"></div>
-
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
-      <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
+    <div class="footer-note">
+      Base visual clara y limpia. Mañana se puede seguir afinando iconos, márgenes y tono de color.
     </div>
   </div>
-</div>
 
-<div class="modal-backdrop" id="authBackdrop">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="authTitle">Acceso</h2>
-      <div class="modal-subtitle" id="authSubtitle">Identifíquese para asociar sus trabajos.</div>
-    </div>
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modalBox">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Confirmación</h2>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
 
-    <div class="modal-body">
-      <div class="modal-grid">
-        <div class="modal-card full">
-          <div class="modal-label">Email</div>
-          <input id="authEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
+      <div class="modal-body" id="modalBody"></div>
 
-        <div class="modal-card full">
-          <div class="modal-label">Nombre o empresa</div>
-          <input id="authName" type="text" placeholder="Nombre del cliente o empresa" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
-
-        <div class="modal-card full" id="authPasswordWrap">
-          <div class="modal-label">Contraseña</div>
-          <input id="authPassword" type="password" placeholder="Mínimo 6 caracteres" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
-        </div>
-
-        <div class="modal-card full" id="authCodeWrap" style="display:none;">
-          <div class="modal-label">Código invitado</div>
-          <input id="authCode" type="text" placeholder="Introduzca su código" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; text-transform:uppercase;">
-        </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+        <button class="btn btn-success" id="modalConfirmBtn" type="button">Continuar</button>
       </div>
     </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="authCancelBtn" type="button">Cancelar</button>
-      <button class="btn btn-success" id="authSaveBtn" type="button">Continuar</button>
-    </div>
   </div>
-</div>
 
   <script>
     const API_BASE = "https://api.xproces.com";
@@ -1097,20 +938,7 @@
     const datasetGrid = document.getElementById("datasetGrid");
     const datasetHighlight = document.getElementById("datasetHighlight");
     const datasetHighlightBadge = document.getElementById("datasetHighlightBadge");
-    const actionButtons = document.getElementById("actionButtons");
-    const jobStatusBox = document.getElementById("jobStatusBox");
 
-    const itemSize = document.getElementById("itemSize");
-    const itemResolution = document.getElementById("itemResolution");
-    const itemLens = document.getElementById("itemLens");
-    const itemFocal = document.getElementById("itemFocal");
-    const itemDate = document.getElementById("itemDate");
-    const itemGps = document.getElementById("itemGps");
-    const itemCamera = document.getElementById("itemCamera");
-    const itemDrone = document.getElementById("itemDrone");
-    const itemMission = document.getElementById("itemMission");
-    const itemOverlap = document.getElementById("itemOverlap");
-    const itemLocation = document.getElementById("itemLocation");
     const fieldSize = document.getElementById("fieldSize");
     const fieldResolution = document.getElementById("fieldResolution");
     const fieldGps = document.getElementById("fieldGps");
@@ -1126,7 +954,6 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
-    const projectNameInput = document.getElementById("projectName");
 
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1154,25 +981,6 @@
     const modalCancelBtn = document.getElementById("modalCancelBtn");
     const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 
-    const loginBtn = document.getElementById("loginBtn");
-    const registerBtn = document.getElementById("registerBtn");
-    const inviteBtn = document.getElementById("inviteBtn");
-
-    const authBackdrop = document.getElementById("authBackdrop");
-    const authTitle = document.getElementById("authTitle");
-    const authSubtitle = document.getElementById("authSubtitle");
-    const authEmail = document.getElementById("authEmail");
-    const authName = document.getElementById("authName");
-    const authPassword = document.getElementById("authPassword");
-    const authCode = document.getElementById("authCode");
-
-    const authPasswordWrap = document.getElementById("authPasswordWrap");
-    const authCodeWrap = document.getElementById("authCodeWrap");
-
-    const authCancelBtn = document.getElementById("authCancelBtn");
-    const authSaveBtn = document.getElementById("authSaveBtn");
-    const topbarActions = document.getElementById("topbarActions");
-    
     function formatBytes(bytes) {
       const mb = bytes / 1024 / 1024;
       const gb = mb / 1024;
@@ -1180,89 +988,6 @@
       return mb.toFixed(2) + " MB";
     }
 
-    let authMode = "login";
-
-function getStoredUser() {
-  try {
-    const raw = localStorage.getItem("xproces_user");
-    return raw ? JSON.parse(raw) : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function setStoredUser(user) {
-  localStorage.setItem("xproces_user", JSON.stringify(user));
-}
-
-function clearStoredUser() {
-  localStorage.removeItem("xproces_user");
-}
-
-function syncStoredUserToForm() {
-  const user = getStoredUser();
-  if (!user) return;
-}
-
-function renderTopbarUser() {
-  const user = getStoredUser();
-
-  if (!user || !user.email) {
-    topbarActions.innerHTML = `
-      <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
-      <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
-      <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
-    `;
-
-    document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
-    document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
-    document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
-    return;
-  }
-
-  const userType = user.auth_type === "invite" ? "Invitado" : "Usuario";
-
-  topbarActions.innerHTML = `
-    <div class="user-pill">${userType} · ${user.name || "Usuario"} · ${user.email}</div>
-    <button class="btn btn-secondary" id="logoutBtn" type="button">Salir</button>
-  `;
-
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    clearStoredUser();
-    renderTopbarUser();
-  });
-}
-
-function openAuthModal(mode = "login") {
-  authMode = mode;
-
-  authTitle.textContent =
-    mode === "register" ? "Registrarse" :
-    mode === "invite" ? "Código invitado" :
-    "Iniciar sesión";
-
-  authSubtitle.textContent =
-    mode === "register"
-      ? "Cree su cuenta para asociar sus trabajos."
-      : mode === "invite"
-      ? "Acceda con un código de un solo uso."
-      : "Introduzca sus credenciales para continuar.";
-
-  const user = getStoredUser();
-  authEmail.value = user?.email || "";
-  authName.value = user?.name || "";
-  authPassword.value = "";
-  authCode.value = "";
-
-  authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
-  authCodeWrap.style.display = mode === "invite" ? "block" : "none";
-
-  authBackdrop.classList.add("show");
-}
-
-function closeAuthModal() {
-  authBackdrop.classList.remove("show");
-}
     function formatEtaText(seconds) {
       const total = Math.max(0, Number(seconds || 0));
       const hours = Math.floor(total / 3600);
@@ -1270,23 +995,7 @@ function closeAuthModal() {
       if (hours <= 0) return `${minutes} min`;
       return `${hours} h ${minutes} min`;
     }
-    function isValidEmail(email) {
-      const value = String(email || "").trim();
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    }
-    function translateStatus(status) {
-      const s = String(status || "").toLowerCase();
 
-      if (s === "created") return "Creado";
-      if (s === "receiving") return "Recibiendo fotos";
-      if (s === "queued") return "En cola";
-      if (s === "running") return "Procesando";
-      if (s === "done") return "Completado";
-      if (s === "failed") return "Error";
-      if (s === "cancelled") return "Cancelado";
-
-      return status || "—";
-    }
     function chunkArray(arr, size) {
       const chunks = [];
       for (let i = 0; i < arr.length; i += size) {
@@ -1346,59 +1055,6 @@ function closeAuthModal() {
       etaBig.textContent = "Sin calcular";
     }
 
-    function enterProcessingMode() {
-  document.body.classList.add("processing-layout-active");
-
-  datasetHighlight.style.display = "none";
-  actionButtons.style.display = "none";
-
-  [
-    itemResolution,
-    itemLens,
-    itemFocal,
-    itemDate,
-    itemGps,
-    itemCamera,
-    itemDrone,
-    itemMission,
-    itemOverlap
-  ].forEach((el) => {
-    if (el) el.classList.add("exif-hidden");
-  });
-
-  if (itemSize) itemSize.classList.remove("exif-hidden");
-  if (itemLocation) itemLocation.classList.remove("exif-hidden");
-
-  progressWrap.style.display = "block";
-  processStageWrap.style.display = "grid";
-  jobStatusBox.classList.add("processing-focus");
-}
-
-function exitProcessingMode() {
-  document.body.classList.remove("processing-layout-active");
-
-  datasetHighlight.style.display = "";
-  actionButtons.style.display = "flex";
-
-  [
-    itemResolution,
-    itemLens,
-    itemFocal,
-    itemDate,
-    itemGps,
-    itemCamera,
-    itemDrone,
-    itemMission,
-    itemOverlap,
-    itemSize,
-    itemLocation
-  ].forEach((el) => {
-    if (el) el.classList.remove("exif-hidden");
-  });
-
-  jobStatusBox.classList.remove("processing-focus");
-}
-    
     function closeModal(result = false) {
       modalBackdrop.classList.remove("show");
       modalBox.className = "modal";
@@ -1450,119 +1106,17 @@ function exitProcessingMode() {
     modalCancelBtn.addEventListener("click", () => closeModal(false));
     modalConfirmBtn.addEventListener("click", () => closeModal(true));
 
-    authCancelBtn.addEventListener("click", closeAuthModal);
-
-authSaveBtn.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  const name = authName.value.trim();
-  const password = authPassword.value;
-  const code = authCode.value.trim().toUpperCase();
-
-  if (!email || !isValidEmail(email)) {
-    await showInfoModal(
-      "Email no válido",
-      "Introduzca un correo correcto.",
-      "Ejemplo: cliente@empresa.com",
-      "warning"
-    );
-    return;
-  }
-
-  if (!name) {
-    await showInfoModal(
-      "Falta el nombre o empresa",
-      "Debe identificar a la persona o empresa.",
-      "Introduzca un nombre o empresa para continuar.",
-      "warning"
-    );
-    return;
-  }
-
-  if (authMode === "invite") {
-    if (!code) {
-      await showInfoModal(
-        "Falta el código",
-        "Debe introducir un código invitado.",
-        "Introduzca un código válido para continuar.",
-        "warning"
-      );
-      return;
-    }
-  } else {
-    if (!password || password.length < 6) {
-      await showInfoModal(
-        "Contraseña no válida",
-        "La contraseña debe tener al menos 6 caracteres.",
-        "Introduzca una contraseña válida para continuar.",
-        "warning"
-      );
-      return;
-    }
-  }
-
-  try {
-    let endpoint = "";
-    let payload = {};
-
-    if (authMode === "register") {
-      endpoint = `${API_BASE}/auth/register`;
-      payload = { email, password, name };
-    } else if (authMode === "invite") {
-      endpoint = `${API_BASE}/auth/invite-login`;
-      payload = { email, name, code };
-    } else {
-      endpoint = `${API_BASE}/auth/login`;
-      payload = { email, password };
-    }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.message || data.error || "Error de acceso");
-    }
-
-    setStoredUser(data.user);
-    syncStoredUserToForm();
-    renderTopbarUser();
-    closeAuthModal();
-  } catch (error) {
-    console.error(error);
-    await showInfoModal(
-      "No se pudo completar el acceso",
-      "Revise sus datos e inténtelo de nuevo.",
-      error.message || "Error inesperado",
-      "error"
-    );
-  }
-});
-
     modalBackdrop.addEventListener("click", (e) => {
       if (e.target === modalBackdrop) {
         closeModal(false);
       }
     });
 
-    authBackdrop.addEventListener("click", (e) => {
-  if (e.target === authBackdrop) {
-    closeAuthModal();
-  }
-});
-
-   document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
-    closeModal(false);
-  }
-
-  if (e.key === "Escape" && authBackdrop.classList.contains("show")) {
-    closeAuthModal();
-  }
-});
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalBackdrop.classList.contains("show")) {
+        closeModal(false);
+      }
+    });
 
     async function fetchPricingPreview(photoCount, totalBytes) {
       try {
@@ -1733,7 +1287,6 @@ authSaveBtn.addEventListener("click", async () => {
     function resetAll() {
       stopPolling();
       resetPreviewState();
-      exitProcessingMode();
 
       files = [];
       totalSize = 0;
@@ -1825,8 +1378,6 @@ authSaveBtn.addEventListener("click", async () => {
         setAnalysisPlaceholder();
       } else {
         resetAll();
-        renderTopbarUser();
-        syncStoredUserToForm();
       }
     }
 
@@ -2453,13 +2004,9 @@ authSaveBtn.addEventListener("click", async () => {
         headers: {
           "Content-Type": "application/json"
         },
-       body: JSON.stringify({
-         exif_summary: latestExifSummary,
-         client_email: getStoredUser()?.email || "",
-         project_name: projectNameInput.value.trim(),
-         client_name: getStoredUser()?.name || "",
-         user_id: getStoredUser()?.id || null
-       })
+        body: JSON.stringify({
+          exif_summary: latestExifSummary
+        })
       });
 
       if (!response.ok) {
@@ -2581,7 +2128,7 @@ authSaveBtn.addEventListener("click", async () => {
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-          progressLabel.textContent = `Estado: ${translateStatus(status)}`;
+          progressLabel.textContent = `Estado: ${status}`;
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
@@ -2589,7 +2136,7 @@ authSaveBtn.addEventListener("click", async () => {
           if (status === "queued" || status === "running") {
             jobStatusEl.textContent = await buildQueuedOrRunningMessage(job);
           } else {
-            jobStatusEl.textContent = `Trabajo ${job.id}\nEstado: ${translateStatus(status)}\n${message}`;
+            jobStatusEl.textContent = `Job ${job.id}\nEstado: ${status}\n${message}`;
           }
 
           if (status === "done") {
@@ -2653,27 +2200,6 @@ authSaveBtn.addEventListener("click", async () => {
         return;
       }
 
-     const currentUser = getStoredUser();
-
-     if (!currentUser || !currentUser.email) {
-       await showInfoModal(
-         "Debe identificarse",
-         "Necesita iniciar sesión, registrarse o usar un código invitado.",
-         "Use uno de los botones de la parte superior derecha antes de iniciar el procesado.",
-         "warning"
-       );
-       return;
-     }
-      if (!projectNameInput.value.trim()) {
-        await showInfoModal(
-          "Falta el nombre del proyecto",
-          "Debe indicar un nombre para identificar el trabajo.",
-          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
-          "warning"
-        );
-        return;
-      }
-      
       if (uploadBtn.disabled) {
         return;
       }
@@ -2742,73 +2268,48 @@ authSaveBtn.addEventListener("click", async () => {
       if (!ok) return;
 
       try {
-  stopPolling();
-  hideDownloadButton();
-  processStageWrap.style.display = "grid";
-  resetStageClasses();
+        stopPolling();
+        hideDownloadButton();
+        processStageWrap.style.display = "grid";
+        resetStageClasses();
 
-  enterProcessingMode();
+        progressWrap.style.display = "block";
+        progressFill.style.width = "0%";
+        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+        progressLabel.textContent = "Creando proyecto...";
+        progressPercent.textContent = "0%";
+        jobStatusEl.textContent = "Creando job...";
 
-  progressWrap.style.display = "block";
-  progressFill.style.width = "0%";
-  progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
-  progressLabel.textContent = "Preparando envío";
-  progressPercent.textContent = "0%";
-  jobStatusEl.textContent = "Preparando proyecto y enviando fotografías...";
+        const createdJob = await createJob();
+        const jobId = createdJob.id;
 
-  let createdJob;
-  try {
-    createdJob = await createJob();
-  } catch (error) {
-  console.error(error);
-  jobStatusEl.textContent = error.message || "Error durante el proceso";
-  progressLabel.textContent = "Error";
-  progressPercent.textContent = "0%";
-  progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
-  exitProcessingMode();
-  enableUploadButton();
-}
+        jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
 
-  const jobId = createdJob.id;
-  jobStatusEl.textContent = `Trabajo ${jobId}\nProyecto creado. Preparando subida por lotes...`;
+        const batches = chunkArray(files, BATCH_SIZE);
 
-  const batches = chunkArray(files, BATCH_SIZE);
+        for (let i = 0; i < batches.length; i++) {
+          await uploadBatch(jobId, batches[i], i, batches.length);
+        }
 
-  for (let i = 0; i < batches.length; i++) {
-    await uploadBatch(jobId, batches[i], i, batches.length);
+        progressFill.style.width = "100%";
+        progressLabel.textContent = "Subida completada";
+        progressPercent.textContent = "100%";
+        jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
 
-    const percent = Math.round(((i + 1) / batches.length) * 100);
-    progressFill.style.width = `${percent}%`;
-    progressPercent.textContent = `${percent}%`;
-    progressLabel.textContent = `Subiendo lote ${i + 1} de ${batches.length}`;
-  }
+        await submitJob(jobId);
 
-  progressFill.style.width = "100%";
-  progressLabel.textContent = "Subida completada";
-  progressPercent.textContent = "100%";
-  jobStatusEl.textContent = `Trabajo ${jobId}\nSubida completada. Enviando a procesado...`;
-
-  await submitJob(jobId);
-
-jobStatusEl.textContent = `Trabajo ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
-progressLabel.textContent = "En cola";
-progressPercent.textContent = "0%";
-startPolling(jobId);
-} catch (error) {
-  console.error(error);
-  jobStatusEl.textContent = error.message || "Error durante el proceso";
-  progressLabel.textContent = "Error";
-  progressPercent.textContent = "0%";
-  progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
-  exitProcessingMode();
-  enableUploadButton();
-}
+        jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
+        progressLabel.textContent = "En cola...";
+        progressPercent.textContent = "0%";
+        startPolling(jobId);
+      } catch (error) {
+        console.error(error);
+        jobStatusEl.textContent = error.message || "Error durante la subida";
+        progressLabel.textContent = "Error";
+      }
     }
 
     resetAll();
-    // INIT UI
-    renderTopbarUser();
-    syncStoredUserToForm();
   </script>
 </body>
 </html>
