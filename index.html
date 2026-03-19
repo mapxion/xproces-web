@@ -2680,21 +2680,38 @@ authSaveBtn.addEventListener("click", async () => {
 
   enterProcessingMode();
 
+  progressWrap.style.display = "block";
   progressFill.style.width = "0%";
   progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
   progressLabel.textContent = "Preparando envío";
   progressPercent.textContent = "0%";
   jobStatusEl.textContent = "Preparando proyecto y enviando fotografías...";
 
-  const createdJob = await createJob();
-  const jobId = createdJob.id;
+  let createdJob;
+  try {
+    createdJob = await createJob();
+  } catch (error) {
+  console.error(error);
+  jobStatusEl.textContent = error.message || "Error durante el proceso";
+  progressLabel.textContent = "Error";
+  progressPercent.textContent = "0%";
+  progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
+  exitProcessingMode();
+  enableUploadButton();
+}
 
+  const jobId = createdJob.id;
   jobStatusEl.textContent = `Trabajo ${jobId}\nProyecto creado. Preparando subida por lotes...`;
 
   const batches = chunkArray(files, BATCH_SIZE);
 
   for (let i = 0; i < batches.length; i++) {
     await uploadBatch(jobId, batches[i], i, batches.length);
+
+    const percent = Math.round(((i + 1) / batches.length) * 100);
+    progressFill.style.width = `${percent}%`;
+    progressPercent.textContent = `${percent}%`;
+    progressLabel.textContent = `Subiendo lote ${i + 1} de ${batches.length}`;
   }
 
   progressFill.style.width = "100%";
@@ -2704,15 +2721,19 @@ authSaveBtn.addEventListener("click", async () => {
 
   await submitJob(jobId);
 
-        jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
-        progressLabel.textContent = "En cola...";
-        progressPercent.textContent = "0%";
-        startPolling(jobId);
-      } catch (error) {
-        console.error(error);
-        jobStatusEl.textContent = error.message || "Error durante la subida";
-        progressLabel.textContent = "Error";
-      }
+jobStatusEl.textContent = `Trabajo ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
+progressLabel.textContent = "En cola";
+progressPercent.textContent = "0%";
+startPolling(jobId);
+} catch (error) {
+  console.error(error);
+  jobStatusEl.textContent = error.message || "Error durante el proceso";
+  progressLabel.textContent = "Error";
+  progressPercent.textContent = "0%";
+  progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
+  exitProcessingMode();
+  enableUploadButton();
+}
     }
 
     resetAll();
