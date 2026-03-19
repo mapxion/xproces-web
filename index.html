@@ -122,6 +122,7 @@
       display: grid;
       gap: 16px;
       align-content: start;
+      min-width: 0;
     }
 
     .panel {
@@ -329,7 +330,11 @@
     }
 
     .job-status-box {
-      min-height: 520px;
+      min-height: 240px;
+    }
+
+    .processing-layout-active .job-status-box {
+      min-height: 620px;
     }
 
     .price-time-header,
@@ -578,7 +583,7 @@
 
     #map {
       width: 100%;
-      height: 320px;
+      height: 260px;
       border-radius: 18px;
       border: 1px solid var(--border);
       overflow: hidden;
@@ -704,9 +709,18 @@
       color: var(--danger);
     }
 
-    @media (max-width: 1180px) {
-  .layout {
+    @media (max-width: 1250px) {
+  .layout,
+  .processing-layout-active .layout {
     grid-template-columns: 1fr;
+  }
+
+  .processing-layout-active #processPanel,
+  .processing-layout-active #mapWrap,
+  .processing-layout-active #uploadPanel,
+  .processing-layout-active #pricingPanel {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   #map {
@@ -779,7 +793,7 @@
 
     <div class="layout">
       <div class="left-stack">
-        <div class="panel">
+        <div class="panel" id="uploadPanel">
           <div class="panel-inner">
             <label class="drop" id="drop" for="fileInput">
               <div class="drop-content">
@@ -879,7 +893,7 @@
           </div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="pricingPanel">
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-header">
@@ -902,7 +916,7 @@
           </div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="processPanel">
           <div class="panel-inner">
             <div class="job-status-box" id="jobStatusBox">
   <div class="job-status-header">
@@ -939,7 +953,7 @@
   </div>
 </div>
 
-        <div class="panel">
+        <div class="panel" id="analysisPanel">
           <div class="panel-inner">
             <div class="future-box">
               <div class="future-header">
