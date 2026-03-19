@@ -994,7 +994,87 @@
       if (gb >= 1) return gb.toFixed(2) + " GB";
       return mb.toFixed(2) + " MB";
     }
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem("xproces_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
 
+function setStoredUser(user) {
+  localStorage.setItem("xproces_user", JSON.stringify(user));
+}
+
+function clearStoredUser() {
+  localStorage.removeItem("xproces_user");
+}
+
+function syncStoredUserToForm() {
+  const user = getStoredUser();
+  if (!user) return;
+}
+
+function renderTopbarUser() {
+  const user = getStoredUser();
+
+  if (!user || !user.email) {
+    topbarActions.innerHTML = `
+      <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
+      <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
+      <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
+    `;
+
+    document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
+    document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
+    document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
+    return;
+  }
+
+  const userType = user.auth_type === "invite" ? "Invitado" : "Usuario";
+
+  topbarActions.innerHTML = `
+    <div class="user-pill">${userType} · ${user.name || "Usuario"} · ${user.email}</div>
+    <button class="btn btn-secondary" id="logoutBtn" type="button">Salir</button>
+  `;
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    clearStoredUser();
+    renderTopbarUser();
+  });
+}
+
+function openAuthModal(mode = "login") {
+  authMode = mode;
+
+  authTitle.textContent =
+    mode === "register" ? "Registrarse" :
+    mode === "invite" ? "Código invitado" :
+    "Iniciar sesión";
+
+  authSubtitle.textContent =
+    mode === "register"
+      ? "Cree su cuenta para asociar sus trabajos."
+      : mode === "invite"
+      ? "Acceda con un código de un solo uso."
+      : "Introduzca sus credenciales para continuar.";
+
+  const user = getStoredUser();
+  authEmail.value = user?.email || "";
+  authName.value = user?.name || "";
+  authPassword.value = "";
+  authCode.value = "";
+
+  authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
+  authCodeWrap.style.display = mode === "invite" ? "block" : "none";
+
+  authBackdrop.classList.add("show");
+}
+
+function closeAuthModal() {
+  authBackdrop.classList.remove("show");
+}
     function formatEtaText(seconds) {
       const total = Math.max(0, Number(seconds || 0));
       const hours = Math.floor(total / 3600);
