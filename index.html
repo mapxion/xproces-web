@@ -2125,6 +2125,11 @@ if (mapEl) {
      function initMapWorldView() {
   if (map) return;
 
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.style.height = "260px";
+  }
+
   map = L.map("map", {
     zoomControl: true,
     preferCanvas: true
@@ -2138,37 +2143,24 @@ if (mapEl) {
     }
   );
 
+  baseLayer._xprocesType = "satellite";
+
   baseLayer.on("load", function () {
     if (!map) return;
     map.invalidateSize(true);
   });
 
   baseLayer.on("tileerror", function () {
-    if (!map) return;
-
-    if (baseLayer) {
-      map.removeLayer(baseLayer);
-    }
-
-    baseLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap"
-      }
-    );
-
-    baseLayer.addTo(map);
-
-    setTimeout(() => {
-      if (!map) return;
-      map.invalidateSize(true);
-      if (baseLayer) baseLayer.redraw();
-    }, 200);
+    jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
   });
 
   baseLayer.addTo(map);
-  map.setView([20, 0], 2);
+
+  // Centro inicial: España, zoom lejano
+  map.setView([40.4168, -3.7038], 4);
+
+  forceInitialMapRender();
+}
 
   const forceMapRefresh = () => {
     if (!map) return;
