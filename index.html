@@ -2660,6 +2660,13 @@ syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
+
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize(true);
+      if (baseLayer) baseLayer.redraw();
+    }
+  }, 500);
 });
   </script>
 </body>
