@@ -205,60 +205,66 @@
     }
 
     .dataset-item {
-  background: rgba(255,255,255,0.8);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 7px 10px;
-  min-height: 48px;
-}
+      background: rgba(255,255,255,0.8);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 11px;
+      min-height: 56px;
+    }
 
     .dataset-item.full {
       grid-column: 1 / -1;
     }
 
     .dataset-label {
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
-}
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
 
     .dataset-value {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.2;
-  word-break: break-word;
-  white-space: pre-line;
-}
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-line;
+    }
 
     .dataset-highlight {
-  display: none;
-  grid-column: 1 / -1;
-  justify-content: center;
-  margin-bottom: 0;
-}
+      display: none;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
 
-   .dataset-highlight-badge {
-  display: block;
-  min-height: auto;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--ok);
-  font-size: 14px;
-  font-weight: 700;
-  text-align: left;
-}
+    .dataset-highlight-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 163, 74, 0.24);
+      background: rgba(34, 163, 74, 0.08);
+      color: var(--ok);
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
+    }
 
     .dataset-highlight-badge.warn {
-  color: var(--warning);
-}
+      border-color: rgba(212, 154, 17, 0.24);
+      background: rgba(212, 154, 17, 0.08);
+      color: var(--warning);
+    }
 
     .dataset-highlight-badge.bad {
-  color: var(--danger);
-}
+      border-color: rgba(212, 85, 85, 0.24);
+      background: rgba(212, 85, 85, 0.08);
+      color: var(--danger);
+    }
 
     .actions {
       display: flex;
@@ -372,25 +378,31 @@
     }
 
     .price-card {
-  background: rgba(34,163,74,0.06);
-  border-radius: 10px;
-  border: 1px solid rgba(34,163,74,0.25);
-  padding: 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
     .price-card-label {
-  font-size: 10px;
-  color: var(--ok);
-}
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
 
     .price-card-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--ok);
-}
+      color: var(--ok);
+      font-size: 30px;
+      font-weight: bold;
+      line-height: 1.1;
+      word-break: break-word;
+    }
 
     .future-text {
       color: var(--muted);
@@ -527,13 +539,13 @@
     }
 
     #map {
-  width: 100%;
-  height: 320px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  overflow: hidden;
-  background: #edf2ee;
-}
+      width: 100%;
+      height: 320px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #edf2ee;
+    }
 
     .footer-note {
       font-size: 12px;
@@ -791,22 +803,17 @@
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item full" style="display:none;">
-  <div class="dataset-label">Ubicación</div>
-  <div class="dataset-value" id="fieldLocation">Sin detectar</div>
-</div>
+                  <div class="dataset-item full">
+                    <div class="dataset-label">Ubicación</div>
+                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+                  </div>
                 </div>
 
-                <div class="dataset-item full" style="display:none;">
-  <div class="dataset-label">Ubicación</div>
-  <div class="dataset-value" id="fieldLocation">Sin detectar</div>
-</div>
-
-<div class="dataset-highlight" id="datasetHighlight">
-  <div class="dataset-highlight-badge" id="datasetHighlightBadge">
-    Dataset válido para fotogrametría
-  </div>
-</div>
+                <div class="dataset-highlight" id="datasetHighlight">
+                  <div class="dataset-highlight-badge" id="datasetHighlightBadge">
+                    Dataset válido para fotogrametría
+                  </div>
+                </div>
 
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
@@ -833,7 +840,8 @@
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-header">
-                <div class="price-time-title" style="display:none;"></div>
+                <div class="price-time-title">Precio y tiempo</div>
+                <div class="price-time-badge">Listo</div>
               </div>
 
               <div class="price-time-grid">
@@ -2077,16 +2085,16 @@
       mapWrap.style.display = "block";
 
       if (!map) {
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([lat, lon], 16);
+        map = L.map("map", {
+          zoomControl: true
+        }).setView([lat, lon], 16);
 
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        baseLayer = L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
           {
-  maxZoom: 19,
-  attribution: "Esri, Maxar, Earthstar Geographics"
-}
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+          }
         );
 
         baseLayer.on("tileerror", function () {
@@ -2114,30 +2122,6 @@
       }, 800);
     }
 
-     function initMapWorldView() {
-  if (map) return;
-
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([20, 0], 2);
-
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom: 19,
-      attribution: "Esri, Maxar, Earthstar Geographics"
-    }
-  );
-
-  baseLayer.addTo(map);
-
-  requestAnimationFrame(() => {
-    map.invalidateSize();
-    setTimeout(() => map.invalidateSize(), 250);
-    setTimeout(() => map.invalidateSize(), 700);
-  });
-}
-    
     async function reverseGeocode(lat, lon) {
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=12&addressdetails=1`;
@@ -2651,9 +2635,9 @@
     }
 
       resetAll();
-renderTopbarUser();
-syncStoredUserToForm();
-initMapWorldView();
+    // INIT UI
+    renderTopbarUser();
+    syncStoredUserToForm();
   </script>
 </body>
 </html>
