@@ -539,7 +539,7 @@
 }
 
     #map.has-location {
-  height: 340px;
+  height: 440px;
 }
 
     .footer-note {
@@ -2700,13 +2700,6 @@ syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
-
-  setTimeout(() => {
-    if (map) {
-      map.invalidateSize();
-      if (baseLayer) baseLayer.redraw();
-    }
-  }, 400);
 });
   </script>
 </body>
