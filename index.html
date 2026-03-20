@@ -207,9 +207,9 @@
     .dataset-item {
       background: rgba(255,255,255,0.8);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
-      min-height: 78px;
+      border-radius: 12px;
+      padding: 9px 11px;
+      min-height: 56px;
     }
 
     .dataset-item.full {
@@ -218,10 +218,10 @@
 
     .dataset-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 1px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 7px;
+      letter-spacing: 0.0em;
+      margin-bottom: 4px;
     }
 
     .dataset-value {
@@ -2262,7 +2262,21 @@
       }
     });
 
-    uploadBtn.addEventListener("click", upload);
+    uploadBtn.addEventListener("click", async () => {
+      const currentUser = getStoredUser();
+
+      if (!currentUser || !currentUser.email) {
+        await showInfoModal(
+          "Debe iniciar sesión",
+          "Acceso requerido",
+          "Debe iniciar sesión antes de proseguir.",
+          "warning"
+        );
+        return;
+      }
+
+      await upload();
+    });
 
     async function createJob() {
       const response = await fetch(`${API_BASE}/jobs`, {
@@ -2466,6 +2480,18 @@
     }
 
     async function upload() {
+
+        const currentUser = getStoredUser();
+
+        if (!currentUser || !currentUser.email) {
+          await showInfoModal(
+            "Debe iniciar sesión",
+            "Acceso requerido",
+            "Debe iniciar sesión antes de proseguir.",
+            "warning"
+          );
+          return;
+        }
       if (files.length === 0) {
         await showInfoModal(
           "No hay fotos seleccionadas",
