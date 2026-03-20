@@ -2113,8 +2113,9 @@
   if (map) return;
 
   map = L.map("map", {
-    zoomControl: true
-  }).setView([20, 0], 2);
+    zoomControl: true,
+    preferCanvas: true
+  });
 
   baseLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -2124,13 +2125,46 @@
     }
   );
 
-  baseLayer.addTo(map);
+  baseLayer.on("tileerror", function () {
+    if (!map) return;
 
-  requestAnimationFrame(() => {
+    if (baseLayer) {
+      map.removeLayer(baseLayer);
+    }
+
+    baseLayer = L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
+      }
+    );
+
+    baseLayer.addTo(map);
     map.invalidateSize();
-    setTimeout(() => map.invalidateSize(), 250);
-    setTimeout(() => map.invalidateSize(), 700);
+    baseLayer.redraw();
   });
+
+  baseLayer.addTo(map);
+  map.setView([20, 0], 2);
+
+  setTimeout(() => {
+    if (!map) return;
+    map.invalidateSize();
+    if (baseLayer) baseLayer.redraw();
+  }, 300);
+
+  setTimeout(() => {
+    if (!map) return;
+    map.invalidateSize();
+    if (baseLayer) baseLayer.redraw();
+  }, 1000);
+
+  setTimeout(() => {
+    if (!map) return;
+    map.invalidateSize();
+    if (baseLayer) baseLayer.redraw();
+  }, 2000);
 }
     
     async function reverseGeocode(lat, lon) {
@@ -2648,7 +2682,17 @@
       resetAll();
 renderTopbarUser();
 syncStoredUserToForm();
-initMapWorldView();
+
+window.addEventListener("load", () => {
+  initMapWorldView();
+
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize();
+      if (baseLayer) baseLayer.redraw();
+    }
+  }, 400);
+});
   </script>
 </body>
 </html>
