@@ -2115,28 +2115,27 @@
     }
 
      function initMapWorldView() {
-  setTimeout(() => {
-    if (map) return;
+  if (map) return;
 
-    map = L.map("map", {
-      zoomControl: true
-    }).setView([20, 0], 2);
+  map = L.map("map", {
+    zoomControl: true
+  }).setView([20, 0], 2);
 
-    baseLayer = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 19,
-        attribution: "Esri, Maxar, Earthstar Geographics"
-      }
-    );
+  baseLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Esri, Maxar, Earthstar Geographics"
+    }
+  );
 
-    baseLayer.addTo(map);
+  baseLayer.addTo(map);
 
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-
-  }, 200);
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+    setTimeout(() => map.invalidateSize(), 250);
+    setTimeout(() => map.invalidateSize(), 700);
+  });
 }
     
     async function reverseGeocode(lat, lon) {
