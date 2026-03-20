@@ -372,31 +372,25 @@
     }
 
     .price-card {
-      background: #fbfcfb;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      min-height: 98px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
+  background: rgba(34,163,74,0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(34,163,74,0.25);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
     .price-card-label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
+  font-size: 10px;
+  color: var(--ok);
+}
 
     .price-card-value {
-      color: var(--ok);
-      font-size: 30px;
-      font-weight: bold;
-      line-height: 1.1;
-      word-break: break-word;
-    }
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--ok);
+}
 
     .future-text {
       color: var(--muted);
@@ -839,7 +833,7 @@
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-header">
-                <div class="price-time-title">Precio y tiempo</div>
+                <div class="price-time-title" style="display:none;"></div>
               </div>
 
               <div class="price-time-grid">
@@ -2121,21 +2115,28 @@
     }
 
      function initMapWorldView() {
-  if (map) return;
+  setTimeout(() => {
+    if (map) return;
 
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([20, 0], 2);
+    map = L.map("map", {
+      zoomControl: true
+    }).setView([20, 0], 2);
 
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom: 19,
-      attribution: "Esri, Maxar, Earthstar Geographics"
-    }
-  );
+    baseLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 19,
+        attribution: "Esri, Maxar, Earthstar Geographics"
+      }
+    );
 
-  baseLayer.addTo(map);
+    baseLayer.addTo(map);
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+  }, 200);
 }
     
     async function reverseGeocode(lat, lon) {
