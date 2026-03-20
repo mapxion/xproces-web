@@ -146,15 +146,15 @@
     }
 
     .drop {
-  width: 100%;
-  min-height: 300px;
-  border: 2px dashed rgba(110, 166, 0, 0.24);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 18px;
+      width: 100%;
+      min-height: 390px;
+      border: 2px dashed rgba(110, 166, 0, 0.24);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
       background:
         linear-gradient(180deg, rgba(184, 255, 26, 0.05), rgba(184, 255, 26, 0.02)),
         #fbfcfb;
@@ -184,17 +184,17 @@
     }
 
     .drop-subtitle {
-  font-size: 15px;
-  color: var(--muted);
-  line-height: 1.45;
-  white-space: pre-line;
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-  text-align: center;
-}
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-line;
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      text-align: center;
+    }
 
     .dataset-grid {
       display: none;
@@ -236,7 +236,7 @@
     .dataset-highlight {
   display: none;
   grid-column: 1 / -1;
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 0;
 }
 
@@ -249,7 +249,7 @@
   color: var(--ok);
   font-size: 14px;
   font-weight: 700;
-  text-align: center;
+  text-align: left;
 }
 
     .dataset-highlight-badge.warn {
@@ -322,13 +322,13 @@
     }
 
     .price-time-box,
-.job-status-box,
-.future-box {
-  background: rgba(255,255,255,0.76);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 12px;
-}
+    .job-status-box,
+    .future-box {
+      background: rgba(255,255,255,0.76);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+    }
 
     .price-time-header,
     .future-header,
@@ -337,7 +337,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
 
     .price-time-title,
@@ -366,34 +366,37 @@
     }
 
     .price-time-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  align-items: stretch;
-}
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
 
     .price-card {
-  background: rgba(34,163,74,0.06);
-  border-radius: 10px;
-  border: 1px solid rgba(34,163,74,0.25);
-  padding: 6px 10px;
-  min-height: 64px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-}
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
     .price-card-label {
-  font-size: 10px;
-  color: var(--ok);
-}
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
 
     .price-card-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--ok);
-}
+      color: var(--ok);
+      font-size: 30px;
+      font-weight: bold;
+      line-height: 1.1;
+      word-break: break-word;
+    }
 
     .future-text {
       color: var(--muted);
@@ -530,13 +533,13 @@
     }
 
     #map {
-  width: 100%;
-  height: 220px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  overflow: hidden;
-  background: #edf2ee;
-}
+      width: 100%;
+      height: 320px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #edf2ee;
+    }
 
     .footer-note {
       font-size: 12px;
@@ -659,15 +662,15 @@
 
     #analysisPanel { display: none !important; }
 
-    @media (max-width: 760px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
 
-  #map {
-    height: 300px;
-  }
-}
+      #map {
+        height: 300px;
+      }
+    }
 
     @media (max-width: 760px) {
       body {
@@ -794,7 +797,12 @@
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                 
+                  <div class="dataset-item full" style="display:none;">
+  <div class="dataset-label">Ubicación</div>
+  <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+</div>
+                </div>
+
                 <div class="dataset-item full" style="display:none;">
   <div class="dataset-label">Ubicación</div>
   <div class="dataset-value" id="fieldLocation">Sin detectar</div>
@@ -805,7 +813,6 @@
     Dataset válido para fotogrametría
   </div>
 </div>
-                </div>
 
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
@@ -831,6 +838,11 @@
 <div class="panel" id="pricingPanel">
           <div class="panel-inner">
             <div class="price-time-box">
+              <div class="price-time-header">
+                <div class="price-time-title">Precio y tiempo</div>
+                <div class="price-time-badge">Listo</div>
+              </div>
+
               <div class="price-time-grid">
                 <div class="price-card">
                   <div class="price-card-label">Precio</div>
@@ -2072,16 +2084,16 @@
       mapWrap.style.display = "block";
 
       if (!map) {
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([lat, lon], 16);
+        map = L.map("map", {
+          zoomControl: true
+        }).setView([lat, lon], 16);
 
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        baseLayer = L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
           {
-  maxZoom: 19,
-  attribution: "Esri, Maxar, Earthstar Geographics"
-}
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+          }
         );
 
         baseLayer.on("tileerror", function () {
@@ -2109,30 +2121,6 @@
       }, 800);
     }
 
-     function initMapWorldView() {
-  if (map) return;
-
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([20, 0], 2);
-
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom: 19,
-      attribution: "Esri, Maxar, Earthstar Geographics"
-    }
-  );
-
-  baseLayer.addTo(map);
-
-  requestAnimationFrame(() => {
-    map.invalidateSize();
-    setTimeout(() => map.invalidateSize(), 250);
-    setTimeout(() => map.invalidateSize(), 700);
-  });
-}
-    
     async function reverseGeocode(lat, lon) {
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=12&addressdetails=1`;
@@ -2646,9 +2634,9 @@
     }
 
       resetAll();
-renderTopbarUser();
-syncStoredUserToForm();
-initMapWorldView();
+    // INIT UI
+    renderTopbarUser();
+    syncStoredUserToForm();
   </script>
 </body>
 </html>
