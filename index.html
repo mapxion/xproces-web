@@ -538,6 +538,10 @@
   background: #edf2ee;
 }
 
+    #map.has-location {
+  height: 340px;
+}
+
     .footer-note {
       font-size: 12px;
       color: var(--muted);
@@ -1560,6 +1564,10 @@
       fieldOverlap.textContent = "Sin detectar";
 
       resetDetectionInfo();
+      const mapEl = document.getElementById("map");
+if (mapEl) {
+  mapEl.classList.remove("has-location");
+}
       enableUploadButton();
       setAnalysisPlaceholder();
       hideDownloadButton();
@@ -2069,7 +2077,12 @@
     }
 
     function showMap(lat, lon) {
-      mapWrap.style.display = "block";
+  mapWrap.style.display = "block";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.classList.add("has-location");
+  }
 
       if (!map) {
   map = L.map("map", {
@@ -2125,6 +2138,11 @@
     }
   );
 
+  baseLayer.on("load", function () {
+    if (!map) return;
+    map.invalidateSize(true);
+  });
+
   baseLayer.on("tileerror", function () {
     if (!map) return;
 
@@ -2141,30 +2159,27 @@
     );
 
     baseLayer.addTo(map);
-    map.invalidateSize();
-    baseLayer.redraw();
+
+    setTimeout(() => {
+      if (!map) return;
+      map.invalidateSize(true);
+      if (baseLayer) baseLayer.redraw();
+    }, 200);
   });
 
   baseLayer.addTo(map);
   map.setView([20, 0], 2);
 
-  setTimeout(() => {
+  const forceMapRefresh = () => {
     if (!map) return;
-    map.invalidateSize();
+    map.invalidateSize(true);
     if (baseLayer) baseLayer.redraw();
-  }, 300);
+  };
 
-  setTimeout(() => {
-    if (!map) return;
-    map.invalidateSize();
-    if (baseLayer) baseLayer.redraw();
-  }, 1000);
-
-  setTimeout(() => {
-    if (!map) return;
-    map.invalidateSize();
-    if (baseLayer) baseLayer.redraw();
-  }, 2000);
+  requestAnimationFrame(forceMapRefresh);
+  setTimeout(forceMapRefresh, 200);
+  setTimeout(forceMapRefresh, 600);
+  setTimeout(forceMapRefresh, 1200);
 }
     
     async function reverseGeocode(lat, lon) {
