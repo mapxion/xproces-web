@@ -218,43 +218,51 @@
 
     .dataset-label {
       color: var(--muted);
-      font-size: 1px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.0em;
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
     }
 
     .dataset-value {
       color: var(--text);
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.35;
       word-break: break-word;
       white-space: pre-line;
     }
 
     .dataset-highlight {
       display: none;
-      margin-bottom: 0;
+      justify-content: center;
+      margin-bottom: 18px;
     }
 
     .dataset-highlight-badge {
-      display: block;
-      min-height: auto;
-      padding: 0;
-      border: none;
-      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 163, 74, 0.24);
+      background: rgba(34, 163, 74, 0.08);
       color: var(--ok);
-      font-size: 14px;
-      font-weight: 700;
-      text-align: left;
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
     }
 
     .dataset-highlight-badge.warn {
+      border-color: rgba(212, 154, 17, 0.24);
+      background: rgba(212, 154, 17, 0.08);
       color: var(--warning);
     }
 
     .dataset-highlight-badge.bad {
+      border-color: rgba(212, 85, 85, 0.24);
+      background: rgba(212, 85, 85, 0.08);
       color: var(--danger);
     }
 
@@ -795,12 +803,13 @@
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item full" id="itemLocation" style="display:none;">
+                  <div class="dataset-item full">
                     <div class="dataset-label">Ubicación</div>
                     <div class="dataset-value" id="fieldLocation">Sin detectar</div>
                   </div>
+                </div>
 
-                <div class="dataset-item full" id="datasetHighlight" style="display:none; background:transparent; border:none; padding:0; min-height:auto;">
+                <div class="dataset-highlight" id="datasetHighlight">
                   <div class="dataset-highlight-badge" id="datasetHighlightBadge">
                     Dataset válido para fotogrametría
                   </div>
