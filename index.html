@@ -2661,12 +2661,14 @@ syncStoredUserToForm();
 window.addEventListener("load", () => {
   initMapWorldView();
 
-  setTimeout(() => {
-    if (map) {
-      map.invalidateSize(true);
-      if (baseLayer) baseLayer.redraw();
-    }
-  }, 500);
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      if (map) {
+        map.invalidateSize(true);
+        if (baseLayer) baseLayer.redraw();
+      }
+    }, 300);
+  });
 });
   </script>
 </body>
