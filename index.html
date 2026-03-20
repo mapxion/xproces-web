@@ -531,11 +531,15 @@
 
     #map {
   width: 100%;
-  height: 260px;
+  height: 226px;
   border-radius: 18px;
   border: 1px solid var(--border);
   overflow: hidden;
   background: #edf2ee;
+}
+
+    #map.has-location {
+  height: 640px;
 }
 
     .footer-note {
@@ -1562,14 +1566,7 @@
       resetDetectionInfo();
       const mapEl = document.getElementById("map");
 if (mapEl) {
-  mapEl.style.height = "260px";
-}
-
-if (map) {
-  setTimeout(() => {
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 150);
+  mapEl.classList.remove("has-location");
 }
       enableUploadButton();
       setAnalysisPlaceholder();
@@ -2080,66 +2077,108 @@ if (map) {
     }
 
     function showMap(lat, lon, zoom = 16, addMarker = true) {
-  mapWrap.style.display = "block";
+      mapWrap.style.display = "block";
 
-  const mapEl = document.getElementById("map");
-  if (mapEl) {
-    mapEl.style.height = addMarker ? "340px" : "260px";
-  }
-
-  if (!map) {
-    map = L.map("map", {
-      zoomControl: true,
-      preferCanvas: true
-    });
-
-    baseLayer = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 19,
-        attribution: "Esri, Maxar, Earthstar Geographics"
+      const mapEl = document.getElementById("map");
+      if (mapEl) {
+        mapEl.style.height = addMarker ? "340px" : "260px";
       }
-    );
 
-    baseLayer.on("tileerror", function () {
-      jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
-    });
+      if (!map) {
+        map = L.map("map", {
+          zoomControl: true
+        });
 
-    baseLayer.addTo(map);
-  }
+        baseLayer = L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          {
+            maxZoom: 19,
+            attribution: "Esri, Maxar, Earthstar Geographics"
+          }
+        );
 
-  if (marker) {
-    map.removeLayer(marker);
-    marker = null;
-  }
+        baseLayer.on("tileerror", function () {
+          jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
+        });
 
-  if (addMarker) {
-    marker = L.marker([lat, lon]).addTo(map);
-  }
+        baseLayer.addTo(map);
+      }
 
-  map.setView([lat, lon], zoom);
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
 
-  setTimeout(() => {
+      if (addMarker) {
+        marker = L.marker([lat, lon]).addTo(map);
+      }
+
+      map.setView([lat, lon], zoom);
+
+      const refreshMap = () => {
+        if (!map) return;
+        map.invalidateSize(true);
+        if (baseLayer) baseLayer.redraw();
+      };
+
+      requestAnimationFrame(refreshMap);
+      setTimeout(refreshMap, 200);
+      setTimeout(refreshMap, 700);
+      setTimeout(refreshMap, 1400);
+    }
+
+    function initMapWorldView() {
+      if (map) return;
+
+      setTimeout(() => {
+        if (!map) {
+          showMap(40.4168, -3.7038, 4, false);
+        }
+      }, 150);
+    }
+
+  map = L.map("map", {
+    zoomControl: true,
+    preferCanvas: true
+  });
+
+  baseLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Esri, Maxar, Earthstar Geographics"
+    }
+  );
+
+  baseLayer._xprocesType = "satellite";
+
+  baseLayer.on("load", function () {
+    if (!map) return;
     map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 200);
+  });
 
-  setTimeout(() => {
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 700);
+  baseLayer.on("tileerror", function () {
+    jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
+  });
 
-  setTimeout(() => {
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 1400);
+  baseLayer.addTo(map);
+
+  // Centro inicial: España, zoom lejano
+  map.setView([40.4168, -3.7038], 4);
+
+  forceInitialMapRender();
 }
 
-     function initMapWorldView() {
-  if (map) return;
+  const forceMapRefresh = () => {
+    if (!map) return;
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  };
 
-  // España, zoom lejano, sin marcador
-  showMap(40.4168, -3.7038, 4, false);
+  requestAnimationFrame(forceMapRefresh);
+  setTimeout(forceMapRefresh, 200);
+  setTimeout(forceMapRefresh, 600);
+  setTimeout(forceMapRefresh, 1200);
 }
     
     async function reverseGeocode(lat, lon) {
