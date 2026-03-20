@@ -205,66 +205,60 @@
     }
 
     .dataset-item {
-      background: rgba(255,255,255,0.8);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 9px 11px;
-      min-height: 56px;
-    }
+  background: rgba(255,255,255,0.8);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  min-height: 48px;
+}
 
     .dataset-item.full {
       grid-column: 1 / -1;
     }
 
     .dataset-label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 7px;
-    }
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
 
     .dataset-value {
-      color: var(--text);
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.35;
-      word-break: break-word;
-      white-space: pre-line;
-    }
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  word-break: break-word;
+  white-space: pre-line;
+}
 
     .dataset-highlight {
-      display: none;
-      justify-content: center;
-      margin-bottom: 18px;
-    }
+  display: none;
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
 
-    .dataset-highlight-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 50px;
-      padding: 12px 20px;
-      border-radius: 999px;
-      border: 1px solid rgba(34, 163, 74, 0.24);
-      background: rgba(34, 163, 74, 0.08);
-      color: var(--ok);
-      font-size: 17px;
-      font-weight: bold;
-      text-align: center;
-    }
+   .dataset-highlight-badge {
+  display: block;
+  min-height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ok);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
 
     .dataset-highlight-badge.warn {
-      border-color: rgba(212, 154, 17, 0.24);
-      background: rgba(212, 154, 17, 0.08);
-      color: var(--warning);
-    }
+  color: var(--warning);
+}
 
     .dataset-highlight-badge.bad {
-      border-color: rgba(212, 85, 85, 0.24);
-      background: rgba(212, 85, 85, 0.08);
-      color: var(--danger);
-    }
+  color: var(--danger);
+}
 
     .actions {
       display: flex;
@@ -803,17 +797,22 @@
                     <div class="dataset-value" id="fieldOverlap">Sin detectar</div>
                   </div>
 
-                  <div class="dataset-item full">
-                    <div class="dataset-label">Ubicación</div>
-                    <div class="dataset-value" id="fieldLocation">Sin detectar</div>
-                  </div>
+                  <div class="dataset-item full" style="display:none;">
+  <div class="dataset-label">Ubicación</div>
+  <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+</div>
                 </div>
 
-                <div class="dataset-highlight" id="datasetHighlight">
-                  <div class="dataset-highlight-badge" id="datasetHighlightBadge">
-                    Dataset válido para fotogrametría
-                  </div>
-                </div>
+                <div class="dataset-item full" style="display:none;">
+  <div class="dataset-label">Ubicación</div>
+  <div class="dataset-value" id="fieldLocation">Sin detectar</div>
+</div>
+
+<div class="dataset-highlight" id="datasetHighlight">
+  <div class="dataset-highlight-badge" id="datasetHighlightBadge">
+    Dataset válido para fotogrametría
+  </div>
+</div>
 
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
