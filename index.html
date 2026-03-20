@@ -840,7 +840,6 @@
             <div class="price-time-box">
               <div class="price-time-header">
                 <div class="price-time-title">Precio y tiempo</div>
-                <div class="price-time-badge">Listo</div>
               </div>
 
               <div class="price-time-grid">
@@ -2084,16 +2083,16 @@
       mapWrap.style.display = "block";
 
       if (!map) {
-        map = L.map("map", {
-          zoomControl: true
-        }).setView([lat, lon], 16);
+  map = L.map("map", {
+    zoomControl: true
+  }).setView([lat, lon], 16);
 
-        baseLayer = L.tileLayer(
-          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  baseLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
           {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap"
-          }
+  maxZoom: 19,
+  attribution: "Esri, Maxar, Earthstar Geographics"
+}
         );
 
         baseLayer.on("tileerror", function () {
@@ -2121,6 +2120,24 @@
       }, 800);
     }
 
+     function initMapWorldView() {
+  if (map) return;
+
+  map = L.map("map", {
+    zoomControl: true
+  }).setView([20, 0], 2);
+
+  baseLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Esri, Maxar, Earthstar Geographics"
+    }
+  );
+
+  baseLayer.addTo(map);
+}
+    
     async function reverseGeocode(lat, lon) {
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=12&addressdetails=1`;
@@ -2634,9 +2651,9 @@
     }
 
       resetAll();
-    // INIT UI
-    renderTopbarUser();
-    syncStoredUserToForm();
+renderTopbarUser();
+syncStoredUserToForm();
+initMapWorldView();
   </script>
 </body>
 </html>
