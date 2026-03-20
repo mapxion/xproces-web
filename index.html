@@ -2079,18 +2079,19 @@ if (map) {
       return dec;
     }
 
-    function showMap(lat, lon) {
+    function showMap(lat, lon, zoom = 16, addMarker = true) {
   mapWrap.style.display = "block";
 
   const mapEl = document.getElementById("map");
   if (mapEl) {
-    mapEl.style.height = "340px";
+    mapEl.style.height = addMarker ? "340px" : "260px";
   }
 
   if (!map) {
     map = L.map("map", {
-      zoomControl: true
-    }).setView([lat, lon], 16);
+      zoomControl: true,
+      preferCanvas: true
+    });
 
     baseLayer = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -2109,10 +2110,14 @@ if (map) {
 
   if (marker) {
     map.removeLayer(marker);
+    marker = null;
   }
 
-  marker = L.marker([lat, lon]).addTo(map);
-  map.setView([lat, lon], 16);
+  if (addMarker) {
+    marker = L.marker([lat, lon]).addTo(map);
+  }
+
+  map.setView([lat, lon], zoom);
 
   setTimeout(() => {
     map.invalidateSize(true);
@@ -2123,46 +2128,18 @@ if (map) {
     map.invalidateSize(true);
     if (baseLayer) baseLayer.redraw();
   }, 700);
+
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 1400);
 }
 
      function initMapWorldView() {
   if (map) return;
 
-  const mapEl = document.getElementById("map");
-  if (mapEl) {
-    mapEl.style.height = "260px";
-  }
-
-  map = L.map("map", {
-    zoomControl: true,
-    preferCanvas: true
-  });
-
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom: 19,
-      attribution: "Esri, Maxar, Earthstar Geographics"
-    }
-  );
-
-  baseLayer.on("tileerror", function () {
-    jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
-  });
-
-  baseLayer.addTo(map);
-  map.setView([40.4168, -3.7038], 4);
-
-  const forceMapRefresh = () => {
-    if (!map) return;
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  };
-
-  requestAnimationFrame(forceMapRefresh);
-  setTimeout(forceMapRefresh, 200);
-  setTimeout(forceMapRefresh, 700);
-  setTimeout(forceMapRefresh, 1400);
+  // España, zoom lejano, sin marcador
+  showMap(40.4168, -3.7038, 4, false);
 }
     
     async function reverseGeocode(lat, lon) {
