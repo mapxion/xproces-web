@@ -2262,7 +2262,21 @@
       }
     });
 
-    uploadBtn.addEventListener("click", upload);
+    uploadBtn.addEventListener("click", async () => {
+      const currentUser = getStoredUser();
+
+      if (!currentUser || !currentUser.email) {
+        await showInfoModal(
+          "Debe iniciar sesión",
+          "Acceso requerido",
+          "Debe iniciar sesión antes de proseguir.",
+          "warning"
+        );
+        return;
+      }
+
+      await upload();
+    });
 
     async function createJob() {
       const response = await fetch(`${API_BASE}/jobs`, {
@@ -2466,6 +2480,18 @@
     }
 
     async function upload() {
+
+        const currentUser = getStoredUser();
+
+        if (!currentUser || !currentUser.email) {
+          await showInfoModal(
+            "Debe iniciar sesión",
+            "Acceso requerido",
+            "Debe iniciar sesión antes de proseguir.",
+            "warning"
+          );
+          return;
+        }
       if (files.length === 0) {
         await showInfoModal(
           "No hay fotos seleccionadas",
