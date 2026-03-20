@@ -851,7 +851,7 @@
                 </div>
 
                 <div class="price-card">
-                  <div class="price-card-label">Tiempo</div>
+                  <div class="price-card-label">Tiempo estimado</div>
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
@@ -2404,9 +2404,15 @@
           updateProcessStages(job);
 
           if (status === "queued" || status === "running") {
+            const eta = await getJobEta(job.id);
+
+            if (eta && eta.ok) {
+              etaBig.textContent = eta.total_estimated_human || "No disponible";
+            }
+
             jobStatusEl.textContent = await buildQueuedOrRunningMessage(job);
           } else {
-            jobStatusEl.textContent = `Job ${job.id}\nEstado: ${status}\n${message}`;
+            jobStatusEl.textContent = `Trabajo ${job.id}\nEstado: ${translateStatus(status)}\n${message}`;
           }
 
           if (status === "done") {
