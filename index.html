@@ -2119,10 +2119,20 @@ if (map) {
 
   map.setView([lat, lon], zoom);
 
-    setTimeout(() => {
+  setTimeout(() => {
     map.invalidateSize(true);
     if (baseLayer) baseLayer.redraw();
-  }, 250);
+  }, 200);
+
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 700);
+
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 1400);
 }
 
      function initMapWorldView() {
@@ -2649,10 +2659,7 @@ renderTopbarUser();
 syncStoredUserToForm();
 
 window.addEventListener("load", () => {
-  setTimeout(() => {
-    initMapWorldView();
-  }, 900);
-});
+  initMapWorldView();
 
   requestAnimationFrame(() => {
     setTimeout(() => {
