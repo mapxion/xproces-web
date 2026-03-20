@@ -531,15 +531,11 @@
 
     #map {
   width: 100%;
-  height: 226px;
+  height: 260px;
   border-radius: 18px;
   border: 1px solid var(--border);
   overflow: hidden;
   background: #edf2ee;
-}
-
-    #map.has-location {
-  height: 640px;
 }
 
     .footer-note {
@@ -1566,7 +1562,14 @@
       resetDetectionInfo();
       const mapEl = document.getElementById("map");
 if (mapEl) {
-  mapEl.classList.remove("has-location");
+  mapEl.style.height = "260px";
+}
+
+if (map) {
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 150);
 }
       enableUploadButton();
       setAnalysisPlaceholder();
@@ -2081,46 +2084,46 @@ if (mapEl) {
 
   const mapEl = document.getElementById("map");
   if (mapEl) {
-    mapEl.classList.add("has-location");
+    mapEl.style.height = "340px";
   }
 
-      if (!map) {
-  map = L.map("map", {
-    zoomControl: true
-  }).setView([lat, lon], 16);
+  if (!map) {
+    map = L.map("map", {
+      zoomControl: true
+    }).setView([lat, lon], 16);
 
-  baseLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          {
-  maxZoom: 19,
-  attribution: "Esri, Maxar, Earthstar Geographics"
+    baseLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 19,
+        attribution: "Esri, Maxar, Earthstar Geographics"
+      }
+    );
+
+    baseLayer.on("tileerror", function () {
+      jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
+    });
+
+    baseLayer.addTo(map);
+  }
+
+  if (marker) {
+    map.removeLayer(marker);
+  }
+
+  marker = L.marker([lat, lon]).addTo(map);
+  map.setView([lat, lon], 16);
+
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 200);
+
+  setTimeout(() => {
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  }, 700);
 }
-        );
-
-        baseLayer.on("tileerror", function () {
-          jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
-        });
-
-        baseLayer.addTo(map);
-      }
-
-      if (marker) {
-        map.removeLayer(marker);
-      }
-
-      marker = L.marker([lat, lon]).addTo(map);
-      map.setView([lat, lon], 16);
-
-      setTimeout(() => {
-        map.invalidateSize();
-        if (baseLayer) baseLayer.redraw();
-      }, 300);
-
-      setTimeout(() => {
-        map.invalidateSize();
-        if (baseLayer) baseLayer.redraw();
-      }, 800);
-    }
 
      function initMapWorldView() {
   if (map) return;
@@ -2143,24 +2146,12 @@ if (mapEl) {
     }
   );
 
-  baseLayer._xprocesType = "satellite";
-
-  baseLayer.on("load", function () {
-    if (!map) return;
-    map.invalidateSize(true);
-  });
-
   baseLayer.on("tileerror", function () {
     jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
   });
 
   baseLayer.addTo(map);
-
-  // Centro inicial: España, zoom lejano
   map.setView([40.4168, -3.7038], 4);
-
-  forceInitialMapRender();
-}
 
   const forceMapRefresh = () => {
     if (!map) return;
@@ -2170,8 +2161,8 @@ if (mapEl) {
 
   requestAnimationFrame(forceMapRefresh);
   setTimeout(forceMapRefresh, 200);
-  setTimeout(forceMapRefresh, 600);
-  setTimeout(forceMapRefresh, 1200);
+  setTimeout(forceMapRefresh, 700);
+  setTimeout(forceMapRefresh, 1400);
 }
     
     async function reverseGeocode(lat, lon) {
