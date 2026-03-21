@@ -1422,10 +1422,6 @@
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
-
-              <div class="selected-quality-row" style="display:none;">
-                <div class="selected-quality-badge" id="selectedQualityBadge">Modo seleccionado: Normal</div>
-              </div>
             </div>
           </div>
         </div>
@@ -1437,6 +1433,10 @@
             <div class="job-status-box">
               <div class="job-status-header">
                 <div class="job-status-title">Estado del procesado</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span id="processProjectName" class="user-pill" style="display:none;">Proyecto: —</span>
+                  <button class="btn btn-secondary" id="newProjectBtn" type="button" style="display:none;">Iniciar otro proyecto</button>
+                </div>
               </div>
 
               <div class="process-stage-wrap" id="processStageWrap">
@@ -1580,6 +1580,7 @@
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
+    let activeProcessLocked = false;
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
@@ -1611,7 +1612,10 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const processProjectName = document.getElementById("processProjectName");
+    const newProjectBtn = document.getElementById("newProjectBtn");
     const uploadActions = document.getElementById("uploadActions");
+    const uploadPanel = document.getElementById("uploadPanel");
     const datasetPanel = document.getElementById("datasetPanel");
     const processStartWrap = document.getElementById("processStartWrap");
     const projectNameInput = document.getElementById("projectName");
@@ -1672,6 +1676,7 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (activeProcessLocked) return;
         setSelectedQualityMode(btn.dataset.qualityMode || "normal", true);
       });
     });
@@ -1680,6 +1685,7 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (activeProcessLocked) return;
         setSelectedOutputMode(btn.dataset.outputMode || "preset");
         refreshPricingPreviewDebounced();
       });
@@ -1689,6 +1695,7 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (activeProcessLocked) return;
         if (getSelectedOutputMode() !== "preset") {
           setSelectedOutputMode("preset");
         }
@@ -1703,6 +1710,7 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (activeProcessLocked) return;
         if (getSelectedOutputMode() !== "manual") {
           setSelectedOutputMode("manual");
         }
@@ -1741,6 +1749,85 @@
 
       updateOutputsModeNote();
       updateProcessSelectionSummary();
+    }
+
+
+
+    function saveActiveJobState(jobId, projectName) {
+      try {
+        localStorage.setItem("xproces_active_job_id", jobId || "");
+        localStorage.setItem("xproces_active_project_name", projectName || "");
+      } catch (_) {}
+    }
+
+    function clearActiveJobState() {
+      try {
+        localStorage.removeItem("xproces_active_job_id");
+        localStorage.removeItem("xproces_active_project_name");
+      } catch (_) {}
+    }
+
+    function getSavedActiveJobState() {
+      try {
+        return {
+          jobId: localStorage.getItem("xproces_active_job_id") || "",
+          projectName: localStorage.getItem("xproces_active_project_name") || ""
+        };
+      } catch (_) {
+        return { jobId: "", projectName: "" };
+      }
+    }
+
+    function updateProcessOnlyView(isActive) {
+      if (uploadPanel) uploadPanel.style.display = isActive ? "none" : "block";
+      if (datasetPanel) datasetPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (pricingPanel) pricingPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (mapWrap) mapWrap.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (processPanel) processPanel.style.display = isActive ? "block" : (files.length ? "block" : "none");
+
+      if (!isActive && mainLayout) {
+        if (files.length) {
+          mainLayout.classList.add("with-data");
+        } else {
+          mainLayout.classList.remove("with-data");
+        }
+      }
+    }
+
+    function setUiLockedAfterStart(isLocked) {
+      activeProcessLocked = isLocked;
+
+      document.querySelectorAll(".quality-mode-btn, .output-mode-btn, [data-preset], [data-output]").forEach((el) => {
+        el.disabled = isLocked;
+        el.style.pointerEvents = isLocked ? "none" : "";
+        el.style.opacity = isLocked ? "0.6" : "";
+      });
+
+      if (clearBtn) {
+        clearBtn.disabled = isLocked;
+        clearBtn.style.pointerEvents = isLocked ? "none" : "";
+        clearBtn.style.opacity = isLocked ? "0.6" : "";
+      }
+
+      if (uploadBtn) {
+        uploadBtn.disabled = isLocked;
+      }
+    }
+
+    function goToNewProjectHome() {
+      clearActiveJobState();
+      resetAll();
+      if (processProjectName) {
+        processProjectName.style.display = "none";
+        processProjectName.textContent = "Proyecto: —";
+      }
+      if (newProjectBtn) {
+        newProjectBtn.style.display = "none";
+      }
+      setUiLockedAfterStart(false);
+      updateProcessOnlyView(false);
+      updateProcessOnlyView(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function getSelectedPreset() {
@@ -1994,6 +2081,12 @@ function getSelectedQualityMode() {
         clearStoredUser();
         renderTopbarUser();
       });
+
+      if (newProjectBtn) {
+        newProjectBtn.addEventListener("click", () => {
+          goToNewProjectHome();
+        });
+      }
     }
 
     function formatBytes(bytes) {
@@ -2429,7 +2522,15 @@ function getSelectedQualityMode() {
       latestExifSummary = {};
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
+      activeProcessLocked = false;
       fileInput.value = "";
+      if (processProjectName) {
+        processProjectName.style.display = "none";
+        processProjectName.textContent = "Proyecto: —";
+      }
+      if (newProjectBtn) {
+        newProjectBtn.style.display = "none";
+      }
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
       dropSubtitle.textContent =
@@ -2469,6 +2570,7 @@ function getSelectedQualityMode() {
       setAnalysisPlaceholder();
       jobStatusEl.textContent = "Puede subir otra selección manteniendo la calidad y los archivos de salida elegidos.";
       enableUploadButton();
+      setUiLockedAfterStart(false);
     }
 
     function resetAll() {
@@ -3242,6 +3344,10 @@ if (map) {
     });
 
     clearBtn.addEventListener("click", async () => {
+      if (activeProcessLocked) {
+        return;
+      }
+
       if (files.length === 0) {
         return;
       }
