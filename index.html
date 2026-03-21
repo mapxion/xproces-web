@@ -860,6 +860,10 @@
       transition: width 0.2s ease;
     }
 
+    .progress-fill.error {
+      background: linear-gradient(90deg, #ff7a7a, #ff5252);
+    }
+
     .status {
       color: var(--text);
       min-height: 92px;
@@ -2568,6 +2572,7 @@ if (map) {
 
       progressWrap.style.display = "none";
       progressFill.style.width = "0%";
+      progressFill.classList.remove("error");
       progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
       progressLabel.textContent = "Subiendo...";
       progressPercent.textContent = "0%";
@@ -3415,6 +3420,26 @@ if (map) {
       }
     }
 
+
+    function buildProjectStatusText(job) {
+      const status = String(job?.status ?? "").toLowerCase();
+      const stage = String(job?.stage ?? "");
+      const message = String(job?.message ?? "").trim();
+      const lines = [];
+
+      if (status === "failed") lines.push("Estado: Fallido");
+      else if (status === "cancelled") lines.push("Estado: Cancelado");
+      else if (status === "completed") lines.push("Estado: Completado");
+      else if (status === "queued") lines.push("Estado: En cola");
+      else if (status === "running") lines.push("Estado: Procesando");
+      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
+
+      if (stage) lines.push(`Fase: ${stage}`);
+      if (message) lines.push(message);
+
+      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
+    }
+
     async function buildQueuedOrRunningMessage(job) {
       const eta = await getJobEta(job.id);
 
@@ -3459,7 +3484,12 @@ if (map) {
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-          progressLabel.textContent = `Estado: ${status}`;
+          progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
+          if (status === "failed") progressLabel.textContent = "Fallido";
+          else if (status === "cancelled") progressLabel.textContent = "Cancelado";
+          else if (status === "completed") progressLabel.textContent = "Completado";
+          else if (status === "queued") progressLabel.textContent = "En cola";
+          else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
@@ -3471,9 +3501,9 @@ if (map) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.textContent = await buildQueuedOrRunningMessage(job);
+            jobStatusEl.textContent = buildProjectStatusText(job);
           } else {
-            jobStatusEl.textContent = `Trabajo ${job.id}\nEstado: ${translateStatus(status)}\n${message}`;
+            jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
           if (status === "done") {
@@ -3666,7 +3696,8 @@ if (map) {
 
         progressWrap.style.display = "block";
         progressFill.style.width = "0%";
-        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+        progressFill.classList.remove("error");
+      progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         progressLabel.textContent = "Creando proyecto...";
         progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
@@ -3691,20 +3722,21 @@ if (map) {
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
-        jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Subida completada. Enviando a procesado...`;
 
         await submitJob(jobId);
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Su proyecto está en cola.<br>Calculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        jobStatusEl.textContent = error.message || "Error durante la subida";
-        progressLabel.textContent = "Error";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>${error.message || "Error durante la subida"}`;
+        progressFill.classList.add("error");
+        progressLabel.textContent = "Fallido";
       }
     }
 
