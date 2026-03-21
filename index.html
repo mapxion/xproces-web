@@ -807,6 +807,15 @@
 </div>
                 </div>
 
+                
+                <div style="margin-bottom:10px; display:flex; justify-content:center;">
+                  <select id="qualityMode" style="min-height:38px; border-radius:10px; border:1px solid var(--border); padding:0 10px; font-size:13px;">
+                    <option value="fast">Rápido</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="max">Máxima calidad</option>
+                  </select>
+                </div>
+
                 <div class="actions">
                   <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
@@ -1378,7 +1387,8 @@
           },
           body: JSON.stringify({
             photos_count: photoCount,
-            total_bytes: totalBytes
+            total_bytes: totalBytes,
+            quality_mode: document.getElementById("qualityMode")?.value || "normal"
           })
         });
 
@@ -2309,7 +2319,8 @@ if (map) {
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
-  user_id: getStoredUser()?.id || null
+  user_id: getStoredUser()?.id || null,
+  quality_mode: document.getElementById("qualityMode")?.value || "normal"
 })
       });
 
