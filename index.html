@@ -531,11 +531,15 @@
 
     #map {
   width: 100%;
-  height: 220px;
+  height: 226px;
   border-radius: 18px;
   border: 1px solid var(--border);
   overflow: hidden;
   background: #edf2ee;
+}
+
+    #map.has-location {
+  height: 640px;
 }
 
     .footer-note {
@@ -889,7 +893,7 @@
 
 <div class="panel" id="mapWrap">
           <div class="panel-inner">
-            <div class="dataset-label" style="margin-bottom: 10px;">Mapa</div>
+            <div class="dataset-label" style="margin-bottom: 10px;">Situación de la toma de datos</div>
             <div id="map"></div>
           </div>
         </div>
@@ -1560,6 +1564,10 @@
       fieldOverlap.textContent = "Sin detectar";
 
       resetDetectionInfo();
+      const mapEl = document.getElementById("map");
+if (mapEl) {
+  mapEl.classList.remove("has-location");
+}
       enableUploadButton();
       setAnalysisPlaceholder();
       hideDownloadButton();
@@ -2069,7 +2077,12 @@
     }
 
     function showMap(lat, lon) {
-      mapWrap.style.display = "block";
+  mapWrap.style.display = "block";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.classList.add("has-location");
+  }
 
       if (!map) {
   map = L.map("map", {
@@ -2112,9 +2125,15 @@
      function initMapWorldView() {
   if (map) return;
 
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.style.height = "260px";
+  }
+
   map = L.map("map", {
-    zoomControl: true
-  }).setView([20, 0], 2);
+    zoomControl: true,
+    preferCanvas: true
+  });
 
   baseLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -2124,13 +2143,35 @@
     }
   );
 
+  baseLayer._xprocesType = "satellite";
+
+  baseLayer.on("load", function () {
+    if (!map) return;
+    map.invalidateSize(true);
+  });
+
+  baseLayer.on("tileerror", function () {
+    jobStatusEl.textContent = "El mapa base no ha cargado correctamente";
+  });
+
   baseLayer.addTo(map);
 
-  requestAnimationFrame(() => {
-    map.invalidateSize();
-    setTimeout(() => map.invalidateSize(), 250);
-    setTimeout(() => map.invalidateSize(), 700);
-  });
+  // Centro inicial: España, zoom lejano
+  map.setView([40.4168, -3.7038], 4);
+
+  forceInitialMapRender();
+}
+
+  const forceMapRefresh = () => {
+    if (!map) return;
+    map.invalidateSize(true);
+    if (baseLayer) baseLayer.redraw();
+  };
+
+  requestAnimationFrame(forceMapRefresh);
+  setTimeout(forceMapRefresh, 200);
+  setTimeout(forceMapRefresh, 600);
+  setTimeout(forceMapRefresh, 1200);
 }
     
     async function reverseGeocode(lat, lon) {
@@ -2648,7 +2689,20 @@
       resetAll();
 renderTopbarUser();
 syncStoredUserToForm();
-initMapWorldView();
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    initMapWorldView();
+
+    setTimeout(() => {
+      if (map) {
+        map.invalidateSize(true);
+        if (baseLayer) baseLayer.redraw();
+      }
+      window.dispatchEvent(new Event("resize"));
+    }, 300);
+  }, 600);
+});
   </script>
 </body>
 </html>
