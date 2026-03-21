@@ -260,6 +260,50 @@
   color: var(--danger);
 }
 
+
+    .quality-mode-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .quality-mode-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(24, 33, 29, 0.05);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .quality-mode-btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .quality-mode-btn:hover {
+      background: #f4f7f3;
+      color: var(--text);
+    }
+
+    .quality-mode-btn.active {
+      background: var(--accent);
+      color: #18210e;
+      border-color: rgba(158, 224, 0, 0.5);
+    }
+
     .actions {
       display: flex;
       justify-content: center;
@@ -808,12 +852,13 @@
                 </div>
 
                 
-                <div style="margin-bottom:10px; display:flex; justify-content:center;">
-                  <select id="qualityMode" style="min-height:38px; border-radius:10px; border:1px solid var(--border); padding:0 10px; font-size:13px;">
-                    <option value="fast">Rápido</option>
-                    <option value="normal" selected>Normal</option>
-                    <option value="max">Máxima calidad</option>
-                  </select>
+                <div class="quality-mode-wrap">
+                  <div class="quality-mode-group" role="group" aria-label="Calidad de procesado">
+                    <input id="qualityMode" type="hidden" value="normal" />
+                    <button class="quality-mode-btn" type="button" data-quality-mode="fast">Rápido</button>
+                    <button class="quality-mode-btn active" type="button" data-quality-mode="normal">Normal</button>
+                    <button class="quality-mode-btn" type="button" data-quality-mode="max">Máxima calidad</button>
+                  </div>
                 </div>
 
                 <div class="actions">
@@ -1040,6 +1085,7 @@
     const processDownloadBtn = document.getElementById("processDownloadBtn");
 
     const mapWrap = document.getElementById("mapWrap");
+    const qualityModeInput = document.getElementById("qualityMode");
 
     const modalBackdrop = document.getElementById("modalBackdrop");
     const modalBox = document.getElementById("modalBox");
@@ -1064,6 +1110,28 @@
 
 
     let authMode = "login";
+
+
+    function getSelectedQualityMode() {
+      return qualityModeInput?.value || "normal";
+    }
+
+    function setSelectedQualityMode(mode, refresh = true) {
+      const normalized =
+        mode === "fast" || mode === "normal" || mode === "max" ? mode : "normal";
+
+      if (qualityModeInput) {
+        qualityModeInput.value = normalized;
+      }
+
+      document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.qualityMode === normalized);
+      });
+
+      if (refresh) {
+        refreshPricingPreviewDebounced();
+      }
+    }
 
     function getStoredUser() {
       try {
@@ -1138,7 +1206,16 @@
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
-        renderTopbarUser();
+    
+    document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setSelectedQualityMode(btn.dataset.qualityMode || "normal", true);
+      });
+    });
+
+    setSelectedQualityMode("normal", false);
+
+    renderTopbarUser();
       });
     }
 
@@ -1387,8 +1464,7 @@
           },
           body: JSON.stringify({
             photos_count: photoCount,
-            total_bytes: totalBytes,
-            quality_mode: document.getElementById("qualityMode")?.value || "normal"
+            total_bytes: totalBytes
           })
         });
 
@@ -2319,8 +2395,7 @@ if (map) {
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
-  user_id: getStoredUser()?.id || null,
-  quality_mode: document.getElementById("qualityMode")?.value || "normal"
+  user_id: getStoredUser()?.id || null
 })
       });
 
