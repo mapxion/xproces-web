@@ -1188,7 +1188,20 @@
     let authMode = "login";
 
 
-    function getSelectedQualityMode() {
+    
+    // INIT botones calidad
+    document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedQualityMode(btn.dataset.qualityMode || "normal", true);
+      });
+    });
+
+    setSelectedQualityMode("normal", false);
+
+
+function getSelectedQualityMode() {
       return qualityModeInput?.value || "normal";
     }
 
@@ -1282,18 +1295,7 @@
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
-    
-    document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedQualityMode(btn.dataset.qualityMode || "normal", true);
-      });
-    });
-
-    setSelectedQualityMode("normal", false);
-
-    renderTopbarUser();
+        renderTopbarUser();
       });
     }
 
