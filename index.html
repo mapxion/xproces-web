@@ -867,6 +867,18 @@
       font-size: 14px;
     }
 
+    .process-selection-summary {
+      display: none;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: #f9fbf9;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
     .process-stage-wrap {
       display: none;
       gap: 8px;
@@ -1450,6 +1462,8 @@
                 </div>
               </div>
 
+              <div class="process-selection-summary" id="processSelectionSummary"></div>
+
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
               <div class="process-download-wrap" id="processDownloadWrap">
@@ -1675,8 +1689,12 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (getSelectedOutputMode() !== "preset") {
+          setSelectedOutputMode("preset");
+        }
         setSelectedPreset(btn.dataset.preset || "");
         updateOutputsModeNote();
+        updateProcessSelectionSummary();
         refreshPricingPreviewDebounced();
       });
     });
@@ -1717,13 +1735,17 @@
       if (presetPanel) presetPanel.style.display = normalized === "preset" ? "block" : "none";
       if (manualPanel) manualPanel.style.display = normalized === "manual" ? "block" : "none";
 
+      if (normalized === "preset" && !getSelectedPreset()) {
+        setSelectedPreset("");
+      }
+
       updateOutputsModeNote();
       updateProcessSelectionSummary();
     }
 
     function getSelectedPreset() {
       const active = document.querySelector("[data-preset].active");
-      return active?.dataset.preset || "inspection_standard";
+      return active?.dataset.preset || "";
     }
 
     function setSelectedPreset(presetName) {
@@ -1766,13 +1788,71 @@
 
     function formatQualityModeLabel(mode) {
       if (mode === "fast") return "Rápido";
+      if (mode === "normal") return "Normal";
       if (mode === "max") return "Máxima calidad";
-      return "Normal";
+      return "Sin seleccionar";
     }
 
     function updateSelectedQualityBadge() {
       if (!selectedQualityBadge) return;
       selectedQualityBadge.textContent = `Modo seleccionado: ${formatQualityModeLabel(getSelectedQualityMode())}`;
+    }
+
+
+    function getSelectedPreset() {
+      const active = document.querySelector("[data-preset].active");
+      return active?.dataset.preset || "";
+    }
+
+    function formatPresetLabel(preset) {
+      const labels = {
+        inspection_standard: "Inspección estándar",
+        inspection_tams: "TAMS",
+        web_delivery: "Web",
+        compact_delivery: "Entrega compacta"
+      };
+      return labels[preset] || "Sin seleccionar";
+    }
+
+    function formatDeliveryModeLabel(mode) {
+      if (mode === "preset") return "Paquetes recomendados";
+      if (mode === "manual") return "Selección manual";
+      return "Sin seleccionar";
+    }
+
+    function updateProcessSelectionSummary() {
+      const box = document.getElementById("processSelectionSummary");
+      if (!box) return;
+
+      const quality = getSelectedQualityMode();
+      const deliveryMode = getSelectedOutputMode();
+      const preset = getSelectedPreset();
+      const outputs = getSelectedOutputs();
+
+      const lines = [];
+
+      if (quality) {
+        lines.push(`Calidad: ${formatQualityModeLabel(quality)}`);
+      }
+
+      if (deliveryMode === "preset") {
+        lines.push(`Entrega: ${formatDeliveryModeLabel(deliveryMode)}`);
+        if (preset) {
+          lines.push(`Paquete: ${formatPresetLabel(preset)}`);
+        }
+      } else if (deliveryMode === "manual") {
+        lines.push(`Entrega: ${formatDeliveryModeLabel(deliveryMode)}`);
+        lines.push(`Selección manual: ${outputs.length ? outputs.map(formatOutputLabel).join(", ") : "Sin seleccionar"}`);
+      }
+
+      if (!lines.length) {
+        box.style.display = "none";
+        box.innerHTML = "";
+        return;
+      }
+
+      box.style.display = "block";
+      box.innerHTML = lines.join("<br>");
     }
 
 function getSelectedQualityMode() {
@@ -1831,6 +1911,7 @@ function getSelectedQualityMode() {
         btn.classList.toggle("active", normalized !== "" && btn.dataset.qualityMode === normalized);
       });
 
+      updateSelectedQualityBadge();
       updateProcessSelectionSummary();
 
       if (refresh) {
