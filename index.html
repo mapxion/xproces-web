@@ -188,32 +188,58 @@
     }
 
     .drop-subtitle {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--muted);
-  line-height: 1.45;
+  line-height: 1.4;
   white-space: pre-line;
-  min-height: 54px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   text-align: center;
 }
+
+    
+    .upload-meta {
+      display: none;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .upload-meta-item {
+      white-space: nowrap;
+    }
+
+    .upload-valid {
+      display: none;
+      justify-content: center;
+      margin-bottom: 10px;
+      color: var(--ok);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
 
     .dataset-grid {
       display: none;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
       text-align: left;
-      margin-bottom: 18px;
+      margin-bottom: 8px;
     }
 
     .dataset-item {
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.82);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 7px 10px;
-  min-height: 48px;
+  padding: 6px 9px;
+  min-height: 40px;
 }
 
     .dataset-item.full {
@@ -222,17 +248,17 @@
 
     .dataset-label {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
 }
 
     .dataset-value {
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   word-break: break-word;
   white-space: pre-line;
 }
@@ -267,7 +293,7 @@
     .quality-mode-wrap {
       display: none;
       justify-content: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .quality-mode-group {
@@ -556,14 +582,14 @@
     .outputs-wrap {
       display: none;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 8px;
     }
 
 
     .output-mode-wrap {
       display: none;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 8px;
     }
 
     .output-mode-group {
@@ -1500,6 +1526,10 @@
     const drop = document.getElementById("drop");
     const dropTitle = document.getElementById("dropTitle");
     const dropSubtitle = document.getElementById("dropSubtitle");
+    const uploadValid = document.getElementById("uploadValid");
+    const uploadMeta = document.getElementById("uploadMeta");
+    const uploadPhotosMeta = document.getElementById("uploadPhotosMeta");
+    const uploadGpsMeta = document.getElementById("uploadGpsMeta");
     const datasetGrid = document.getElementById("datasetGrid");
     const datasetHighlight = document.getElementById("datasetHighlight");
     const datasetHighlightBadge = document.getElementById("datasetHighlightBadge");
@@ -2272,6 +2302,11 @@ function getSelectedQualityMode() {
       dropSubtitle.textContent =
         "Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
+      if (uploadValid) uploadValid.style.display = "none";
+      if (uploadMeta) uploadMeta.style.display = "none";
+      if (uploadPhotosMeta) uploadPhotosMeta.textContent = "Fotos analizadas: 0";
+      if (uploadGpsMeta) uploadGpsMeta.textContent = "Extensión GPS: 0 m";
+
       datasetGrid.style.display = "none";
       hideDatasetHighlight();
 
@@ -2369,18 +2404,33 @@ if (map) {
 
     function applyDatasetVisualState(dataset) {
       if (dataset.missingExifCore || dataset.blockers.length > 0) {
-        setDatasetHighlight("Dataset no válido para procesado", "bad");
+        hideDatasetHighlight();
+        if (uploadValid) {
+          uploadValid.style.display = "flex";
+          uploadValid.style.color = "var(--danger)";
+          uploadValid.textContent = "Dataset no válido para procesado";
+        }
         disableUploadButton();
         return;
       }
 
       if (dataset.warnings.length > 0) {
-        setDatasetHighlight("Dataset con advertencias", "warn");
+        hideDatasetHighlight();
+        if (uploadValid) {
+          uploadValid.style.display = "flex";
+          uploadValid.style.color = "var(--warning)";
+          uploadValid.textContent = "Dataset con advertencias";
+        }
         enableUploadButton();
         return;
       }
 
-      setDatasetHighlight("Dataset válido para fotogrametría", "ok");
+      hideDatasetHighlight();
+      if (uploadValid) {
+        uploadValid.style.display = "flex";
+        uploadValid.style.color = "var(--ok)";
+        uploadValid.textContent = "Dataset válido para fotogrametría";
+      }
       enableUploadButton();
     }
 
@@ -2426,8 +2476,10 @@ if (map) {
         fillDatasetGrid(dataset, missionType);
         applyDatasetVisualState(dataset);
 
-        dropSubtitle.textContent =
-          `Dataset analizado\n\nFotos analizadas: ${Math.min(files.length, DATASET_SAMPLE_SIZE)}\nExtensión GPS: ${dataset.gpsSpread?.maxDistanceMeters || 0} m`;
+        dropSubtitle.textContent = "Las imágenes se han analizado correctamente.";
+        if (uploadMeta) uploadMeta.style.display = "flex";
+        if (uploadPhotosMeta) uploadPhotosMeta.textContent = `Fotos analizadas: ${Math.min(files.length, DATASET_SAMPLE_SIZE)}`;
+        if (uploadGpsMeta) uploadGpsMeta.textContent = `Extensión GPS: ${dataset.gpsSpread?.maxDistanceMeters || 0} m`;
 
         setAnalysisPlaceholder();
       } else {
