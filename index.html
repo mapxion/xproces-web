@@ -943,6 +943,14 @@
       margin-top: 16px;
     }
 
+    .process-new-project-wrap {
+      display: none;
+      justify-content: center;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
     .process-download-btn {
       display: inline-flex;
       align-items: center;
@@ -1473,6 +1481,10 @@
               <div class="process-primary-action" id="processStartWrap">
                 <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
               </div>
+
+              <div class="process-new-project-wrap" id="newProjectWrap">
+                <button class="btn btn-secondary" id="newProjectBtnBottom" type="button">Iniciar nuevo proyecto</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1814,6 +1826,22 @@
       }
     }
 
+    function updateProcessOnlyView(isActive) {
+      if (uploadPanel) uploadPanel.style.display = isActive ? "none" : "block";
+      if (datasetPanel) datasetPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (pricingPanel) pricingPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (mapWrap) mapWrap.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (processPanel) processPanel.style.display = isActive ? "block" : (files.length ? "block" : "none");
+
+      if (!isActive && mainLayout) {
+        if (files.length) {
+          mainLayout.classList.add("with-data");
+        } else {
+          mainLayout.classList.remove("with-data");
+        }
+      }
+    }
+
     function setUiLockedAfterStart(isLocked) {
       activeProcessLocked = isLocked;
 
@@ -1839,6 +1867,40 @@
       setUiLockedAfterStart(false);
       resetAll();
       showInitialProjectView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+
+    function setControlsLocked(lock) {
+      activeProcessLocked = lock;
+
+      document.querySelectorAll(".quality-mode-btn, .output-mode-btn, [data-preset], [data-output]").forEach((el) => {
+        el.disabled = lock;
+        el.style.pointerEvents = lock ? "none" : "";
+        el.style.opacity = lock ? "0.6" : "";
+      });
+
+      if (clearBtn) {
+        clearBtn.disabled = lock;
+        clearBtn.style.pointerEvents = lock ? "none" : "";
+        clearBtn.style.opacity = lock ? "0.6" : "";
+      }
+
+      if (uploadBtn) {
+        uploadBtn.disabled = lock;
+        uploadBtn.style.pointerEvents = lock ? "none" : "";
+        uploadBtn.style.opacity = lock ? "0.6" : "";
+      }
+
+      if (newProjectWrap) {
+        newProjectWrap.style.display = lock ? "flex" : "none";
+      }
+    }
+
+    function startNewProjectFlow() {
+      resetAll();
+      setControlsLocked(false);
+      if (newProjectWrap) newProjectWrap.style.display = "none";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -2079,6 +2141,11 @@ function getSelectedQualityMode() {
         document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
         document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
         document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
+    if (newProjectBtnBottom) {
+      newProjectBtnBottom.addEventListener("click", () => {
+        startNewProjectFlow();
+      });
+    }
         return;
       }
 
@@ -2601,22 +2668,15 @@ function getSelectedQualityMode() {
         "Sube las fotografías originales del dron para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
       if (mainLayout) mainLayout.classList.remove("with-data");
-      if (uploadPanel) uploadPanel.style.display = "block";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
       if (processStartWrap) processStartWrap.style.display = "none";
+      if (newProjectWrap) newProjectWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
-      if (processProjectName) {
-        processProjectName.style.display = "none";
-        processProjectName.textContent = "Proyecto: —";
-      }
-      if (newProjectBtn) {
-        newProjectBtn.style.display = "none";
-      }
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
       if (outputModeWrap) outputModeWrap.style.display = "none";
@@ -2702,7 +2762,8 @@ if (map) {
         if (uploadActions) uploadActions.style.display = "flex";
         if (pricingPanel) pricingPanel.style.display = "block";
         if (processPanel) processPanel.style.display = "block";
-        if (processStartWrap) processStartWrap.style.display = "flex";
+        if (processStartWrap) processStartWrap.style.display = activeProcessLocked ? "none" : "flex";
+        if (newProjectWrap) newProjectWrap.style.display = activeProcessLocked ? "flex" : "none";
         if (mapWrap) mapWrap.style.display = "block";
         if (qualityModeWrap) qualityModeWrap.style.display = "flex";
         if (outputsWrap) outputsWrap.style.display = "flex";
@@ -3774,6 +3835,7 @@ if (map) {
     }
 
       resetAll();
+      setControlsLocked(false);
 renderTopbarUser();
 syncStoredUserToForm();
 
