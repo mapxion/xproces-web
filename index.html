@@ -291,22 +291,14 @@
 }
 
     
-    .config-inline-row {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
-    .config-inline-label {
-      font-size: 12px;
+    .config-section-title {
+      text-align: center;
+      font-size: 11px;
       font-weight: 800;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      white-space: nowrap;
+      margin: 4px 0 6px;
     }
 
     .quality-mode-wrap {
@@ -318,8 +310,8 @@
     .quality-mode-group {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px;
+      gap: 6px;
+      padding: 6px;
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -338,9 +330,9 @@
       border-radius: 999px;
       background: linear-gradient(180deg, #ffffff 0%, #f6f8f5 100%);
       color: var(--text);
-      min-height: 40px;
-      padding: 0 16px;
-      font-size: 13px;
+      min-height: 36px;
+      padding: 0 14px;
+      font-size: 12px;
       font-weight: 800;
       cursor: pointer;
       transition: 0.2s ease;
@@ -614,8 +606,8 @@
     .output-mode-group {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px;
+      gap: 6px;
+      padding: 6px;
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -629,9 +621,9 @@
       border-radius: 999px;
       background: linear-gradient(180deg, #ffffff 0%, #f6f8f5 100%);
       color: var(--text);
-      min-height: 38px;
+      min-height: 36px;
       padding: 0 14px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       cursor: pointer;
       transition: 0.2s ease;
@@ -1238,9 +1230,9 @@
 </div>
                 </div>
 
-                <div class="config-inline-row" id="qualityInlineRow">
-                  <div class="config-inline-label">Calidad del proceso</div>
-                  <div class="quality-mode-wrap" style="display:flex; margin-bottom:0;">
+                <div class="quality-mode-wrap" id="qualityInlineRow" style="display:none;">
+              <div>
+                <div class="config-section-title">Calidad</div>
                   <div class="quality-mode-group" role="group" aria-label="Calidad de procesado">
                     <input id="qualityMode" type="hidden" value="normal" />
 
@@ -1277,9 +1269,9 @@
                   <div class="output-mode-group" role="group" aria-label="Modo de selección de archivos de salida">
                     <button class="output-mode-btn active" type="button" data-output-mode="preset">Paquetes recomendados</button>
                     <button class="output-mode-btn" type="button" data-output-mode="manual">Selección manual</button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
                 <div class="outputs-wrap" id="outputsWrap">
                   <div class="outputs-box">
