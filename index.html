@@ -3422,37 +3422,23 @@ if (map) {
 
 
     function buildProjectStatusText(job) {
-  const status = String(job?.status ?? "").toLowerCase();
-  const stage = String(job?.stage ?? "");
-  const message = String(job?.message ?? "").trim();
+      const status = String(job?.status ?? "").toLowerCase();
+      const stage = String(job?.stage ?? "");
+      const message = String(job?.message ?? "").trim();
+      const lines = [];
 
-  const lines = [];
+      if (status === "failed") lines.push("Estado: Fallido");
+      else if (status === "cancelled") lines.push("Estado: Cancelado");
+      else if (status === "completed") lines.push("Estado: Completado");
+      else if (status === "queued") lines.push("Estado: En cola");
+      else if (status === "running") lines.push("Estado: Procesando");
+      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
 
-  if (status === "failed") {
-    lines.push("Estado: Fallido");
-    if (message) {
-      lines.push("Error: " + message);
+      if (stage) lines.push(`Fase: ${stage}`);
+      if (message) lines.push(message);
+
+      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
     }
-  } else if (status === "cancelled") {
-    lines.push("Estado: Cancelado");
-  } else if (status === "completed") {
-    lines.push("Estado: Completado");
-  } else if (status === "queued") {
-    lines.push("Estado: En cola");
-  } else if (status === "running") {
-    lines.push("Estado: Procesando");
-  } else if (status) {
-    lines.push("Estado: " + status);
-  }
-
-  if (stage && status !== "failed") {
-    lines.push("Fase: " + stage);
-  }
-
-  return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>
-${lines.join("
-")}`;
-}
 
     async function buildQueuedOrRunningMessage(job) {
       const eta = await getJobEta(job.id);
