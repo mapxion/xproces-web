@@ -151,7 +151,7 @@
 
     .drop {
   width: 100%;
-  min-height: 180px;
+  min-height: 150px;
   border: 2px dashed rgba(110, 166, 0, 0.24);
   border-radius: 20px;
   display: flex;
@@ -183,7 +183,7 @@
     .drop-title {
       font-size: 24px;
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: var(--text);
     }
 
@@ -196,7 +196,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   text-align: center;
 }
 
@@ -440,7 +440,7 @@
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 6px;
     }
 
     .process-primary-action {
@@ -1098,7 +1098,7 @@
       }
 
       .drop {
-        min-height: 280px;
+        min-height: 150px;
       }
 
       .drop-title {
@@ -1106,7 +1106,7 @@
       }
 
       .drop-subtitle {
-        min-height: 100px;
+        min-height: 24px;
         font-size: 14px;
       }
 
@@ -1231,14 +1231,16 @@
   <div class="dataset-value" id="fieldLocation">Sin detectar</div>
 </div>
 
-<div class="dataset-highlight" id="datasetHighlight">
+<div class="dataset-highlight" id="datasetHighlight" style="display:none;">
   <div class="dataset-highlight-badge" id="datasetHighlightBadge">
     Dataset válido para fotogrametría
   </div>
 </div>
                 </div>
 
-                                <div class="quality-mode-wrap">
+                <div class="config-inline-row" id="qualityInlineRow">
+                  <div class="config-inline-label">Calidad del proceso</div>
+                  <div class="quality-mode-wrap" style="display:flex; margin-bottom:0;">
                   <div class="quality-mode-group" role="group" aria-label="Calidad de procesado">
                     <input id="qualityMode" type="hidden" value="normal" />
 
@@ -1277,6 +1279,7 @@
                     <button class="output-mode-btn" type="button" data-output-mode="manual">Selección manual</button>
                   </div>
                 </div>
+              </div>
 
                 <div class="outputs-wrap" id="outputsWrap">
                   <div class="outputs-box">
