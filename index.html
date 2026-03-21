@@ -496,9 +496,122 @@
 }
 
     .selected-quality-row {
-      display: flex;
+      display: none;
       justify-content: center;
       margin-top: 10px;
+    }
+
+    .outputs-wrap {
+      display: none;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .outputs-box {
+      width: 100%;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 6px 18px rgba(24, 33, 29, 0.05);
+    }
+
+    .outputs-title {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .outputs-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .output-item {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .output-btn {
+      border: 1px solid rgba(221, 229, 223, 0.95);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6f8f5 100%);
+      color: var(--text);
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s ease;
+      box-shadow: 0 2px 8px rgba(24, 33, 29, 0.04);
+    }
+
+    .output-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(24, 33, 29, 0.08);
+      background: linear-gradient(180deg, #ffffff 0%, #f3f7ef 100%);
+    }
+
+    .output-btn.active {
+      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      color: #18210e;
+      border-color: rgba(158, 224, 0, 0.55);
+      box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
+    }
+
+    .output-tooltip {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 12px);
+      transform: translateX(-50%) translateY(6px);
+      min-width: 220px;
+      max-width: 280px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(24, 33, 29, 0.96);
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: 0 16px 34px rgba(24, 33, 29, 0.22);
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.18s ease;
+      z-index: 30;
+      text-align: left;
+    }
+
+    .output-tooltip strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .output-tooltip::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      transform: translateX(-50%);
+      border-width: 7px;
+      border-style: solid;
+      border-color: rgba(24, 33, 29, 0.96) transparent transparent transparent;
+    }
+
+    .output-item:hover .output-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 760px) {
+      .output-tooltip {
+        display: none;
+      }
     }
 
     .selected-quality-badge {
@@ -958,6 +1071,49 @@
                   </div>
                 </div>
 
+
+                <div class="outputs-wrap" id="outputsWrap">
+                  <div class="outputs-box">
+                    <div class="outputs-title">Archivos de salida</div>
+                    <div class="outputs-group">
+                      <div class="output-item"><button class="output-btn active" type="button" data-output="obj">OBJ</button><div class="output-tooltip"><strong>OBJ</strong>Modelo 3D muy usado. Suele servir para abrir el resultado en muchos programas de visualización y modelado.</div></div>
+                      <div class="output-item"><button class="output-btn active" type="button" data-output="ply">PLY</button><div class="output-tooltip"><strong>PLY</strong>Formato 3D muy habitual en software técnico y de investigación. Útil para intercambio entre programas especializados.</div></div>
+                      <div class="output-item"><button class="output-btn active" type="button" data-output="las">LAS</button><div class="output-tooltip"><strong>LAS</strong>Nube de puntos para trabajo técnico, mediciones, CAD, GIS y revisión detallada de la geometría.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="laz">LAZ</button><div class="output-tooltip"><strong>LAZ</strong>Igual que LAS, pero comprimido. Ocupa menos espacio y es muy útil para entregar archivos grandes.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="e57">E57</button><div class="output-tooltip"><strong>E57</strong>Formato profesional de nube de puntos muy conocido en ingeniería y escaneado 3D.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="pts">PTS</button><div class="output-tooltip"><strong>PTS</strong>Formato sencillo de nube de puntos. Se usa para intercambio con ciertos programas de topografía y escaneado.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="pcd">PCD</button><div class="output-tooltip"><strong>PCD</strong>Formato de nube de puntos muy usado en flujos técnicos, robótica y visión artificial.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="xyz">XYZ/TXT</button><div class="output-tooltip"><strong>XYZ/TXT</strong>Listado simple de puntos con coordenadas. Útil para intercambio básico o revisiones simples.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="dxf_pointcloud">DXF nube</button><div class="output-tooltip"><strong>DXF nube</strong>Formato conocido en CAD. Puede ser útil si luego se va a abrir en software tipo AutoCAD.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="u3d">U3D</button><div class="output-tooltip"><strong>U3D</strong>Formato 3D pensado sobre todo para ciertos documentos y flujos antiguos de visualización.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="pdf_pointcloud">PDF nube</button><div class="output-tooltip"><strong>PDF nube</strong>Versión pensada para compartir una vista 3D dentro de un PDF, cuando el flujo lo permita.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="cl3">CL3</button><div class="output-tooltip"><strong>CL3</strong>Formato especializado de nube de puntos usado en ciertos entornos profesionales.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="potree">Potree</button><div class="output-tooltip"><strong>Potree</strong>Salida optimizada para visualizar la nube de puntos en web con gran fluidez.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="cesium_tiles_pointcloud">Cesium nube</button><div class="output-tooltip"><strong>Cesium nube</strong>Salida preparada para visualizar nube de puntos en entornos 3D web tipo Cesium.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="oc3">OC3</button><div class="output-tooltip"><strong>OC3</strong>Formato propio de Agisoft para ciertos flujos de visualización optimizada.</div></div>
+
+                      <div class="output-item"><button class="output-btn active" type="button" data-output="mesh_obj">Malla OBJ</button><div class="output-tooltip"><strong>Malla OBJ</strong>Modelo 3D de superficie con textura. Muy útil para mostrar la estructura como objeto 3D.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_fbx">FBX</button><div class="output-tooltip"><strong>FBX</strong>Formato muy usado en 3D, animación y visualización, compatible con muchos programas.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_stl">STL</button><div class="output-tooltip"><strong>STL</strong>Formato clásico de malla, muy conocido por impresión 3D y algunos programas de ingeniería.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dae">DAE</button><div class="output-tooltip"><strong>DAE</strong>Formato Collada. Sirve para intercambio de modelos 3D entre distintos programas.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_3ds">3DS</button><div class="output-tooltip"><strong>3DS</strong>Formato 3D clásico, útil sobre todo por compatibilidad con software antiguo.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_wrl">WRL</button><div class="output-tooltip"><strong>WRL</strong>Formato 3D antiguo pero todavía utilizable en algunos flujos concretos.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_pdf">PDF 3D</button><div class="output-tooltip"><strong>PDF 3D</strong>Modelo 3D embebido en PDF para compartir de forma sencilla con clientes.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dxf">DXF malla</button><div class="output-tooltip"><strong>DXF malla</strong>Salida de modelo 3D pensada para ciertos entornos CAD.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_ply">Malla PLY</button><div class="output-tooltip"><strong>Malla PLY</strong>Otra forma de exportar la superficie 3D para intercambio técnico.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_u3d">Malla U3D</button><div class="output-tooltip"><strong>Malla U3D</strong>Modelo 3D pensado para algunos flujos de documentación en PDF.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_cesium_tiles">Cesium malla</button><div class="output-tooltip"><strong>Cesium malla</strong>Modelo 3D optimizado para visualización web jerárquica en Cesium.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_slpk">SLPK</button><div class="output-tooltip"><strong>SLPK</strong>Paquete de escena 3D usado sobre todo en ecosistemas ESRI/ArcGIS.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="mesh_osgb">OSGB</button><div class="output-tooltip"><strong>OSGB</strong>Formato de escena 3D optimizada usado en algunos visores y flujos geoespaciales.</div></div>
+
+                      <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_tif">Ortomosaico TIFF</button><div class="output-tooltip"><strong>Ortomosaico TIFF</strong>Imagen corregida geométricamente, útil cuando se necesita una vista cenital precisa.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_jpg">Ortomosaico JPG</button><div class="output-tooltip"><strong>Ortomosaico JPG</strong>Versión más ligera del ortomosaico, buena para consulta rápida o entrega sencilla.</div></div>
+                      <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DEM/DSM TIFF</button><div class="output-tooltip"><strong>DEM/DSM TIFF</strong>Modelo de elevación del terreno o superficie, más útil en trabajos topográficos y cartográficos.</div></div>
+                      <div class="output-item"><button class="output-btn active" type="button" data-output="pdf_report">Informe PDF</button><div class="output-tooltip"><strong>Informe PDF</strong>Resumen del proyecto y del procesado. Útil para documentación y entrega al cliente.</div></div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="actions">                  <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
                   <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
                 </div>
@@ -1174,6 +1330,7 @@
 
     const priceBig = document.getElementById("priceBig");
     const etaBig = document.getElementById("etaBig");
+    const selectedQualityRow = document.querySelector(".selected-quality-row");
     const selectedQualityBadge = document.getElementById("selectedQualityBadge");
 
     const progressWrap = document.getElementById("progressWrap");
@@ -1188,6 +1345,7 @@
     const mapWrap = document.getElementById("mapWrap");
     const qualityModeInput = document.getElementById("qualityMode");
     const qualityModeWrap = document.querySelector(".quality-mode-wrap");
+    const outputsWrap = document.getElementById("outputsWrap");
 
     const modalBackdrop = document.getElementById("modalBackdrop");
     const modalBox = document.getElementById("modalBox");
@@ -1224,6 +1382,15 @@
       });
     });
 
+    document.querySelectorAll(".output-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.toggle("active");
+        refreshPricingPreviewDebounced();
+      });
+    });
+
     setSelectedQualityMode("normal", false);
 
 
@@ -1241,6 +1408,54 @@
 
 function getSelectedQualityMode() {
       return qualityModeInput?.value || "normal";
+    }
+
+    function getSelectedOutputs() {
+      return Array.from(document.querySelectorAll(".output-btn.active")).map((btn) => btn.dataset.output);
+    }
+
+    function formatOutputLabel(output) {
+      const labels = {
+        obj: "OBJ",
+        ply: "PLY",
+        las: "LAS",
+        laz: "LAZ",
+        e57: "E57",
+        pts: "PTS",
+        pcd: "PCD",
+        xyz: "XYZ/TXT",
+        dxf_pointcloud: "DXF nube",
+        u3d: "U3D",
+        pdf_pointcloud: "PDF nube",
+        cl3: "CL3",
+        potree: "Potree",
+        cesium_tiles_pointcloud: "Cesium nube",
+        oc3: "OC3",
+        mesh_obj: "Malla OBJ",
+        mesh_fbx: "FBX",
+        mesh_stl: "STL",
+        mesh_dae: "DAE",
+        mesh_3ds: "3DS",
+        mesh_wrl: "WRL",
+        mesh_pdf: "PDF 3D",
+        mesh_dxf: "DXF malla",
+        mesh_ply: "Malla PLY",
+        mesh_u3d: "Malla U3D",
+        mesh_cesium_tiles: "Cesium malla",
+        mesh_slpk: "SLPK",
+        mesh_osgb: "OSGB",
+        orthomosaic_tif: "Ortomosaico TIFF",
+        orthomosaic_jpg: "Ortomosaico JPG",
+        dem_tif: "DEM/DSM TIFF",
+        pdf_report: "Informe PDF"
+      };
+      return labels[output] || output;
+    }
+
+    function formatSelectedOutputsText() {
+      const outputs = getSelectedOutputs();
+      if (!outputs.length) return "Sin seleccionar";
+      return outputs.map(formatOutputLabel).join(", ");
     }
 
     function setSelectedQualityMode(mode, refresh = true) {
@@ -1585,7 +1800,8 @@ function getSelectedQualityMode() {
           body: JSON.stringify({
             photos_count: photoCount,
             total_bytes: totalBytes,
-            quality_mode: getSelectedQualityMode()
+            quality_mode: getSelectedQualityMode(),
+            outputs_requested: getSelectedOutputs()
           })
         });
 
@@ -1759,6 +1975,8 @@ function getSelectedQualityMode() {
 
       datasetGrid.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
+      if (outputsWrap) outputsWrap.style.display = "none";
+      if (selectedQualityRow) selectedQualityRow.style.display = "none";
       setSelectedQualityMode("normal", false);
       hideDatasetHighlight();
 
@@ -1820,6 +2038,8 @@ if (map) {
         dropTitle.textContent = `${files.length} archivos seleccionados`;
         datasetGrid.style.display = "grid";
         if (qualityModeWrap) qualityModeWrap.style.display = "flex";
+        if (outputsWrap) outputsWrap.style.display = "flex";
+        if (selectedQualityRow) selectedQualityRow.style.display = "flex";
 
         refreshPricingPreviewDebounced();
         detectCamera(files[0]);
@@ -2526,7 +2746,8 @@ if (map) {
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null,
-  quality_mode: getSelectedQualityMode()
+  quality_mode: getSelectedQualityMode(),
+  outputs_requested: getSelectedOutputs()
 })
       });
 
@@ -2794,6 +3015,10 @@ if (map) {
             <div class="modal-card">
               <div class="modal-label">Calidad</div>
               <div class="modal-value">${formatQualityModeLabel(getSelectedQualityMode())}</div>
+            </div>
+            <div class="modal-card full">
+              <div class="modal-label">Archivos de salida</div>
+              <div class="modal-value">${formatSelectedOutputsText()}</div>
             </div>
             <div class="modal-card full">
               <div class="modal-label">Nombre del proyecto</div>
