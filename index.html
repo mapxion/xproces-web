@@ -831,6 +831,7 @@
     .progress-wrap {
       display: none;
       margin-top: 2px;
+      margin-bottom: 16px;
     }
 
     .progress-top {
@@ -882,6 +883,7 @@
     .process-stage-wrap {
       display: none;
       gap: 8px;
+      margin-top: 10px;
       margin-bottom: 14px;
       grid-template-columns: 1fr;
     }
@@ -906,6 +908,42 @@
       border-radius: 999px;
       background: #c9d3cc;
       flex: 0 0 10px;
+    }
+
+    .process-stage-body {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .process-stage-name {
+      display: block;
+    }
+
+    .process-stage-progress {
+      display: none;
+      width: 100%;
+      height: 6px;
+      margin-top: 6px;
+      background: #edf1ed;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .process-stage-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 0.2s ease;
+    }
+
+    .process-stage.active .process-stage-progress,
+    .process-stage.done .process-stage-progress {
+      display: block;
+    }
+
+    .process-stage.done .process-stage-progress-fill {
+      width: 100% !important;
     }
 
     .process-stage.active {
@@ -3642,7 +3680,7 @@ if (map) {
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
 
-        jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Preparando subida por lotes...`;
 
         const batches = chunkArray(files, BATCH_SIZE);
 
