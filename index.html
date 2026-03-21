@@ -1814,22 +1814,6 @@
       }
     }
 
-    function updateProcessOnlyView(isActive) {
-      if (uploadPanel) uploadPanel.style.display = isActive ? "none" : "block";
-      if (datasetPanel) datasetPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (pricingPanel) pricingPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (mapWrap) mapWrap.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (processPanel) processPanel.style.display = isActive ? "block" : (files.length ? "block" : "none");
-
-      if (!isActive && mainLayout) {
-        if (files.length) {
-          mainLayout.classList.add("with-data");
-        } else {
-          mainLayout.classList.remove("with-data");
-        }
-      }
-    }
-
     function setUiLockedAfterStart(isLocked) {
       activeProcessLocked = isLocked;
 
@@ -2617,6 +2601,7 @@ function getSelectedQualityMode() {
         "Sube las fotografías originales del dron para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
       if (mainLayout) mainLayout.classList.remove("with-data");
+      if (uploadPanel) uploadPanel.style.display = "block";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
@@ -2625,6 +2610,13 @@ function getSelectedQualityMode() {
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
+      if (processProjectName) {
+        processProjectName.style.display = "none";
+        processProjectName.textContent = "Proyecto: —";
+      }
+      if (newProjectBtn) {
+        newProjectBtn.style.display = "none";
+      }
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
       if (outputModeWrap) outputModeWrap.style.display = "none";
