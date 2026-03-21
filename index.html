@@ -1468,6 +1468,8 @@
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
+    let activeJobId = null;
+    let currentJobStatus = "idle";
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
@@ -1725,6 +1727,63 @@ function getSelectedQualityMode() {
       if (refresh) {
         refreshPricingPreviewDebounced();
       }
+    }
+
+
+    function isJobLocked() {
+      return ["creating", "uploading", "submitting", "queued", "running"].includes(currentJobStatus);
+    }
+
+    function updateClearButtonState() {
+      if (!clearBtn) return;
+
+      if (isJobLocked()) {
+        clearBtn.disabled = true;
+        clearBtn.textContent = "Bloqueado";
+        return;
+      }
+
+      clearBtn.disabled = false;
+      clearBtn.textContent = "Borrar";
+    }
+
+    function clearSelectedFilesOnly() {
+      files = [];
+      totalSize = 0;
+      latestDataset = null;
+      latestExifSummary = {};
+      latestMissionType = "Sin detectar";
+      pendingProjectName = "";
+      fileInput.value = "";
+
+      dropTitle.textContent = "Arrastra tus fotos aquí";
+      dropSubtitle.textContent =
+        "Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
+
+      datasetGrid.style.display = "none";
+      hideDatasetHighlight();
+
+      fieldSize.textContent = "0 MB";
+      fieldResolution.textContent = "Sin detectar";
+      fieldGps.textContent = "Sin detectar";
+      fieldMission.textContent = "Sin detectar";
+      fieldOverlap.textContent = "Sin detectar";
+
+      resetDetectionInfo();
+      resetPreviewState();
+      setAnalysisPlaceholder();
+      disableUploadButton();
+      updateClearButtonState();
+
+      if (!activeJobId) {
+        if (pricingPanel) pricingPanel.style.display = "none";
+        if (processPanel) processPanel.style.display = "none";
+        if (mapWrap) mapWrap.style.display = "none";
+      }
+
+      jobStatusEl.textContent = activeJobId
+        ? jobStatusEl.textContent
+        : "Puede subir otra selección manteniendo la configuración elegida.";
     }
 
     function getStoredUser() {
@@ -2237,8 +2296,11 @@ function getSelectedQualityMode() {
       files = [];
       totalSize = 0;
       latestDataset = null;
+      latestExifSummary = {};
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
+      activeJobId = null;
+      currentJobStatus = "idle";
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -2277,6 +2339,7 @@ if (map) {
   }, 150);
 }
       enableUploadButton();
+      updateClearButtonState();
       setAnalysisPlaceholder();
       hideDownloadButton();
 
@@ -2978,27 +3041,42 @@ if (map) {
     });
 
     clearBtn.addEventListener("click", async () => {
+      if (isJobLocked()) {
+        await showInfoModal(
+          "Proyecto ya iniciado",
+          "No puede borrarse desde esta pantalla.",
+          "El procesado ya está en marcha o en cola. Para evitar problemas, este botón queda bloqueado y no detiene el trabajo.",
+          "warning"
+        );
+        return;
+      }
+
       if (files.length === 0) {
-        resetAll();
+        await showInfoModal(
+          "No hay fotos cargadas",
+          "La selección actual ya está vacía.",
+          "Puede subir otra selección manteniendo la configuración elegida.",
+          "default"
+        );
         return;
       }
 
       const ok = await openModal({
-        title: "Borrar selección",
-        subtitle: "Se eliminarán los archivos cargados en esta vista.",
+        title: "Borrar fotos",
+        subtitle: "Se eliminará solo la selección de imágenes.",
         body: `
           <div class="modal-note">
-            Va a borrar la selección actual de fotografías y se reiniciará el panel de análisis.
+            Se borrarán únicamente las fotografías cargadas. La calidad y los archivos de salida seleccionados se mantendrán igual.
           </div>
         `,
-        confirmText: "Sí, borrar",
+        confirmText: "Sí, borrar fotos",
         cancelText: "Cancelar",
         showCancel: true,
         tone: "warning"
       });
 
       if (ok) {
-        resetAll();
+        clearSelectedFilesOnly();
       }
     });
 
@@ -3150,6 +3228,8 @@ if (map) {
 
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "");
+          currentJobStatus = status || currentJobStatus;
+          updateClearButtonState();
           const message = job.message || "";
 
           progressWrap.style.display = "block";
@@ -3355,11 +3435,16 @@ if (map) {
         progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
 
+        currentJobStatus = "creating";
+        updateClearButtonState();
         const createdJob = await createJob();
         const jobId = createdJob.id;
+        activeJobId = jobId;
 
         jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
 
+        currentJobStatus = "uploading";
+        updateClearButtonState();
         const batches = chunkArray(files, BATCH_SIZE);
 
         for (let i = 0; i < batches.length; i++) {
@@ -3371,20 +3456,27 @@ if (map) {
         progressPercent.textContent = "100%";
         jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
 
+        currentJobStatus = "submitting";
+        updateClearButtonState();
         await submitJob(jobId);
 
         jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
+        currentJobStatus = "queued";
+        updateClearButtonState();
         startPolling(jobId);
       } catch (error) {
         console.error(error);
+        currentJobStatus = "failed";
+        updateClearButtonState();
         jobStatusEl.textContent = error.message || "Error durante la subida";
         progressLabel.textContent = "Error";
       }
     }
 
       resetAll();
+updateClearButtonState();
 renderTopbarUser();
 syncStoredUserToForm();
 
