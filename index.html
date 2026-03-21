@@ -1467,7 +1467,10 @@
           <div class="panel-inner">
             <div class="job-status-box">
               <div class="job-status-header">
-                <div class="job-status-title">Estado del procesado</div>
+                <div>
+                  <div id="projectTitle" style="display:none; font-weight:700; margin-bottom:4px;"></div>
+                  <div class="job-status-title">Estado del procesado</div>
+                </div>
               </div>
 
               
@@ -1658,6 +1661,7 @@
     const projectNameInput = document.getElementById("projectName");
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
+    const projectTitle = document.getElementById("projectTitle");
     const analysisBadgeEl = document.getElementById("analysisBadge");
 
     const priceBig = document.getElementById("priceBig");
@@ -2569,6 +2573,8 @@ if (map) {
       resetStageClasses();
 
       jobStatusEl.textContent = "Aquí se mostrará el estado real del trabajo una vez iniciado.";
+      if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
+      if (uploadBtn) uploadBtn.textContent = "Iniciar procesado";
 
       progressWrap.style.display = "none";
       progressFill.style.width = "0%";
@@ -3308,6 +3314,11 @@ if (map) {
     });
 
     uploadBtn.addEventListener("click", async () => {
+      if (uploadBtn.textContent === "Iniciar nuevo proyecto") {
+        resetAll();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       const currentUser = getStoredUser();
 
       if (!currentUser || !currentUser.email) {
@@ -3704,6 +3715,7 @@ if (map) {
 
         const createdJob = await createJob();
         const jobId = createdJob.id;
+        if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
 
         if (uploadPanel) uploadPanel.style.display = "none";
         if (datasetPanel) datasetPanel.style.display = "none";
@@ -3725,6 +3737,7 @@ if (map) {
         jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Subida completada. Enviando a procesado...`;
 
         await submitJob(jobId);
+        if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
         jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Su proyecto está en cola.<br>Calculando tiempo restante...`;
