@@ -1107,11 +1107,12 @@
                   Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.
                 </div>
 
+                
                 <div class="upload-actions" id="uploadActions">
                   <button class="btn btn-danger" id="clearBtn" type="button">Eliminar fotos</button>
                 </div>
 
-                <input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
+<input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
 
             <div class="progress-wrap" id="progressWrap">
               <div class="progress-top">
@@ -1126,8 +1127,7 @@
         </div>
 
 
-
-        <div class="panel" id="datasetPanel" style="display:none;">
+<div class="panel" id="datasetPanel" style="display:none;">
           <div class="panel-inner">
 <div class="dataset-grid" id="datasetGrid">
                   <div class="dataset-item">
@@ -1322,8 +1322,6 @@
                     </div>
                   </div>
                 </div>
-
-
           </div>
         </div>
 
@@ -2274,7 +2272,6 @@ function getSelectedQualityMode() {
       dropSubtitle.textContent =
         "Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
-      if (datasetPanel) datasetPanel.style.display = "none";
       datasetGrid.style.display = "none";
       hideDatasetHighlight();
 
@@ -2283,13 +2280,26 @@ function getSelectedQualityMode() {
       fieldGps.textContent = "Sin detectar";
       fieldMission.textContent = "Sin detectar";
       fieldOverlap.textContent = "Sin detectar";
+      fieldCamera.textContent = "Sin detectar";
+      fieldDrone.textContent = "Sin detectar";
+      fieldLocation.textContent = "Sin detectar";
+      fieldLens.textContent = "Sin detectar";
+      fieldFocal.textContent = "Sin detectar";
+      fieldDate.textContent = "Sin detectar";
 
-      resetDetectionInfo();
+      if (uploadActions) uploadActions.style.display = "none";
+      if (pricingPanel) pricingPanel.style.display = "none";
+      if (mapWrap) mapWrap.style.display = "none";
+      if (processStartWrap) processStartWrap.style.display = "none";
+
+      if (map && marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+
       resetPreviewState();
       setAnalysisPlaceholder();
-      if (uploadActions) uploadActions.style.display = "none";
-      if (datasetPanel) datasetPanel.style.display = "none";
-      if (processStartWrap) processStartWrap.style.display = "none";
+      jobStatusEl.textContent = "Puede subir otra selección manteniendo la calidad y los archivos de salida elegidos.";
       enableUploadButton();
     }
 
@@ -2309,6 +2319,7 @@ function getSelectedQualityMode() {
         "Sube las fotografías originales del dron para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
       if (mainLayout) mainLayout.classList.remove("with-data");
+      if (datasetPanel) datasetPanel.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
       if (processStartWrap) processStartWrap.style.display = "none";
