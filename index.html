@@ -3629,6 +3629,12 @@ if (map) {
         const createdJob = await createJob();
         const jobId = createdJob.id;
 
+        if (uploadPanel) uploadPanel.style.display = "none";
+        if (datasetPanel) datasetPanel.style.display = "none";
+        if (pricingPanel) pricingPanel.style.display = "none";
+        if (mapWrap) mapWrap.style.display = "none";
+        if (processPanel) processPanel.style.display = "block";
+
         jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
 
         const batches = chunkArray(files, BATCH_SIZE);
