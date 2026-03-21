@@ -389,6 +389,25 @@
       gap: 6px;
     }
 
+
+    .upload-actions {
+      display: none;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .process-primary-action {
+      display: none;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .process-primary-action .btn {
+      min-width: 220px;
+    }
+
     .actions {
       display: none;
       justify-content: center;
@@ -1283,7 +1302,7 @@
                 </div>
 
 <div class="actions">                  <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
-                  <button class="btn btn-danger" id="clearBtn" type="button">Borrar</button>
+                  <button class="btn btn-danger" id="clearBtn" type="button">Eliminar fotos</button>
                 </div>
               </div>
             </div>
@@ -1360,6 +1379,10 @@
 
               <div class="process-download-wrap" id="processDownloadWrap">
                 <a class="process-download-btn" id="processDownloadBtn" href="#" target="_blank">Descargar resultados</a>
+              </div>
+
+              <div class="process-primary-action" id="processStartWrap">
+                <button class="btn btn-primary" id="uploadBtn" type="button">Iniciar procesado</button>
               </div>
             </div>
           </div>
@@ -1468,8 +1491,6 @@
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
-    let activeJobId = null;
-    let currentJobStatus = "idle";
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
@@ -1494,6 +1515,8 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const uploadActions = document.getElementById("uploadActions");
+    const processStartWrap = document.getElementById("processStartWrap");
     const actionsWrap = document.querySelector(".actions");
     const projectNameInput = document.getElementById("projectName");
     const statusEl = document.getElementById("status");
@@ -1727,63 +1750,6 @@ function getSelectedQualityMode() {
       if (refresh) {
         refreshPricingPreviewDebounced();
       }
-    }
-
-
-    function isJobLocked() {
-      return ["creating", "uploading", "submitting", "queued", "running"].includes(currentJobStatus);
-    }
-
-    function updateClearButtonState() {
-      if (!clearBtn) return;
-
-      if (isJobLocked()) {
-        clearBtn.disabled = true;
-        clearBtn.textContent = "Bloqueado";
-        return;
-      }
-
-      clearBtn.disabled = false;
-      clearBtn.textContent = "Borrar";
-    }
-
-    function clearSelectedFilesOnly() {
-      files = [];
-      totalSize = 0;
-      latestDataset = null;
-      latestExifSummary = {};
-      latestMissionType = "Sin detectar";
-      pendingProjectName = "";
-      fileInput.value = "";
-
-      dropTitle.textContent = "Arrastra tus fotos aquí";
-      dropSubtitle.textContent =
-        "Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
-
-      datasetGrid.style.display = "none";
-      hideDatasetHighlight();
-
-      fieldSize.textContent = "0 MB";
-      fieldResolution.textContent = "Sin detectar";
-      fieldGps.textContent = "Sin detectar";
-      fieldMission.textContent = "Sin detectar";
-      fieldOverlap.textContent = "Sin detectar";
-
-      resetDetectionInfo();
-      resetPreviewState();
-      setAnalysisPlaceholder();
-      disableUploadButton();
-      updateClearButtonState();
-
-      if (!activeJobId) {
-        if (pricingPanel) pricingPanel.style.display = "none";
-        if (processPanel) processPanel.style.display = "none";
-        if (mapWrap) mapWrap.style.display = "none";
-      }
-
-      jobStatusEl.textContent = activeJobId
-        ? jobStatusEl.textContent
-        : "Puede subir otra selección manteniendo la configuración elegida.";
     }
 
     function getStoredUser() {
@@ -2289,6 +2255,36 @@ function getSelectedQualityMode() {
       });
     }
 
+    function clearSelectedFilesOnly() {
+      files = [];
+      totalSize = 0;
+      latestDataset = null;
+      latestExifSummary = {};
+      latestMissionType = "Sin detectar";
+      pendingProjectName = "";
+      fileInput.value = "";
+
+      dropTitle.textContent = "Arrastra tus fotos aquí";
+      dropSubtitle.textContent =
+        "Sube las fotografías originales para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
+
+      datasetGrid.style.display = "none";
+      hideDatasetHighlight();
+
+      fieldSize.textContent = "0 MB";
+      fieldResolution.textContent = "Sin detectar";
+      fieldGps.textContent = "Sin detectar";
+      fieldMission.textContent = "Sin detectar";
+      fieldOverlap.textContent = "Sin detectar";
+
+      resetDetectionInfo();
+      resetPreviewState();
+      setAnalysisPlaceholder();
+      if (uploadActions) uploadActions.style.display = "none";
+      if (processStartWrap) processStartWrap.style.display = "none";
+      enableUploadButton();
+    }
+
     function resetAll() {
       stopPolling();
       resetPreviewState();
@@ -2296,11 +2292,8 @@ function getSelectedQualityMode() {
       files = [];
       totalSize = 0;
       latestDataset = null;
-      latestExifSummary = {};
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
-      activeJobId = null;
-      currentJobStatus = "idle";
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -2309,7 +2302,8 @@ function getSelectedQualityMode() {
 
       if (mainLayout) mainLayout.classList.remove("with-data");
       datasetGrid.style.display = "none";
-      if (actionsWrap) actionsWrap.style.display = "none";
+      if (uploadActions) uploadActions.style.display = "none";
+      if (processStartWrap) processStartWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
@@ -2339,7 +2333,6 @@ if (map) {
   }, 150);
 }
       enableUploadButton();
-      updateClearButtonState();
       setAnalysisPlaceholder();
       hideDownloadButton();
 
@@ -2379,9 +2372,10 @@ if (map) {
         if (mainLayout) mainLayout.classList.add("with-data");
         dropTitle.textContent = `${files.length} archivos seleccionados`;
         datasetGrid.style.display = "grid";
-        if (actionsWrap) actionsWrap.style.display = "flex";
+        if (uploadActions) uploadActions.style.display = "flex";
         if (pricingPanel) pricingPanel.style.display = "block";
         if (processPanel) processPanel.style.display = "block";
+        if (processStartWrap) processStartWrap.style.display = "flex";
         if (mapWrap) mapWrap.style.display = "block";
         if (qualityModeWrap) qualityModeWrap.style.display = "flex";
         if (outputsWrap) outputsWrap.style.display = "flex";
@@ -3041,35 +3035,19 @@ if (map) {
     });
 
     clearBtn.addEventListener("click", async () => {
-      if (isJobLocked()) {
-        await showInfoModal(
-          "Proyecto ya iniciado",
-          "No puede borrarse desde esta pantalla.",
-          "El procesado ya está en marcha o en cola. Para evitar problemas, este botón queda bloqueado y no detiene el trabajo.",
-          "warning"
-        );
-        return;
-      }
-
       if (files.length === 0) {
-        await showInfoModal(
-          "No hay fotos cargadas",
-          "La selección actual ya está vacía.",
-          "Puede subir otra selección manteniendo la configuración elegida.",
-          "default"
-        );
         return;
       }
 
       const ok = await openModal({
-        title: "Borrar fotos",
-        subtitle: "Se eliminará solo la selección de imágenes.",
+        title: "Eliminar fotos",
+        subtitle: "Se eliminarán solo las imágenes cargadas.",
         body: `
           <div class="modal-note">
-            Se borrarán únicamente las fotografías cargadas. La calidad y los archivos de salida seleccionados se mantendrán igual.
+            Se borrarán únicamente las fotografías seleccionadas. La calidad y los archivos de salida elegidos se mantendrán.
           </div>
         `,
-        confirmText: "Sí, borrar fotos",
+        confirmText: "Sí, eliminar fotos",
         cancelText: "Cancelar",
         showCancel: true,
         tone: "warning"
@@ -3228,8 +3206,6 @@ if (map) {
 
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "");
-          currentJobStatus = status || currentJobStatus;
-          updateClearButtonState();
           const message = job.message || "";
 
           progressWrap.style.display = "block";
@@ -3435,16 +3411,11 @@ if (map) {
         progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
 
-        currentJobStatus = "creating";
-        updateClearButtonState();
         const createdJob = await createJob();
         const jobId = createdJob.id;
-        activeJobId = jobId;
 
         jobStatusEl.textContent = `Job creado: ${jobId}\nPreparando subida por lotes...`;
 
-        currentJobStatus = "uploading";
-        updateClearButtonState();
         const batches = chunkArray(files, BATCH_SIZE);
 
         for (let i = 0; i < batches.length; i++) {
@@ -3456,27 +3427,20 @@ if (map) {
         progressPercent.textContent = "100%";
         jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
 
-        currentJobStatus = "submitting";
-        updateClearButtonState();
         await submitJob(jobId);
 
         jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
-        currentJobStatus = "queued";
-        updateClearButtonState();
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        currentJobStatus = "failed";
-        updateClearButtonState();
         jobStatusEl.textContent = error.message || "Error durante la subida";
         progressLabel.textContent = "Error";
       }
     }
 
       resetAll();
-updateClearButtonState();
 renderTopbarUser();
 syncStoredUserToForm();
 
