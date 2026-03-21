@@ -1642,7 +1642,7 @@
             <input id="authEmail" type="email" placeholder="cliente@empresa.com" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
           </div>
 
-          <div class="modal-card full">
+          <div class="modal-card full" id="authNameWrap">
             <div class="modal-label">Nombre o empresa</div>
             <input id="authName" type="text" placeholder="Nombre del cliente o empresa" style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px;">
           </div>
@@ -1768,6 +1768,7 @@
     const authEmail = document.getElementById("authEmail");
     const authName = document.getElementById("authName");
     const authPassword = document.getElementById("authPassword");
+    const authNameWrap = document.getElementById("authNameWrap");
     const authCode = document.getElementById("authCode");
     const authPasswordWrap = document.getElementById("authPasswordWrap");
     const authCodeWrap = document.getElementById("authCodeWrap");
@@ -2130,6 +2131,10 @@ function getSelectedQualityMode() {
       authPassword.value = "";
       authCode.value = "";
 
+      if (authNameWrap) {
+        authNameWrap.style.display = mode === "register" ? "block" : "none";
+      }
+
       authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
       authCodeWrap.style.display = mode === "invite" ? "block" : "none";
 
@@ -2314,7 +2319,7 @@ function getSelectedQualityMode() {
         return;
       }
 
-      if (!name) {
+      if (authMode === "register" && !name) {
         await showInfoModal(
           "Falta el nombre o empresa",
           "Debe identificar a la persona o empresa.",
@@ -2353,7 +2358,7 @@ function getSelectedQualityMode() {
           payload = { email, password, name };
         } else if (authMode === "invite") {
           endpoint = `${API_BASE}/auth/invite-login`;
-          payload = { email, name, code };
+          payload = { email, code };
         } else {
           endpoint = `${API_BASE}/auth/login`;
           payload = { email, password };
