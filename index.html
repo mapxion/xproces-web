@@ -1189,14 +1189,7 @@
 
 <input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
 
-            <div class="progress-wrap" id="progressWrap">
-              <div class="progress-top">
-                <span id="progressLabel">Subiendo...</span>
-                <span id="progressPercent">0%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-              </div>
+            </div>
             </div>
           </div>
         </div>
@@ -1439,7 +1432,17 @@
                 <div class="job-status-title">Estado del procesado</div>
               </div>
 
-              <div class="process-stage-wrap" id="processStageWrap">
+              
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-top">
+                <span id="progressLabel">Procesando...</span>
+                <span id="progressPercent">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+<div class="process-stage-wrap" id="processStageWrap">
                 <div class="process-stage" data-stage="matching">
                   <div class="process-stage-dot"></div>
                   <div>Alineación inicial</div>
