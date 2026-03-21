@@ -3416,6 +3416,11 @@ if (map) {
 
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "");
+          if (datasetPanel) datasetPanel.style.display = "none";
+          if (pricingPanel) pricingPanel.style.display = "none";
+          if (mapWrap) mapWrap.style.display = "none";
+          if (uploadPanel) uploadPanel.style.display = "none";
+          if (processPanel) processPanel.style.display = "block";
           const message = job.message || "";
 
           progressWrap.style.display = "block";
