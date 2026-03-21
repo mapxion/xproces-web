@@ -3715,6 +3715,16 @@ if (map) {
 
         const createdJob = await createJob();
         const jobId = createdJob.id;
+        try {
+          const jobs = JSON.parse(localStorage.getItem("xproces_jobs") || "[]");
+          jobs.push({
+            id: jobId,
+            project: pendingProjectName || "",
+            created_at: Date.now()
+          });
+          localStorage.setItem("xproces_jobs", JSON.stringify(jobs));
+        } catch(e) {}
+
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
 
         if (uploadPanel) uploadPanel.style.display = "none";
