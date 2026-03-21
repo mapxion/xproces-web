@@ -1435,8 +1435,9 @@
                 <div class="job-status-title">Estado del procesado</div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                   <span id="processProjectName" class="user-pill" style="display:none;">Proyecto: —</span>
-                  <button class="btn btn-secondary" id="newProjectBtn" type="button" style="display:none;">Iniciar otro proyecto</button>
+                  <button class="btn btn-secondary" id="newProjectBtn" type="button" style="display:none;">Iniciar nuevo proyecto</button>
                 </div>
+              </div>
               </div>
 
               <div class="process-stage-wrap" id="processStageWrap">
@@ -1753,6 +1754,54 @@
 
 
 
+
+    function showProcessOnlyView(projectName = "") {
+      if (uploadPanel) uploadPanel.style.display = "none";
+      if (datasetPanel) datasetPanel.style.display = "none";
+      if (pricingPanel) pricingPanel.style.display = "none";
+      if (mapWrap) mapWrap.style.display = "none";
+      if (processPanel) processPanel.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "none";
+      if (mainLayout) mainLayout.classList.remove("with-data");
+      if (uploadPanel) uploadPanel.style.display = "block";
+      if (datasetPanel) datasetPanel.style.display = "none";
+      if (pricingPanel) pricingPanel.style.display = "none";
+      if (mapWrap) mapWrap.style.display = "none";
+      if (processPanel) processPanel.style.display = "none";
+      if (processStartWrap) processStartWrap.style.display = "none";
+      if (processProjectName) { processProjectName.style.display = "none"; processProjectName.textContent = "Proyecto: —"; }
+      if (newProjectBtn) newProjectBtn.style.display = "none";
+
+      if (processProjectName) {
+        processProjectName.style.display = "inline-flex";
+        processProjectName.textContent = `Proyecto: ${projectName || "Sin nombre"}`;
+      }
+      if (newProjectBtn) {
+        newProjectBtn.style.display = "inline-flex";
+      }
+    }
+
+    function showWorkingViewWithFiles() {
+      if (uploadPanel) uploadPanel.style.display = "block";
+      if (datasetPanel) datasetPanel.style.display = files.length ? "block" : "none";
+      if (pricingPanel) pricingPanel.style.display = files.length ? "block" : "none";
+      if (mapWrap) mapWrap.style.display = files.length ? "block" : "none";
+      if (processPanel) processPanel.style.display = files.length ? "block" : "none";
+      if (processStartWrap) processStartWrap.style.display = files.length ? "flex" : "none";
+      if (mainLayout) {
+        if (files.length) mainLayout.classList.add("with-data");
+        else mainLayout.classList.remove("with-data");
+      }
+
+      if (processProjectName) {
+        processProjectName.style.display = "none";
+        processProjectName.textContent = "Proyecto: —";
+      }
+      if (newProjectBtn) {
+        newProjectBtn.style.display = "none";
+      }
+    }
+
     function saveActiveJobState(jobId, projectName) {
       try {
         localStorage.setItem("xproces_active_job_id", jobId || "");
@@ -1778,21 +1827,6 @@
       }
     }
 
-    function updateProcessOnlyView(isActive) {
-      if (uploadPanel) uploadPanel.style.display = isActive ? "none" : "block";
-      if (datasetPanel) datasetPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (pricingPanel) pricingPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (mapWrap) mapWrap.style.display = isActive ? "none" : (files.length ? "block" : "none");
-      if (processPanel) processPanel.style.display = isActive ? "block" : (files.length ? "block" : "none");
-
-      if (!isActive && mainLayout) {
-        if (files.length) {
-          mainLayout.classList.add("with-data");
-        } else {
-          mainLayout.classList.remove("with-data");
-        }
-      }
-    }
 
     function setUiLockedAfterStart(isLocked) {
       activeProcessLocked = isLocked;
@@ -1825,8 +1859,8 @@
         newProjectBtn.style.display = "none";
       }
       setUiLockedAfterStart(false);
-      updateProcessOnlyView(false);
-      updateProcessOnlyView(false);
+      showWorkingViewWithFiles();
+      showWorkingViewWithFiles();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
