@@ -611,7 +611,7 @@
 }
 
     .selected-quality-row {
-      display: none;
+      display: none !important;
       justify-content: center;
       margin-top: 10px;
     }
@@ -1620,8 +1620,8 @@
 
     const priceBig = document.getElementById("priceBig");
     const etaBig = document.getElementById("etaBig");
-    const selectedQualityRow = document.querySelector(".selected-quality-row");
-    const selectedQualityBadge = document.getElementById("selectedQualityBadge");
+    const selectedQualityRow = null;
+    const selectedQualityBadge = null;
 
     const progressWrap = document.getElementById("progressWrap");
     const progressFill = document.getElementById("progressFill");
@@ -3602,6 +3602,17 @@ if (map) {
           "Falta el nombre del proyecto",
           "Debe indicar un nombre para identificar el trabajo.",
           "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+
+      const selectedOutputs = typeof getSelectedOutputs === "function" ? getSelectedOutputs() : [];
+      if (!selectedOutputs.length) {
+        await showInfoModal(
+          "Faltan archivos de salida",
+          "Debe seleccionar qué archivos quiere recibir antes de iniciar el procesado.",
+          "Elija un paquete recomendado o use la selección manual y marque al menos un archivo.",
           "warning"
         );
         return;
