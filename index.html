@@ -3638,10 +3638,12 @@ if (map) {
         jobStatusEl.textContent = `Job ${jobId}\nSubida completada. Enviando a procesado...`;
 
         await submitJob(jobId);
+        if (datasetPanel) datasetPanel.style.display = "none";
 
         jobStatusEl.textContent = `Job ${jobId}\nSu proyecto está en cola.\nCalculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
+        if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
