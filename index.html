@@ -495,6 +495,27 @@
   color: var(--ok);
 }
 
+    .selected-quality-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .selected-quality-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(184, 255, 26, 0.12);
+      border: 1px solid rgba(158, 224, 0, 0.4);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+
     .future-text {
       color: var(--muted);
       font-size: 14px;
@@ -971,6 +992,10 @@
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
               </div>
+
+              <div class="selected-quality-row">
+                <div class="selected-quality-badge" id="selectedQualityBadge">Modo seleccionado: Normal</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1149,6 +1174,7 @@
 
     const priceBig = document.getElementById("priceBig");
     const etaBig = document.getElementById("etaBig");
+    const selectedQualityBadge = document.getElementById("selectedQualityBadge");
 
     const progressWrap = document.getElementById("progressWrap");
     const progressFill = document.getElementById("progressFill");
@@ -1201,6 +1227,18 @@
     setSelectedQualityMode("normal", false);
 
 
+
+    function formatQualityModeLabel(mode) {
+      if (mode === "fast") return "Rápido";
+      if (mode === "max") return "Máxima calidad";
+      return "Normal";
+    }
+
+    function updateSelectedQualityBadge() {
+      if (!selectedQualityBadge) return;
+      selectedQualityBadge.textContent = `Modo seleccionado: ${formatQualityModeLabel(getSelectedQualityMode())}`;
+    }
+
 function getSelectedQualityMode() {
       return qualityModeInput?.value || "normal";
     }
@@ -1216,6 +1254,8 @@ function getSelectedQualityMode() {
       document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.qualityMode === normalized);
       });
+
+      updateSelectedQualityBadge();
 
       if (refresh) {
         refreshPricingPreviewDebounced();
@@ -1544,7 +1584,8 @@ function getSelectedQualityMode() {
           },
           body: JSON.stringify({
             photos_count: photoCount,
-            total_bytes: totalBytes
+            total_bytes: totalBytes,
+            quality_mode: getSelectedQualityMode()
           })
         });
 
@@ -1718,6 +1759,7 @@ function getSelectedQualityMode() {
 
       datasetGrid.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
+      setSelectedQualityMode("normal", false);
       hideDatasetHighlight();
 
       fieldSize.textContent = "0 MB";
@@ -2483,7 +2525,8 @@ if (map) {
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
-  user_id: getStoredUser()?.id || null
+  user_id: getStoredUser()?.id || null,
+  quality_mode: getSelectedQualityMode()
 })
       });
 
@@ -2747,6 +2790,10 @@ if (map) {
             <div class="modal-card">
               <div class="modal-label">Tiempo</div>
               <div class="modal-value">${timeText}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Calidad</div>
+              <div class="modal-value">${formatQualityModeLabel(getSelectedQualityMode())}</div>
             </div>
             <div class="modal-card full">
               <div class="modal-label">Nombre del proyecto</div>
