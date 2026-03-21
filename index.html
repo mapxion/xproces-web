@@ -117,17 +117,15 @@
       font-size: 14px;
     }
 
-    
-    #uploadPanel {
-      grid-column: 1 / -1;
-      width: 100%;
-    }
-
     .layout {
       display: grid;
-      grid-template-columns: minmax(620px, 1fr) minmax(620px, 1fr);
+      grid-template-columns: 1fr;
       gap: 20px;
       align-items: start;
+    }
+
+    .layout.with-data {
+      grid-template-columns: minmax(620px, 1fr) minmax(620px, 1fr);
     }
 
     .left-stack,
@@ -1077,7 +1075,7 @@
       </div>
     </div>
 
-    <div class="layout">
+    <div class="layout" id="mainLayout">
       <div class="left-stack">
 <div class="panel" id="uploadPanel">
           <div class="panel-inner">
@@ -1460,6 +1458,7 @@
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
 
+    const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
     const dropTitle = document.getElementById("dropTitle");
     const dropSubtitle = document.getElementById("dropSubtitle");
@@ -2211,6 +2210,7 @@ function getSelectedQualityMode() {
       dropSubtitle.textContent =
         "Sube las fotografías originales del dron para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
+      if (mainLayout) mainLayout.classList.remove("with-data");
       datasetGrid.style.display = "none";
       if (actionsWrap) actionsWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
@@ -2278,6 +2278,7 @@ if (map) {
       totalSize = files.reduce((acc, file) => acc + file.size, 0);
 
       if (files.length > 0) {
+        if (mainLayout) mainLayout.classList.add("with-data");
         dropTitle.textContent = `${files.length} archivos seleccionados`;
         datasetGrid.style.display = "grid";
         if (actionsWrap) actionsWrap.style.display = "flex";
