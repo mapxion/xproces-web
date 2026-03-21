@@ -1018,6 +1018,53 @@
   background: #edf2ee;
 }
 
+
+    .jobs-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .job-card {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .job-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .job-card-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .job-card-id {
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .job-card-meta {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .job-empty {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 8px 0;
+    }
+
     .footer-note {
       font-size: 12px;
       color: var(--muted);
@@ -1540,6 +1587,19 @@
           </div>
         </div>
       </div>
+
+        <div class="panel" id="jobsPanel">
+          <div class="panel-inner">
+            <div class="job-status-box">
+              <div class="job-status-header">
+                <div class="job-status-title">Tus trabajos</div>
+              </div>
+              <div class="jobs-list" id="jobsList"></div>
+              <div class="job-empty" id="jobsEmpty">Todavía no hay trabajos guardados en esta sesión.</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1658,6 +1718,8 @@
     const uploadActions = document.getElementById("uploadActions");
     const datasetPanel = document.getElementById("datasetPanel");
     const processStartWrap = document.getElementById("processStartWrap");
+    const jobsList = document.getElementById("jobsList");
+    const jobsEmpty = document.getElementById("jobsEmpty");
     const projectNameInput = document.getElementById("projectName");
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1962,6 +2024,51 @@ function getSelectedQualityMode() {
       if (refresh) {
         refreshPricingPreviewDebounced();
       }
+    }
+
+
+    function getStoredJobs() {
+      try {
+        const raw = JSON.parse(localStorage.getItem("xproces_jobs") || "[]");
+        return Array.isArray(raw) ? raw : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function formatStoredJobDate(ts) {
+      try {
+        return new Date(ts).toLocaleString("es-ES");
+      } catch (_) {
+        return "";
+      }
+    }
+
+    function renderStoredJobs() {
+      if (!jobsList || !jobsEmpty) return;
+
+      const jobs = getStoredJobs().slice().reverse();
+      jobsList.innerHTML = "";
+
+      if (!jobs.length) {
+        jobsEmpty.style.display = "block";
+        return;
+      }
+
+      jobsEmpty.style.display = "none";
+
+      jobs.forEach((job) => {
+        const card = document.createElement("div");
+        card.className = "job-card";
+        card.innerHTML = `
+          <div class="job-card-top">
+            <div class="job-card-title">${job.project || "Proyecto sin nombre"}</div>
+          </div>
+          <div class="job-card-id">Job ID: ${job.id || "—"}</div>
+          <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
+        `;
+        jobsList.appendChild(card);
+      });
     }
 
     function getStoredUser() {
@@ -2539,6 +2646,7 @@ function getSelectedQualityMode() {
       if (processStartWrap) processStartWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
+      renderStoredJobs();
       if (mapWrap) mapWrap.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
@@ -3724,6 +3832,7 @@ if (map) {
           });
           localStorage.setItem("xproces_jobs", JSON.stringify(jobs));
         } catch(e) {}
+        renderStoredJobs();
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
 
@@ -3764,6 +3873,7 @@ if (map) {
     }
 
       resetAll();
+renderStoredJobs();
 renderTopbarUser();
 syncStoredUserToForm();
 
