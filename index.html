@@ -291,6 +291,32 @@
 }
 
     
+    
+    .top-config-row {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+      margin: 6px 0 8px;
+    }
+
+    .top-config-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .top-config-card .config-section-title {
+      margin: 0 0 6px;
+    }
+
+    @media (max-width: 900px) {
+      .top-config-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .config-section-title {
       text-align: center;
       font-size: 11px;
@@ -1230,50 +1256,55 @@
 </div>
                 </div>
 
-                <div class="quality-mode-wrap" id="qualityInlineRow" style="display:none;">
-              <div>
-                <div class="config-section-title">Calidad</div>
-                  <div class="quality-mode-group" role="group" aria-label="Calidad de procesado">
-                    <input id="qualityMode" type="hidden" value="normal" />
-
-                    <div class="quality-mode-item">
-                      <button class="quality-mode-btn" type="button" data-quality-mode="fast">Rápido</button>
-                      <div class="quality-tooltip">
-                        <strong>Rápido</strong>
-                        Procesado más veloz y económico. Recomendado para proyectos en los que no se necesite un detalle perfecto y prime la velocidad del procesado.
-                      </div>
-                    </div>
-
-                    <div class="quality-mode-item">
-                      <button class="quality-mode-btn active" type="button" data-quality-mode="normal">Normal</button>
-                      <div class="quality-tooltip">
-                        <strong>Normal</strong>
-                        Equilibrio entre tiempo, coste y detalle. Es la opción recomendada para la mayoría de proyectos.
-                      </div>
-                    </div>
-
-                    <div class="quality-mode-item">
-                      <button class="quality-mode-btn" type="button" data-quality-mode="max">Máxima calidad</button>
-                      <div class="quality-tooltip">
-                        <strong>Máxima calidad</strong>
-                        Procesado más detallado y más lento. Pensado para obtener el mejor resultado posible cuando prima la precisión.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-
                 
+                <div class="top-config-row" id="topConfigRow">
+                  <div class="top-config-card">
+                    <div class="config-section-title">Calidad</div>
+                    <div class="quality-mode-wrap" id="qualityInlineRow" style="display:flex; margin:0;">
+                      <div class="quality-mode-group" role="group" aria-label="Calidad de procesado">
+                        <input id="qualityMode" type="hidden" value="normal" />
 
-                <div class="output-mode-wrap" id="outputModeWrap">
-                  <div class="output-mode-group" role="group" aria-label="Modo de selección de archivos de salida">
-                    <button class="output-mode-btn active" type="button" data-output-mode="preset">Paquetes recomendados</button>
-                    <button class="output-mode-btn" type="button" data-output-mode="manual">Selección manual</button>
+                        <div class="quality-mode-item">
+                          <button class="quality-mode-btn" type="button" data-quality-mode="fast">Rápido</button>
+                          <div class="quality-tooltip">
+                            <strong>Rápido</strong>
+                            Procesado más veloz y económico. Recomendado para proyectos en los que no se necesite un detalle perfecto y prime la velocidad del procesado.
+                          </div>
+                        </div>
+
+                        <div class="quality-mode-item">
+                          <button class="quality-mode-btn active" type="button" data-quality-mode="normal">Normal</button>
+                          <div class="quality-tooltip">
+                            <strong>Normal</strong>
+                            Equilibrio entre tiempo, coste y detalle. Es la opción recomendada para la mayoría de proyectos.
+                          </div>
+                        </div>
+
+                        <div class="quality-mode-item">
+                          <button class="quality-mode-btn" type="button" data-quality-mode="max">Máxima calidad</button>
+                          <div class="quality-tooltip">
+                            <strong>Máxima calidad</strong>
+                            Procesado más detallado y más lento. Pensado para obtener el mejor resultado posible cuando prima la precisión.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="top-config-card">
+                    <div class="config-section-title">Entrega</div>
+                    <div class="output-mode-wrap" id="outputInlineRow" style="display:flex; margin:0;">
+                      <div class="output-mode-wrap" id="outputModeWrap" style="display:flex; margin:0;">
+                        <div class="output-mode-group" role="group" aria-label="Modo de selección de archivos de salida">
+                          <button class="output-mode-btn active" type="button" data-output-mode="preset">Paquetes recomendados</button>
+                          <button class="output-mode-btn" type="button" data-output-mode="manual">Selección manual</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="outputs-wrap" id="outputsWrap">
+<div class="outputs-wrap" id="outputsWrap">
                   <div class="outputs-box">
                     <div class="outputs-title">Archivos de salida</div>
                     <div class="outputs-note" id="outputsModeNote">
@@ -1544,6 +1575,7 @@
     const uploadMeta = document.getElementById("uploadMeta");
     const uploadPhotosMeta = document.getElementById("uploadPhotosMeta");
     const uploadGpsMeta = document.getElementById("uploadGpsMeta");
+    const topConfigRow = document.getElementById("topConfigRow");
     const qualityInlineRow = document.getElementById("qualityInlineRow");
     const outputInlineRow = document.getElementById("outputInlineRow");
     const datasetGrid = document.getElementById("datasetGrid");
@@ -2371,8 +2403,7 @@ function getSelectedQualityMode() {
 
       if (mainLayout) mainLayout.classList.remove("with-data");
       if (datasetPanel) datasetPanel.style.display = "none";
-      if (qualityInlineRow) qualityInlineRow.style.display = "none";
-      if (outputInlineRow) outputInlineRow.style.display = "none";
+      if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
       if (processStartWrap) processStartWrap.style.display = "none";
@@ -2459,8 +2490,7 @@ if (map) {
         if (mainLayout) mainLayout.classList.add("with-data");
         dropTitle.textContent = `${files.length} archivos seleccionados`;
         if (datasetPanel) datasetPanel.style.display = "block";
-        if (qualityInlineRow) qualityInlineRow.style.display = "flex";
-        if (outputInlineRow) outputInlineRow.style.display = "flex";
+        if (topConfigRow) topConfigRow.style.display = "grid";
         datasetGrid.style.display = "grid";
         if (uploadActions) uploadActions.style.display = "flex";
         if (pricingPanel) pricingPanel.style.display = "block";
