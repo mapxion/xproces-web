@@ -386,7 +386,11 @@
     }
 
     .actions {
-      display: flex;
+      display: none;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
@@ -580,9 +584,7 @@
     }
 
     .outputs-note {
-      margin-top: 4px;
-      margin-bottom: 12px;
-      margin: 10px 0 0;
+      margin: 0 0 12px;
       text-align: center;
       color: var(--muted);
       font-size: 12px;
@@ -627,7 +629,7 @@
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      margin-bottom: 10px;
+      margin-bottom: 2px;
     }
 
     .outputs-group {
@@ -1285,7 +1287,7 @@
           </div>
         </div>
 
-<div class="panel" id="pricingPanel">
+<div class="panel" id="pricingPanel" style="display:none;">
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-grid">
@@ -1309,7 +1311,7 @@
       </div>
 
       <div class="right-stack">
-<div class="panel" id="processPanel">
+<div class="panel" id="processPanel" style="display:none;">
           <div class="panel-inner">
             <div class="job-status-box">
               <div class="job-status-header">
@@ -1348,7 +1350,7 @@
           </div>
         </div>
 
-<div class="panel" id="mapWrap">
+<div class="panel" id="mapWrap" style="display:none;">
           <div class="panel-inner">
             <div class="dataset-label" style="margin-bottom: 10px;">Situación de la toma de datos</div>
             <div id="map"></div>
@@ -1474,6 +1476,7 @@
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const actionsWrap = document.querySelector(".actions");
     const projectNameInput = document.getElementById("projectName");
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
@@ -1493,6 +1496,8 @@
     const processDownloadWrap = document.getElementById("processDownloadWrap");
     const processDownloadBtn = document.getElementById("processDownloadBtn");
 
+    const pricingPanel = document.getElementById("pricingPanel");
+    const processPanel = document.getElementById("processPanel");
     const mapWrap = document.getElementById("mapWrap");
     const qualityModeInput = document.getElementById("qualityMode");
     const qualityModeWrap = document.querySelector(".quality-mode-wrap");
@@ -1836,7 +1841,7 @@ function getSelectedQualityMode() {
       fieldLens.textContent = "Sin detectar";
       fieldFocal.textContent = "Sin detectar";
       fieldDate.textContent = "Sin detectar";
-      mapWrap.style.display = "block";
+      if (files.length > 0) mapWrap.style.display = "block";
 
       if (map && marker) {
         map.removeLayer(marker);
@@ -2201,6 +2206,10 @@ function getSelectedQualityMode() {
         "Sube las fotografías originales del dron para calcular precio, tiempo, analizar EXIF, validar el dataset y preparar el procesado.";
 
       datasetGrid.style.display = "none";
+      if (actionsWrap) actionsWrap.style.display = "none";
+      if (pricingPanel) pricingPanel.style.display = "none";
+      if (processPanel) processPanel.style.display = "none";
+      if (mapWrap) mapWrap.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
       if (outputModeWrap) outputModeWrap.style.display = "none";
@@ -2265,6 +2274,10 @@ if (map) {
       if (files.length > 0) {
         dropTitle.textContent = `${files.length} archivos seleccionados`;
         datasetGrid.style.display = "grid";
+        if (actionsWrap) actionsWrap.style.display = "flex";
+        if (pricingPanel) pricingPanel.style.display = "block";
+        if (processPanel) processPanel.style.display = "block";
+        if (mapWrap) mapWrap.style.display = "block";
         if (qualityModeWrap) qualityModeWrap.style.display = "flex";
         if (outputsWrap) outputsWrap.style.display = "flex";
         if (outputModeWrap) outputModeWrap.style.display = "flex";
@@ -2682,7 +2695,7 @@ if (map) {
             fieldCamera.textContent = "No detectada";
             fieldDrone.textContent = "No detectado";
             fieldLocation.textContent = "No detectada";
-            mapWrap.style.display = "block";
+            if (files.length > 0) mapWrap.style.display = "block";
           }
         };
 
@@ -2690,14 +2703,14 @@ if (map) {
           fieldCamera.textContent = "No detectada";
           fieldDrone.textContent = "No detectado";
           fieldLocation.textContent = "No detectada";
-          mapWrap.style.display = "block";
+          if (files.length > 0) mapWrap.style.display = "block";
         };
 
         reader.onerror = function () {
           fieldCamera.textContent = "No detectada";
           fieldDrone.textContent = "No detectado";
           fieldLocation.textContent = "No detectada";
-          mapWrap.style.display = "block";
+          if (files.length > 0) mapWrap.style.display = "block";
         };
 
         img.src = e.target.result;
