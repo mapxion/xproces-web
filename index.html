@@ -1675,7 +1675,7 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        setSelectedPreset(btn.dataset.preset || "inspection_standard");
+        setSelectedPreset(btn.dataset.preset || "");
         updateOutputsModeNote();
         refreshPricingPreviewDebounced();
       });
@@ -1716,10 +1716,6 @@
       const manualPanel = document.getElementById("manualOutputsPanel");
       if (presetPanel) presetPanel.style.display = normalized === "preset" ? "block" : "none";
       if (manualPanel) manualPanel.style.display = normalized === "manual" ? "block" : "none";
-
-      if (normalized === "preset" && !getSelectedPreset()) {
-        setSelectedPreset("");
-      }
 
       updateOutputsModeNote();
       updateProcessSelectionSummary();
@@ -1780,7 +1776,7 @@
     }
 
 function getSelectedQualityMode() {
-      return qualityModeInput?.value || "normal";
+      return qualityModeInput?.value || "";
     }
 
     function getSelectedOutputs() {
@@ -1825,17 +1821,17 @@ function getSelectedQualityMode() {
 
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
-        mode === "fast" || mode === "normal" || mode === "max" ? mode : "normal";
+        mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
 
       if (qualityModeInput) {
         qualityModeInput.value = normalized;
       }
 
       document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.qualityMode === normalized);
+        btn.classList.toggle("active", normalized !== "" && btn.dataset.qualityMode === normalized);
       });
 
-      updateSelectedQualityBadge();
+      updateProcessSelectionSummary();
 
       if (refresh) {
         refreshPricingPreviewDebounced();
