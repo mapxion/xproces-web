@@ -1004,7 +1004,8 @@
     #analysisPanel { display: none !important; }
 
     @media (max-width: 760px) {
-  .layout {
+  .layout,
+  .layout.with-data {
     grid-template-columns: 1fr;
   }
 
@@ -2037,6 +2038,28 @@ function getSelectedQualityMode() {
       if (e.key === "Escape" && authBackdrop.classList.contains("show")) {
         closeAuthModal();
       }
+    });
+
+    function refreshMapAfterResize() {
+      if (!map) return;
+      const mapEl = document.getElementById("map");
+      if (!mapEl) return;
+      if (mapEl.offsetWidth === 0 || mapEl.offsetHeight === 0) return;
+
+      if (mapResizeTimer) {
+        clearTimeout(mapResizeTimer);
+      }
+
+      mapResizeTimer = setTimeout(() => {
+        if (!map) return;
+        map.invalidateSize(true);
+        mapResizeTimer = null;
+      }, 180);
+    }
+
+    window.addEventListener("resize", refreshMapAfterResize);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(refreshMapAfterResize, 220);
     });
 
     async function fetchPricingPreview(photoCount, totalBytes) {
