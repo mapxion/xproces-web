@@ -1019,6 +1019,10 @@
 }
 
 
+    .jobs-panel-hidden {
+      display: none !important;
+    }
+
     .jobs-list {
       display: grid;
       gap: 10px;
@@ -1587,19 +1591,19 @@
           </div>
         </div>
       </div>
+      </div>
+    </div>
 
-        <div class="panel" id="jobsPanel">
-          <div class="panel-inner">
-            <div class="job-status-box">
-              <div class="job-status-header">
-                <div class="job-status-title">Tus trabajos</div>
-              </div>
-              <div class="jobs-list" id="jobsList"></div>
-              <div class="job-empty" id="jobsEmpty">Todavía no hay trabajos guardados en esta sesión.</div>
-            </div>
+
+    <div class="panel jobs-panel-hidden" id="jobsPanel">
+      <div class="panel-inner">
+        <div class="job-status-box">
+          <div class="job-status-header">
+            <div class="job-status-title">Tus trabajos</div>
           </div>
+          <div class="jobs-list" id="jobsList"></div>
+          <div class="job-empty" id="jobsEmpty">Todavía no hay trabajos guardados en esta cuenta.</div>
         </div>
-
       </div>
     </div>
 
@@ -1718,6 +1722,7 @@
     const uploadActions = document.getElementById("uploadActions");
     const datasetPanel = document.getElementById("datasetPanel");
     const processStartWrap = document.getElementById("processStartWrap");
+    const jobsPanel = document.getElementById("jobsPanel");
     const jobsList = document.getElementById("jobsList");
     const jobsEmpty = document.getElementById("jobsEmpty");
     const projectNameInput = document.getElementById("projectName");
@@ -2036,6 +2041,12 @@ function getSelectedQualityMode() {
       }
     }
 
+    function clearStoredJobs() {
+      try {
+        localStorage.removeItem("xproces_jobs");
+      } catch (_) {}
+    }
+
     function formatStoredJobDate(ts) {
       try {
         return new Date(ts).toLocaleString("es-ES");
@@ -2045,7 +2056,17 @@ function getSelectedQualityMode() {
     }
 
     function renderStoredJobs() {
-      if (!jobsList || !jobsEmpty) return;
+      if (!jobsPanel || !jobsList || !jobsEmpty) return;
+
+      const user = typeof getStoredUser === "function" ? getStoredUser() : null;
+      if (!user) {
+        jobsPanel.classList.add("jobs-panel-hidden");
+        jobsList.innerHTML = "";
+        jobsEmpty.style.display = "block";
+        return;
+      }
+
+      jobsPanel.classList.remove("jobs-panel-hidden");
 
       const jobs = getStoredJobs().slice().reverse();
       jobsList.innerHTML = "";
@@ -2144,7 +2165,9 @@ function getSelectedQualityMode() {
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
+        clearStoredJobs();
         renderTopbarUser();
+        renderStoredJobs();
       });
     }
 
@@ -2646,7 +2669,6 @@ function getSelectedQualityMode() {
       if (processStartWrap) processStartWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
-      renderStoredJobs();
       if (mapWrap) mapWrap.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
