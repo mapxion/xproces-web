@@ -1447,6 +1447,7 @@
     let map = null;
     let baseLayer = null;
     let marker = null;
+    let mapResizeTimer = null;
     let pollTimer = null;
     let previewTimer = null;
     let lastPreview = null;
@@ -2798,20 +2799,16 @@ if (map) {
 
   map.setView([lat, lon], zoom);
 
-  setTimeout(() => {
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 200);
+  if (mapResizeTimer) {
+    clearTimeout(mapResizeTimer);
+    mapResizeTimer = null;
+  }
 
-  setTimeout(() => {
+  mapResizeTimer = setTimeout(() => {
+    if (!map) return;
     map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 700);
-
-  setTimeout(() => {
-    map.invalidateSize(true);
-    if (baseLayer) baseLayer.redraw();
-  }, 1400);
+    mapResizeTimer = null;
+  }, 180);
 }
 
      function initMapWorldView() {
