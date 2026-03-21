@@ -1614,8 +1614,6 @@
     const clearBtn = document.getElementById("clearBtn");
     const processProjectName = document.getElementById("processProjectName");
     const newProjectBtn = document.getElementById("newProjectBtn");
-    const processProjectName = document.getElementById("processProjectName");
-    const newProjectBtn = document.getElementById("newProjectBtn");
     const uploadActions = document.getElementById("uploadActions");
     const uploadPanel = document.getElementById("uploadPanel");
     const datasetPanel = document.getElementById("datasetPanel");
@@ -1779,34 +1777,6 @@
         return { jobId: "", projectName: "" };
       }
     }
-      }
-    }
-
-
-    function saveActiveJobState(jobId, projectName) {
-      try {
-        localStorage.setItem("xproces_active_job_id", jobId || "");
-        localStorage.setItem("xproces_active_project_name", projectName || "");
-      } catch (_) {}
-    }
-
-    function clearActiveJobState() {
-      try {
-        localStorage.removeItem("xproces_active_job_id");
-        localStorage.removeItem("xproces_active_project_name");
-      } catch (_) {}
-    }
-
-    function getSavedActiveJobState() {
-      try {
-        return {
-          jobId: localStorage.getItem("xproces_active_job_id") || "",
-          projectName: localStorage.getItem("xproces_active_project_name") || ""
-        };
-      } catch (_) {
-        return { jobId: "", projectName: "" };
-      }
-    }
 
     function showOnlyProcessPanel(projectName = "") {
       if (uploadPanel) uploadPanel.style.display = "none";
@@ -1844,6 +1814,22 @@
       }
     }
 
+    function updateProcessOnlyView(isActive) {
+      if (uploadPanel) uploadPanel.style.display = isActive ? "none" : "block";
+      if (datasetPanel) datasetPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (pricingPanel) pricingPanel.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (mapWrap) mapWrap.style.display = isActive ? "none" : (files.length ? "block" : "none");
+      if (processPanel) processPanel.style.display = isActive ? "block" : (files.length ? "block" : "none");
+
+      if (!isActive && mainLayout) {
+        if (files.length) {
+          mainLayout.classList.add("with-data");
+        } else {
+          mainLayout.classList.remove("with-data");
+        }
+      }
+    }
+
     function setUiLockedAfterStart(isLocked) {
       activeProcessLocked = isLocked;
 
@@ -1861,24 +1847,14 @@
 
       if (uploadBtn) {
         uploadBtn.disabled = isLocked;
-        uploadBtn.style.pointerEvents = isLocked ? "none" : "";
-        uploadBtn.style.opacity = isLocked ? "0.6" : "";
       }
     }
 
     function goToNewProjectHome() {
       clearActiveJobState();
-      resetAll();
-      if (processProjectName) {
-        processProjectName.style.display = "none";
-        processProjectName.textContent = "Proyecto: —";
-      }
-      if (newProjectBtn) {
-        newProjectBtn.style.display = "none";
-      }
       setUiLockedAfterStart(false);
-      updateProcessOnlyView(false);
-      updateProcessOnlyView(false);
+      resetAll();
+      showInitialProjectView();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -3808,6 +3784,16 @@ if (map) {
       resetAll();
 renderTopbarUser();
 syncStoredUserToForm();
+
+      const savedJob = getSavedActiveJobState();
+      if (savedJob.jobId) {
+        pendingProjectName = savedJob.projectName || "";
+        setUiLockedAfterStart(true);
+        showOnlyProcessPanel(pendingProjectName || "");
+        startPolling(savedJob.jobId);
+      } else {
+        showInitialProjectView();
+      }
 
 window.addEventListener("load", () => {
   initMapWorldView();
