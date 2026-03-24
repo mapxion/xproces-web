@@ -884,6 +884,37 @@
       line-height: 1.45;
     }
 
+    .selection-summary-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .selection-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selection-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      color: #18210e;
+      border: 1px solid rgba(158, 224, 0, 0.55);
+      box-shadow: 0 6px 16px rgba(158, 224, 0, 0.16);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
     .process-stage-wrap {
       display: none;
       gap: 8px;
@@ -2028,6 +2059,39 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
+    function getProcessSelectionItemsFromJob(job) {
+      const items = [];
+      const quality = String(job?.quality_mode || "").trim().toLowerCase();
+      const qualityLabel = formatQualityModeLabel(quality || "normal");
+      items.push(`Calidad: ${qualityLabel}`);
+
+      const outputs = getJobOutputsArray(job);
+      outputs.forEach((output) => {
+        items.push(formatOutputLabel(output));
+      });
+
+      return items;
+    }
+
+    function updateProcessSelectionSummaryFromJob(job) {
+      if (!processSelectionSummary) return;
+
+      const items = getProcessSelectionItemsFromJob(job);
+      if (!items.length) {
+        processSelectionSummary.style.display = "none";
+        processSelectionSummary.innerHTML = "";
+        return;
+      }
+
+      processSelectionSummary.style.display = "block";
+      processSelectionSummary.innerHTML = `
+        <div class="selection-summary-title">Configuración seleccionada</div>
+        <div class="selection-chips">
+          ${items.map((item) => `<span class="selection-chip">${item}</span>`).join("")}
+        </div>
+      `;
+    }
+
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
         mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
@@ -2112,6 +2176,7 @@ function getSelectedQualityMode() {
         projectTitle.style.display = "block";
         projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
       }
+      updateProcessSelectionSummaryFromJob(job);
 
       if (jobStatusEl) {
         jobStatusEl.textContent =
@@ -2918,6 +2983,7 @@ if (map) {
 
       processStageWrap.style.display = "none";
       resetStageClasses();
+      if (processSelectionSummary) { processSelectionSummary.style.display = "none"; processSelectionSummary.innerHTML = ""; }
 
       jobStatusEl.textContent = "";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
@@ -3839,6 +3905,7 @@ if (map) {
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
+          updateProcessSelectionSummaryFromJob(job);
           renderStoredJobs();
 
           if (status === "queued" || status === "running") {
@@ -4093,15 +4160,35 @@ if (map) {
     }
 
       resetAll();
-renderStoredJobs();
 renderTopbarUser();
+renderStoredJobs();
 syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
-  renderTopbarUser();
-  renderStoredJobs();
-  restoreActiveJobView();
+
+  const user = getStoredUser();
+  const activeJob = getActiveJobState();
+
+  if (user && activeJob && String(activeJob.userId || "") === String(user.id || "") && activeJob.jobId) {
+    pendingProjectName = activeJob.projectName || "";
+    selectedHistoryJobId = activeJob.jobId || "";
+    if (projectTitle) {
+      projectTitle.style.display = "block";
+      projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+    }
+    if (uploadPanel) uploadPanel.style.display = "none";
+    if (datasetPanel) datasetPanel.style.display = "none";
+    if (pricingPanel) pricingPanel.style.display = "none";
+    if (mapWrap) mapWrap.style.display = "none";
+    if (processPanel) processPanel.style.display = "block";
+    if (processStartWrap) processStartWrap.style.display = "none";
+    if (uploadBtn) {
+      uploadBtn.textContent = "Iniciar nuevo proyecto";
+      uploadBtn.disabled = false;
+    }
+    startPolling(activeJob.jobId);
+  }
 });
   </script>
 </body>
