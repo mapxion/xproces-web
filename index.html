@@ -2094,6 +2094,7 @@ function getSelectedQualityMode() {
       if (!job || !job.id) return;
 
       pendingProjectName = job.project_name || "";
+      selectedHistoryJobId = job.id || "";
       if (uploadPanel) uploadPanel.style.display = "none";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
@@ -2147,6 +2148,7 @@ function getSelectedQualityMode() {
         jobsPanel.classList.add("jobs-panel-hidden");
         jobsList.innerHTML = "";
         jobsEmpty.style.display = "block";
+        jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
@@ -2182,17 +2184,35 @@ function getSelectedQualityMode() {
         jobs.forEach((job) => {
           const card = document.createElement("div");
           card.className = "job-card";
+          if (selectedHistoryJobId && job.id === selectedHistoryJobId) {
+            card.classList.add("active");
+          }
+
+          const statusLabel = formatJobListStatus(job.status);
+          const stageLabel = formatJobListStage(job.stage);
+          const progressValue = Math.max(0, Math.min(100, Number(job.progress || 0)));
+          const canDownload = ["done", "completed"].includes(String(job.status || "").toLowerCase());
+
           card.innerHTML = `
             <div class="job-card-top">
               <div class="job-card-title">${job.project_name || "Proyecto sin nombre"}</div>
             </div>
             <div class="job-card-id">Job ID: ${job.id || "—"}</div>
-            <div class="job-card-meta">Estado: ${formatJobListStatus(job.status)}</div>
-            <div class="job-card-meta">Fase: ${formatJobListStage(job.stage)}</div>
-            <div class="job-card-meta">Progreso: ${Number(job.progress || 0)}%</div>
+            <div class="job-card-meta">Estado: ${statusLabel}</div>
+            <div class="job-card-meta">Fase: ${stageLabel}</div>
+            <div class="job-card-meta">Progreso: ${progressValue}%</div>
             <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
             <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
+            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
+
+          card.addEventListener("click", async (event) => {
+            if (event.target.closest("a")) return;
+            selectedHistoryJobId = job.id || "";
+            await openJobFromHistory(job);
+            await renderStoredJobs();
+          });
+
           jobsList.appendChild(card);
         });
       } catch (error) {
@@ -2720,6 +2740,7 @@ function getSelectedQualityMode() {
       latestExifSummary = {};
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
+      selectedHistoryJobId = "";
       selectedHistoryJobId = "";
       fileInput.value = "";
 
@@ -3756,6 +3777,7 @@ if (map) {
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
+          renderStoredJobs();
 
           if (status === "queued" || status === "running") {
             const eta = await getJobEta(job.id);
@@ -3769,7 +3791,7 @@ if (map) {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
-          if (status === "done") {
+          if (status === "done" || status === "completed") {
             stopPolling();
 
             progressFill.style.width = "100%";
