@@ -2146,15 +2146,16 @@ function getSelectedQualityMode() {
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
-        // mantener contenido para evitar flicker
+        jobsList.replaceChildren();
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-      // no limpiar para evitar parpadeo
-      if (!jobsList.children.length) {
+
+      const hasExistingCards = jobsList.children.length > 0;
+      if (!hasExistingCards) {
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Cargando trabajos...";
       }
@@ -2173,15 +2174,15 @@ function getSelectedQualityMode() {
         }
 
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
-        // mantener contenido para evitar flicker
 
         if (!jobs.length) {
+          jobsList.replaceChildren();
           jobsEmpty.style.display = "block";
           jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
           return;
         }
 
-        jobsEmpty.style.display = "none";
+        const fragment = document.createDocumentFragment();
 
         jobs.forEach((job) => {
           const card = document.createElement("div");
@@ -2215,13 +2216,17 @@ function getSelectedQualityMode() {
             await renderStoredJobs();
           });
 
-          jobsList.appendChild(card);
+          fragment.appendChild(card);
         });
+
+        jobsList.replaceChildren(fragment);
+        jobsEmpty.style.display = "none";
       } catch (error) {
         console.error("renderStoredJobs error", error);
-        // mantener contenido para evitar flicker
-        jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
+        if (!jobsList.children.length) {
+          jobsEmpty.style.display = "block";
+          jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
+        }
       }
     }
 
