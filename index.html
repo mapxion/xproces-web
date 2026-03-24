@@ -2240,6 +2240,33 @@ function getSelectedQualityMode() {
       }
     }
 
+
+    function saveActiveJobState(jobId, projectName, userId) {
+      try {
+        localStorage.setItem("xproces_active_job", JSON.stringify({
+          jobId: jobId || "",
+          projectName: projectName || "",
+          userId: userId || "",
+          savedAt: Date.now()
+        }));
+      } catch (_) {}
+    }
+
+    function getActiveJobState() {
+      try {
+        const raw = localStorage.getItem("xproces_active_job");
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function clearActiveJobState() {
+      try {
+        localStorage.removeItem("xproces_active_job");
+      } catch (_) {}
+    }
+
     function getStoredUser() {
       try {
         const raw = localStorage.getItem("xproces_user");
@@ -2318,6 +2345,7 @@ function getSelectedQualityMode() {
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
         clearStoredJobs();
+        clearActiveJobState();
         selectedHistoryJobId = "";
         resetAll();
         renderTopbarUser();
@@ -2526,11 +2554,36 @@ function getSelectedQualityMode() {
         }
 
         const previousUser = getStoredUser();
+        const isDifferentUser = !!(previousUser?.id && data.user?.id && String(previousUser.id) !== String(data.user.id));
+
         setStoredUser(data.user);
+
+        if (isDifferentUser) {
+          clearActiveJobState();
+        }
+
         selectedHistoryJobId = "";
         resetAll();
         renderTopbarUser();
         renderStoredJobs();
+
+        const activeJob = getActiveJobState();
+        if (activeJob && String(activeJob.userId || "") === String(data.user?.id || "") && activeJob.jobId) {
+          pendingProjectName = activeJob.projectName || "";
+          if (projectTitle) {
+            projectTitle.style.display = "block";
+            projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+          }
+          if (uploadPanel) uploadPanel.style.display = "none";
+          if (datasetPanel) datasetPanel.style.display = "none";
+          if (pricingPanel) pricingPanel.style.display = "none";
+          if (mapWrap) mapWrap.style.display = "none";
+          if (processPanel) processPanel.style.display = "block";
+          if (processStartWrap) processStartWrap.style.display = "none";
+          if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+          startPolling(activeJob.jobId);
+        }
+
         closeAuthModal();
       } catch (error) {
         console.error(error);
@@ -2867,7 +2920,7 @@ if (map) {
       processStageWrap.style.display = "none";
       resetStageClasses();
 
-      jobStatusEl.textContent = "Aquí se mostrará el estado real del trabajo una vez iniciado.";
+      jobStatusEl.textContent = "";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
       if (uploadBtn) uploadBtn.textContent = "Iniciar procesado";
 
@@ -3610,6 +3663,7 @@ if (map) {
 
     uploadBtn.addEventListener("click", async () => {
       if (uploadBtn.textContent === "Iniciar nuevo proyecto") {
+        clearActiveJobState();
         resetAll();
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -3728,8 +3782,6 @@ if (map) {
 
 
     function buildProjectStatusText(job) {
-      const status = String(job?.status ?? "").toLowerCase();
-      const stage = String(job?.stage ?? "");
       const message = String(job?.message ?? "").trim();
       const outputs = getJobOutputsArray(job);
       const outputsText = outputs.length ? outputs.map(formatOutputLabel).join(", ") : "Sin seleccionar";
@@ -3737,15 +3789,9 @@ if (map) {
 
       lines.push(`Archivos solicitados: ${outputsText}`);
 
-      if (status === "failed") lines.push("Estado: Fallido");
-      else if (status === "cancelled") lines.push("Estado: Cancelado");
-      else if (status === "completed" || status === "done") lines.push("Estado: Completado");
-      else if (status === "queued") lines.push("Estado: En cola");
-      else if (status === "running") lines.push("Estado: Procesando");
-      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
-
-      if (stage) lines.push(`Fase: ${stage}`);
-      if (message) lines.push(message);
+      if (message) {
+        lines.push(message);
+      }
 
       return lines.join("
 ");
@@ -3792,6 +3838,7 @@ if (map) {
           if (uploadPanel) uploadPanel.style.display = "none";
           if (processPanel) processPanel.style.display = "block";
           const message = job.message || "";
+          saveActiveJobState(job.id, pendingProjectName || job.project_name || "", getStoredUser()?.id || "");
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
@@ -4016,6 +4063,7 @@ if (map) {
 
         const createdJob = await createJob();
         const jobId = createdJob.id;
+        saveActiveJobState(jobId, pendingProjectName || "", getStoredUser()?.id || "");
         renderStoredJobs();
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
@@ -4026,7 +4074,7 @@ if (map) {
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
 
-        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Preparando subida por lotes...`;
+        jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
 
@@ -4037,20 +4085,20 @@ if (map) {
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
-        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Subida completada. Enviando a procesado...`;
+        jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
 
         await submitJob(jobId);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Su proyecto está en cola.<br>Calculando tiempo restante...`;
+        jobStatusEl.textContent = "Su proyecto está en cola. Calculando tiempo restante...";
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>${error.message || "Error durante la subida"}`;
+        jobStatusEl.textContent = error.message || "Error durante la subida";
         progressFill.classList.add("error");
         progressLabel.textContent = "Fallido";
       }
@@ -4063,6 +4111,25 @@ syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
+
+  const user = getStoredUser();
+  const activeJob = getActiveJobState();
+
+  if (user && activeJob && String(activeJob.userId || "") === String(user.id || "") && activeJob.jobId) {
+    pendingProjectName = activeJob.projectName || "";
+    if (projectTitle) {
+      projectTitle.style.display = "block";
+      projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+    }
+    if (uploadPanel) uploadPanel.style.display = "none";
+    if (datasetPanel) datasetPanel.style.display = "none";
+    if (pricingPanel) pricingPanel.style.display = "none";
+    if (mapWrap) mapWrap.style.display = "none";
+    if (processPanel) processPanel.style.display = "block";
+    if (processStartWrap) processStartWrap.style.display = "none";
+    if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+    startPolling(activeJob.jobId);
+  }
 });
   </script>
 </body>
