@@ -2146,16 +2146,18 @@ function getSelectedQualityMode() {
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
-        jobsList.innerHTML = "";
+        // mantener contenido para evitar flicker
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-      jobsList.innerHTML = "";
-      jobsEmpty.style.display = "block";
-      jobsEmpty.textContent = "Cargando trabajos...";
+      // no limpiar para evitar parpadeo
+      if (!jobsList.children.length) {
+        jobsEmpty.style.display = "block";
+        jobsEmpty.textContent = "Cargando trabajos...";
+      }
 
       try {
         const response = await fetch(`${API_BASE}/jobs/mine`, {
@@ -2171,7 +2173,7 @@ function getSelectedQualityMode() {
         }
 
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
-        jobsList.innerHTML = "";
+        // mantener contenido para evitar flicker
 
         if (!jobs.length) {
           jobsEmpty.style.display = "block";
@@ -2217,7 +2219,7 @@ function getSelectedQualityMode() {
         });
       } catch (error) {
         console.error("renderStoredJobs error", error);
-        jobsList.innerHTML = "";
+        // mantener contenido para evitar flicker
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
       }
