@@ -1033,6 +1033,20 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 12px;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .job-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(24, 33, 29, 0.08);
+      border-color: rgba(158, 224, 0, 0.45);
+    }
+
+    .job-card.active {
+      border-color: rgba(158, 224, 0, 0.65);
+      background: rgba(184, 255, 26, 0.08);
+      box-shadow: 0 8px 18px rgba(158, 224, 0, 0.12);
     }
 
     .job-card-top {
@@ -1688,9 +1702,11 @@
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
+    let selectedHistoryJobId = "";
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
+    const uploadPanel = document.getElementById("uploadPanel");
     const dropTitle = document.getElementById("dropTitle");
     const dropSubtitle = document.getElementById("dropSubtitle");
     const uploadValid = document.getElementById("uploadValid");
@@ -2071,6 +2087,56 @@ function getSelectedQualityMode() {
       const num = Number(price);
       if (!Number.isFinite(num) || num <= 0) return "—";
       return `${num} €`;
+    }
+
+
+    async function openJobFromHistory(job) {
+      if (!job || !job.id) return;
+
+      pendingProjectName = job.project_name || "";
+      if (uploadPanel) uploadPanel.style.display = "none";
+      if (datasetPanel) datasetPanel.style.display = "none";
+      if (pricingPanel) pricingPanel.style.display = "none";
+      if (mapWrap) mapWrap.style.display = "none";
+      if (processPanel) processPanel.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "none";
+
+      if (uploadBtn) {
+        uploadBtn.textContent = "Iniciar nuevo proyecto";
+        uploadBtn.disabled = false;
+      }
+
+      if (projectTitle) {
+        projectTitle.style.display = "block";
+        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
+      }
+
+      if (jobStatusEl) {
+        jobStatusEl.textContent =
+          `Trabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
+      }
+
+      if (progressWrap) progressWrap.style.display = "block";
+      if (progressFill) {
+        const pct = Math.max(0, Math.min(100, Number(job.progress || 0)));
+        progressFill.style.width = `${pct}%`;
+        progressFill.classList.toggle("error", ["failed", "cancelled"].includes(String(job.status || "").toLowerCase()));
+      }
+      if (progressPercent) {
+        progressPercent.textContent = `${Math.max(0, Math.min(100, Number(job.progress || 0)))}%`;
+      }
+      if (progressLabel) {
+        const s = String(job.status || "").toLowerCase();
+        if (s === "failed") progressLabel.textContent = "Fallido";
+        else if (s === "cancelled") progressLabel.textContent = "Cancelado";
+        else if (s === "completed" || s === "done") progressLabel.textContent = "Completado";
+        else if (s === "queued") progressLabel.textContent = "En cola";
+        else progressLabel.textContent = "Procesando";
+      }
+
+      stopPolling();
+      startPolling(job.id);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     async function renderStoredJobs() {
@@ -2654,6 +2720,7 @@ function getSelectedQualityMode() {
       latestExifSummary = {};
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
+      selectedHistoryJobId = "";
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -2712,11 +2779,16 @@ function getSelectedQualityMode() {
         "Sube las fotografías originales del dron para calcular el precio, el tiempo, analizar las imágenes, validar los datos y configurar el procesado.";
 
       if (mainLayout) mainLayout.classList.remove("with-data");
+      if (uploadPanel) uploadPanel.style.display = "block";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
       if (processStartWrap) processStartWrap.style.display = "none";
+      if (uploadBtn) {
+        uploadBtn.textContent = "Iniciar procesado";
+        uploadBtn.disabled = false;
+      }
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
