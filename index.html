@@ -2034,12 +2034,7 @@ function getSelectedQualityMode() {
 
 
     function getStoredJobs() {
-      try {
-        const raw = JSON.parse(localStorage.getItem("xproces_jobs") || "[]");
-        return Array.isArray(raw) ? raw : [];
-      } catch (_) {
-        return [];
-      }
+      return [];
     }
 
     function clearStoredJobs() {
@@ -2056,11 +2051,33 @@ function getSelectedQualityMode() {
       }
     }
 
-    function renderStoredJobs() {
+    function formatJobListStatus(status) {
+      const value = String(status || "").toLowerCase();
+      if (value === "queued") return "En cola";
+      if (value === "running") return "Procesando";
+      if (value === "done" || value === "completed") return "Completado";
+      if (value === "failed") return "Fallido";
+      if (value === "cancelled") return "Cancelado";
+      if (value === "created") return "Creado";
+      if (value === "receiving") return "Recibiendo fotos";
+      return value || "Sin estado";
+    }
+
+    function formatJobListStage(stage) {
+      return String(stage || "").trim() || "Sin fase";
+    }
+
+    function formatJobListPrice(price) {
+      const num = Number(price);
+      if (!Number.isFinite(num) || num <= 0) return "—";
+      return `${num} €`;
+    }
+
+    async function renderStoredJobs() {
       if (!jobsPanel || !jobsList || !jobsEmpty) return;
 
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
-      if (!user) {
+      if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
         jobsList.innerHTML = "";
         jobsEmpty.style.display = "block";
@@ -2068,29 +2085,56 @@ function getSelectedQualityMode() {
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-
-      const jobs = getStoredJobs().slice().reverse();
       jobsList.innerHTML = "";
+      jobsEmpty.style.display = "block";
+      jobsEmpty.textContent = "Cargando trabajos...";
 
-      if (!jobs.length) {
+      try {
+        const response = await fetch(`${API_BASE}/jobs/mine`, {
+          headers: {
+            "x-user-id": String(user.id)
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.message || data.error || "No se pudieron cargar los trabajos");
+        }
+
+        const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        jobsList.innerHTML = "";
+
+        if (!jobs.length) {
+          jobsEmpty.style.display = "block";
+          jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
+          return;
+        }
+
+        jobsEmpty.style.display = "none";
+
+        jobs.forEach((job) => {
+          const card = document.createElement("div");
+          card.className = "job-card";
+          card.innerHTML = `
+            <div class="job-card-top">
+              <div class="job-card-title">${job.project_name || "Proyecto sin nombre"}</div>
+            </div>
+            <div class="job-card-id">Job ID: ${job.id || "—"}</div>
+            <div class="job-card-meta">Estado: ${formatJobListStatus(job.status)}</div>
+            <div class="job-card-meta">Fase: ${formatJobListStage(job.stage)}</div>
+            <div class="job-card-meta">Progreso: ${Number(job.progress || 0)}%</div>
+            <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
+            <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
+          `;
+          jobsList.appendChild(card);
+        });
+      } catch (error) {
+        console.error("renderStoredJobs error", error);
+        jobsList.innerHTML = "";
         jobsEmpty.style.display = "block";
-        return;
+        jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
       }
-
-      jobsEmpty.style.display = "none";
-
-      jobs.forEach((job) => {
-        const card = document.createElement("div");
-        card.className = "job-card";
-        card.innerHTML = `
-          <div class="job-card-top">
-            <div class="job-card-title">${job.project || "Proyecto sin nombre"}</div>
-          </div>
-          <div class="job-card-id">Job ID: ${job.id || "—"}</div>
-          <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
-        `;
-        jobsList.appendChild(card);
-      });
     }
 
     function getStoredUser() {
@@ -2378,6 +2422,7 @@ function getSelectedQualityMode() {
 
         setStoredUser(data.user);
         renderTopbarUser();
+        renderStoredJobs();
         closeAuthModal();
       } catch (error) {
         console.error(error);
@@ -3850,15 +3895,6 @@ if (map) {
 
         const createdJob = await createJob();
         const jobId = createdJob.id;
-        try {
-          const jobs = JSON.parse(localStorage.getItem("xproces_jobs") || "[]");
-          jobs.push({
-            id: jobId,
-            project: pendingProjectName || "",
-            created_at: Date.now()
-          });
-          localStorage.setItem("xproces_jobs", JSON.stringify(jobs));
-        } catch(e) {}
         renderStoredJobs();
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
