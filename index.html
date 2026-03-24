@@ -2028,6 +2028,22 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
+    function getJobOutputsArray(job) {
+      const direct = Array.isArray(job?.outputs_requested) ? job.outputs_requested : null;
+      if (direct && direct.length) return direct;
+
+      const nested = job?.exif_summary?._xproces?.outputs_requested;
+      if (Array.isArray(nested) && nested.length) return nested;
+
+      return [];
+    }
+
+    function formatJobOutputsText(job) {
+      const outputs = getJobOutputsArray(job);
+      if (!outputs.length) return "Sin seleccionar";
+      return outputs.map(formatOutputLabel).join(", ");
+    }
+
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
         mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
@@ -2114,7 +2130,7 @@ function getSelectedQualityMode() {
 
       if (jobStatusEl) {
         jobStatusEl.textContent =
-          `Trabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
+          `Archivos solicitados: ${formatJobOutputsText(job)}\nTrabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
       }
 
       if (progressWrap) progressWrap.style.display = "block";
@@ -2146,19 +2162,16 @@ function getSelectedQualityMode() {
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
-        jobsList.replaceChildren();
+        jobsList.innerHTML = "";
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-
-      const hasExistingCards = jobsList.children.length > 0;
-      if (!hasExistingCards) {
-        jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "Cargando trabajos...";
-      }
+      jobsList.innerHTML = "";
+      jobsEmpty.style.display = "block";
+      jobsEmpty.textContent = "Cargando trabajos...";
 
       try {
         const response = await fetch(`${API_BASE}/jobs/mine`, {
@@ -2174,15 +2187,15 @@ function getSelectedQualityMode() {
         }
 
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        jobsList.innerHTML = "";
 
         if (!jobs.length) {
-          jobsList.replaceChildren();
           jobsEmpty.style.display = "block";
           jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
           return;
         }
 
-        const fragment = document.createDocumentFragment();
+        jobsEmpty.style.display = "none";
 
         jobs.forEach((job) => {
           const card = document.createElement("div");
@@ -2205,6 +2218,7 @@ function getSelectedQualityMode() {
             <div class="job-card-meta">Fase: ${stageLabel}</div>
             <div class="job-card-meta">Progreso: ${progressValue}%</div>
             <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
+            <div class="job-card-meta">Archivos: ${formatJobOutputsText(job)}</div>
             <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
@@ -2216,17 +2230,13 @@ function getSelectedQualityMode() {
             await renderStoredJobs();
           });
 
-          fragment.appendChild(card);
+          jobsList.appendChild(card);
         });
-
-        jobsList.replaceChildren(fragment);
-        jobsEmpty.style.display = "none";
       } catch (error) {
         console.error("renderStoredJobs error", error);
-        if (!jobsList.children.length) {
-          jobsEmpty.style.display = "block";
-          jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
-        }
+        jobsList.innerHTML = "";
+        jobsEmpty.style.display = "block";
+        jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
       }
     }
 
@@ -2263,8 +2273,8 @@ function getSelectedQualityMode() {
           : "Introduzca sus credenciales para continuar.";
 
       const user = getStoredUser();
-      authEmail.value = user?.email || "";
-      authName.value = user?.name || "";
+      authEmail.value = mode === "invite" ? (user?.email || "") : "";
+      authName.value = mode === "register" ? "" : "";
       authPassword.value = "";
       authCode.value = "";
 
@@ -2308,6 +2318,8 @@ function getSelectedQualityMode() {
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
         clearStoredJobs();
+        selectedHistoryJobId = "";
+        resetAll();
         renderTopbarUser();
         renderStoredJobs();
       });
@@ -2513,7 +2525,10 @@ function getSelectedQualityMode() {
           throw new Error(data.message || data.error || "Error de acceso");
         }
 
+        const previousUser = getStoredUser();
         setStoredUser(data.user);
+        selectedHistoryJobId = "";
+        resetAll();
         renderTopbarUser();
         renderStoredJobs();
         closeAuthModal();
@@ -3716,11 +3731,15 @@ if (map) {
       const status = String(job?.status ?? "").toLowerCase();
       const stage = String(job?.stage ?? "");
       const message = String(job?.message ?? "").trim();
+      const outputs = getJobOutputsArray(job);
+      const outputsText = outputs.length ? outputs.map(formatOutputLabel).join(", ") : "Sin seleccionar";
       const lines = [];
+
+      lines.push(`Archivos solicitados: ${outputsText}`);
 
       if (status === "failed") lines.push("Estado: Fallido");
       else if (status === "cancelled") lines.push("Estado: Cancelado");
-      else if (status === "completed") lines.push("Estado: Completado");
+      else if (status === "completed" || status === "done") lines.push("Estado: Completado");
       else if (status === "queued") lines.push("Estado: En cola");
       else if (status === "running") lines.push("Estado: Procesando");
       else if (status) lines.push(`Estado: ${translateStatus(status)}`);
@@ -3728,7 +3747,8 @@ if (map) {
       if (stage) lines.push(`Fase: ${stage}`);
       if (message) lines.push(message);
 
-      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
+      return lines.join("
+");
     }
 
     async function buildQueuedOrRunningMessage(job) {
