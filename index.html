@@ -2028,22 +2028,6 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
-    function getJobOutputsArray(job) {
-      const direct = Array.isArray(job?.outputs_requested) ? job.outputs_requested : null;
-      if (direct && direct.length) return direct;
-
-      const nested = job?.exif_summary?._xproces?.outputs_requested;
-      if (Array.isArray(nested) && nested.length) return nested;
-
-      return [];
-    }
-
-    function formatJobOutputsText(job) {
-      const outputs = getJobOutputsArray(job);
-      if (!outputs.length) return "Sin seleccionar";
-      return outputs.map(formatOutputLabel).join(", ");
-    }
-
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
         mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
@@ -2130,7 +2114,7 @@ function getSelectedQualityMode() {
 
       if (jobStatusEl) {
         jobStatusEl.textContent =
-          `Archivos solicitados: ${formatJobOutputsText(job)}\nTrabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
+          `Trabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
       }
 
       if (progressWrap) progressWrap.style.display = "block";
@@ -2162,16 +2146,19 @@ function getSelectedQualityMode() {
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
-        jobsList.innerHTML = "";
+        jobsList.replaceChildren();
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-      jobsList.innerHTML = "";
-      jobsEmpty.style.display = "block";
-      jobsEmpty.textContent = "Cargando trabajos...";
+
+      const hasExistingCards = jobsList.children.length > 0;
+      if (!hasExistingCards) {
+        jobsEmpty.style.display = "block";
+        jobsEmpty.textContent = "Cargando trabajos...";
+      }
 
       try {
         const response = await fetch(`${API_BASE}/jobs/mine`, {
@@ -2187,15 +2174,15 @@ function getSelectedQualityMode() {
         }
 
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
-        jobsList.innerHTML = "";
 
         if (!jobs.length) {
+          jobsList.replaceChildren();
           jobsEmpty.style.display = "block";
           jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
           return;
         }
 
-        jobsEmpty.style.display = "none";
+        const fragment = document.createDocumentFragment();
 
         jobs.forEach((job) => {
           const card = document.createElement("div");
@@ -2218,7 +2205,6 @@ function getSelectedQualityMode() {
             <div class="job-card-meta">Fase: ${stageLabel}</div>
             <div class="job-card-meta">Progreso: ${progressValue}%</div>
             <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
-            <div class="job-card-meta">Archivos: ${formatJobOutputsText(job)}</div>
             <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
@@ -2230,41 +2216,18 @@ function getSelectedQualityMode() {
             await renderStoredJobs();
           });
 
-          jobsList.appendChild(card);
+          fragment.appendChild(card);
         });
+
+        jobsList.replaceChildren(fragment);
+        jobsEmpty.style.display = "none";
       } catch (error) {
         console.error("renderStoredJobs error", error);
-        jobsList.innerHTML = "";
-        jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
+        if (!jobsList.children.length) {
+          jobsEmpty.style.display = "block";
+          jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
+        }
       }
-    }
-
-
-    function saveActiveJobState(jobId, projectName, userId) {
-      try {
-        localStorage.setItem("xproces_active_job", JSON.stringify({
-          jobId: jobId || "",
-          projectName: projectName || "",
-          userId: userId || "",
-          savedAt: Date.now()
-        }));
-      } catch (_) {}
-    }
-
-    function getActiveJobState() {
-      try {
-        const raw = localStorage.getItem("xproces_active_job");
-        return raw ? JSON.parse(raw) : null;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function clearActiveJobState() {
-      try {
-        localStorage.removeItem("xproces_active_job");
-      } catch (_) {}
     }
 
     function getStoredUser() {
@@ -2300,8 +2263,8 @@ function getSelectedQualityMode() {
           : "Introduzca sus credenciales para continuar.";
 
       const user = getStoredUser();
-      authEmail.value = mode === "invite" ? (user?.email || "") : "";
-      authName.value = mode === "register" ? "" : "";
+      authEmail.value = user?.email || "";
+      authName.value = user?.name || "";
       authPassword.value = "";
       authCode.value = "";
 
@@ -2345,9 +2308,6 @@ function getSelectedQualityMode() {
       document.getElementById("logoutBtn").addEventListener("click", () => {
         clearStoredUser();
         clearStoredJobs();
-        clearActiveJobState();
-        selectedHistoryJobId = "";
-        resetAll();
         renderTopbarUser();
         renderStoredJobs();
       });
@@ -2553,37 +2513,9 @@ function getSelectedQualityMode() {
           throw new Error(data.message || data.error || "Error de acceso");
         }
 
-        const previousUser = getStoredUser();
-        const isDifferentUser = !!(previousUser?.id && data.user?.id && String(previousUser.id) !== String(data.user.id));
-
         setStoredUser(data.user);
-
-        if (isDifferentUser) {
-          clearActiveJobState();
-        }
-
-        selectedHistoryJobId = "";
-        resetAll();
         renderTopbarUser();
         renderStoredJobs();
-
-        const activeJob = getActiveJobState();
-        if (activeJob && String(activeJob.userId || "") === String(data.user?.id || "") && activeJob.jobId) {
-          pendingProjectName = activeJob.projectName || "";
-          if (projectTitle) {
-            projectTitle.style.display = "block";
-            projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
-          }
-          if (uploadPanel) uploadPanel.style.display = "none";
-          if (datasetPanel) datasetPanel.style.display = "none";
-          if (pricingPanel) pricingPanel.style.display = "none";
-          if (mapWrap) mapWrap.style.display = "none";
-          if (processPanel) processPanel.style.display = "block";
-          if (processStartWrap) processStartWrap.style.display = "none";
-          if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
-          startPolling(activeJob.jobId);
-        }
-
         closeAuthModal();
       } catch (error) {
         console.error(error);
@@ -2920,7 +2852,7 @@ if (map) {
       processStageWrap.style.display = "none";
       resetStageClasses();
 
-      jobStatusEl.textContent = "";
+      jobStatusEl.textContent = "Aquí se mostrará el estado real del trabajo una vez iniciado.";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
       if (uploadBtn) uploadBtn.textContent = "Iniciar procesado";
 
@@ -3663,7 +3595,6 @@ if (map) {
 
     uploadBtn.addEventListener("click", async () => {
       if (uploadBtn.textContent === "Iniciar nuevo proyecto") {
-        clearActiveJobState();
         resetAll();
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -3782,19 +3713,22 @@ if (map) {
 
 
     function buildProjectStatusText(job) {
+      const status = String(job?.status ?? "").toLowerCase();
+      const stage = String(job?.stage ?? "");
       const message = String(job?.message ?? "").trim();
-      const outputs = getJobOutputsArray(job);
-      const outputsText = outputs.length ? outputs.map(formatOutputLabel).join(", ") : "Sin seleccionar";
       const lines = [];
 
-      lines.push(`Archivos solicitados: ${outputsText}`);
+      if (status === "failed") lines.push("Estado: Fallido");
+      else if (status === "cancelled") lines.push("Estado: Cancelado");
+      else if (status === "completed") lines.push("Estado: Completado");
+      else if (status === "queued") lines.push("Estado: En cola");
+      else if (status === "running") lines.push("Estado: Procesando");
+      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
 
-      if (message) {
-        lines.push(message);
-      }
+      if (stage) lines.push(`Fase: ${stage}`);
+      if (message) lines.push(message);
 
-      return lines.join("
-");
+      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -3838,7 +3772,6 @@ if (map) {
           if (uploadPanel) uploadPanel.style.display = "none";
           if (processPanel) processPanel.style.display = "block";
           const message = job.message || "";
-          saveActiveJobState(job.id, pendingProjectName || job.project_name || "", getStoredUser()?.id || "");
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
@@ -4063,7 +3996,6 @@ if (map) {
 
         const createdJob = await createJob();
         const jobId = createdJob.id;
-        saveActiveJobState(jobId, pendingProjectName || "", getStoredUser()?.id || "");
         renderStoredJobs();
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
@@ -4074,7 +4006,7 @@ if (map) {
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
 
-        jobStatusEl.textContent = "Preparando subida por lotes...";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Preparando subida por lotes...`;
 
         const batches = chunkArray(files, BATCH_SIZE);
 
@@ -4085,20 +4017,20 @@ if (map) {
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
-        jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Subida completada. Enviando a procesado...`;
 
         await submitJob(jobId);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.textContent = "Su proyecto está en cola. Calculando tiempo restante...";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Su proyecto está en cola.<br>Calculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        jobStatusEl.textContent = error.message || "Error durante la subida";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>${error.message || "Error durante la subida"}`;
         progressFill.classList.add("error");
         progressLabel.textContent = "Fallido";
       }
@@ -4111,25 +4043,6 @@ syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
-
-  const user = getStoredUser();
-  const activeJob = getActiveJobState();
-
-  if (user && activeJob && String(activeJob.userId || "") === String(user.id || "") && activeJob.jobId) {
-    pendingProjectName = activeJob.projectName || "";
-    if (projectTitle) {
-      projectTitle.style.display = "block";
-      projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
-    }
-    if (uploadPanel) uploadPanel.style.display = "none";
-    if (datasetPanel) datasetPanel.style.display = "none";
-    if (pricingPanel) pricingPanel.style.display = "none";
-    if (mapWrap) mapWrap.style.display = "none";
-    if (processPanel) processPanel.style.display = "block";
-    if (processStartWrap) processStartWrap.style.display = "none";
-    if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
-    startPolling(activeJob.jobId);
-  }
 });
   </script>
 </body>
