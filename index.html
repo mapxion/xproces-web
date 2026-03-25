@@ -866,7 +866,7 @@
 
     .status {
       color: var(--text);
-      min-height: 48px;
+      min-height: 92px;
       white-space: pre-line;
       line-height: 1.55;
       font-size: 14px;
@@ -3728,7 +3728,7 @@ if (map) {
       if (stage) lines.push(`Fase: ${stage}`);
       if (message) lines.push(message);
 
-      return lines.join("\n");
+      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -4017,20 +4017,20 @@ if (map) {
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
-        jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Subida completada. Enviando a procesado...`;
 
         await submitJob(jobId);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.textContent = "Su proyecto está en cola. Calculando tiempo restante...";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Su proyecto está en cola.<br>Calculando tiempo restante...`;
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        jobStatusEl.textContent = error.message || "Error durante la subida";
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>${error.message || "Error durante la subida"}`;
         progressFill.classList.add("error");
         progressLabel.textContent = "Fallido";
       }
