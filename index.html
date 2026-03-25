@@ -1989,38 +1989,11 @@
       const preset = getSelectedPreset();
       const outputs = getSelectedOutputs();
 
-      const items = [];
+      const lines = [];
 
       if (quality) {
-        items.push(`Calidad: ${formatQualityModeLabel(quality)}`);
+        lines.push(`Calidad: ${formatQualityModeLabel(quality)}`);
       }
-
-      if (deliveryMode === "preset" && preset) {
-        const presets = {
-          inspection_standard: ["las", "mesh_obj", "pdf_report"],
-          inspection_tams: ["las"],
-          web_delivery: ["cesium_tiles_pointcloud", "pdf_report"],
-          compact_delivery: ["laz", "mesh_obj", "pdf_report"]
-        };
-        (presets[preset] || []).forEach((output) => items.push(formatOutputLabel(output)));
-      } else if (deliveryMode === "manual") {
-        outputs.forEach((output) => items.push(formatOutputLabel(output)));
-      }
-
-      if (!items.length) {
-        box.style.display = "none";
-        box.innerHTML = "";
-        return;
-      }
-
-      box.style.display = "block";
-      box.innerHTML = `
-        <div class="selection-summary-title">Configuración seleccionada</div>
-        <div class="selection-chips">
-          ${items.map((item) => `<span class="selection-chip">${item}</span>`).join("")}
-        </div>
-      `;
-    }
 
       if (deliveryMode === "preset") {
         lines.push(`Entrega: ${formatDeliveryModeLabel(deliveryMode)}`);
@@ -2086,25 +2059,29 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
-    function getJobOutputsArray(job) {
-      const direct = Array.isArray(job?.outputs_requested) ? job.outputs_requested : null;
-      if (direct && direct.length) return direct;
+    function getProcessSelectionItemsFromJob(job) {
+      const items = [];
+      const quality = String(job?.quality_mode || "").trim().toLowerCase();
+      const qualityLabel = formatQualityModeLabel(quality || "normal");
+      items.push(`Calidad: ${qualityLabel}`);
 
-      const nested = job?.exif_summary?._xproces?.outputs_requested;
-      if (Array.isArray(nested) && nested.length) return nested;
+      const outputs = getJobOutputsArray(job);
+      outputs.forEach((output) => {
+        items.push(formatOutputLabel(output));
+      });
 
-      return [];
+      return items;
     }
 
     function updateProcessSelectionSummaryFromJob(job) {
       if (!processSelectionSummary) return;
 
-      const items = [];
-      const quality = String(job?.quality_mode || "").trim().toLowerCase();
-      items.push(`Calidad: ${formatQualityModeLabel(quality || "normal")}`);
-
-      const outputs = getJobOutputsArray(job);
-      outputs.forEach((output) => items.push(formatOutputLabel(output)));
+      const items = getProcessSelectionItemsFromJob(job);
+      if (!items.length) {
+        processSelectionSummary.style.display = "none";
+        processSelectionSummary.innerHTML = "";
+        return;
+      }
 
       processSelectionSummary.style.display = "block";
       processSelectionSummary.innerHTML = `
@@ -2114,7 +2091,6 @@ function getSelectedQualityMode() {
         </div>
       `;
     }
-
 
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
@@ -2189,7 +2165,7 @@ function getSelectedQualityMode() {
       if (pricingPanel) pricingPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
       if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "none";
 
       if (uploadBtn) {
         uploadBtn.textContent = "Iniciar nuevo proyecto";
@@ -2382,7 +2358,7 @@ function getSelectedQualityMode() {
       if (pricingPanel) pricingPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
       if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "none";
       if (uploadBtn) {
         uploadBtn.textContent = "Iniciar nuevo proyecto";
         uploadBtn.disabled = false;
@@ -2969,7 +2945,6 @@ function getSelectedQualityMode() {
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
       if (processStartWrap) processStartWrap.style.display = "none";
-      if (processSelectionSummary) { processSelectionSummary.style.display = "none"; processSelectionSummary.innerHTML = ""; }
       if (uploadBtn) {
         uploadBtn.textContent = "Iniciar procesado";
         uploadBtn.disabled = false;
@@ -3008,6 +2983,7 @@ if (map) {
 
       processStageWrap.style.display = "none";
       resetStageClasses();
+      if (processSelectionSummary) { processSelectionSummary.style.display = "none"; processSelectionSummary.innerHTML = ""; }
 
       jobStatusEl.textContent = "";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
@@ -3872,8 +3848,7 @@ if (map) {
 
     function buildProjectStatusText(job) {
       const message = String(job?.message ?? "").trim();
-      if (!message || message === "Procesando proyecto") return "";
-      return message;
+      return message || "";
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -3905,7 +3880,7 @@ if (map) {
     function startPolling(jobId) {
       stopPolling();
 
-      const pollOnce = async () => {
+      pollTimer = setInterval(async () => {
         try {
           const job = await getJob(jobId);
 
@@ -3916,75 +3891,83 @@ if (map) {
           if (mapWrap) mapWrap.style.display = "none";
           if (uploadPanel) uploadPanel.style.display = "none";
           if (processPanel) processPanel.style.display = "block";
-          if (processStartWrap) processStartWrap.style.display = "block";
-          if (uploadBtn) {
-            uploadBtn.textContent = "Iniciar nuevo proyecto";
-            uploadBtn.disabled = false;
-          }
-
+          const message = job.message || "";
           saveActiveJobState(job.id, pendingProjectName || job.project_name || "", getStoredUser()?.id || "");
-          updateProcessSelectionSummaryFromJob(job);
 
           progressWrap.style.display = "block";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
           progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
           if (status === "failed") progressLabel.textContent = "Fallido";
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
-          else if (status === "completed" || status === "done") progressLabel.textContent = "Completado";
+          else if (status === "completed") progressLabel.textContent = "Completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
+          updateProcessSelectionSummaryFromJob(job);
           renderStoredJobs();
-
-          const statusText = buildProjectStatusText(job);
-          jobStatusEl.textContent = statusText;
 
           if (status === "queued" || status === "running") {
             const eta = await getJobEta(job.id);
+
             if (eta && eta.ok) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
+
+            jobStatusEl.textContent = buildProjectStatusText(job);
+          } else {
+            jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
           if (status === "done" || status === "completed") {
             stopPolling();
+
             progressFill.style.width = "100%";
             progressLabel.textContent = "Trabajo procesado correctamente";
             progressPercent.textContent = "100%";
-            jobStatusEl.textContent = "El trabajo se ha generado correctamente y ya puede descargarse.";
+
+            jobStatusEl.textContent =
+              `✔ Procesado completado\n\nEl trabajo se ha generado correctamente y ya puede descargarse.`;
+
             showDownloadButton(job.id);
           }
 
           if (status === "failed") {
             stopPolling();
+
             progressFill.style.width = "100%";
-            progressFill.classList.add("error");
+            progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
             progressLabel.textContent = "Procesado fallido";
             progressPercent.textContent = "100%";
 
             const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
+
             let msg = "El procesado no se pudo completar.";
 
             if (rawError.includes("no_input_files")) {
               msg = "No se encontraron imágenes válidas en el proyecto.";
-            } else if (rawError.includes("muy pocas cámaras alineadas") || rawError.includes("cámaras alineadas")) {
+            } else if (
+              rawError.includes("muy pocas cámaras alineadas") ||
+              rawError.includes("cámaras alineadas")
+            ) {
               msg = "No hay suficiente solape entre las fotos para generar el modelo.";
-            } else if (rawError.includes("point cloud densa") || rawError.includes("depth maps")) {
+            } else if (
+              rawError.includes("point cloud densa") ||
+              rawError.includes("depth maps")
+            ) {
               msg = "No se ha podido generar la nube de puntos. Revise calidad, solape y resolución de las fotos.";
             }
 
-            jobStatusEl.textContent = msg;
+            jobStatusEl.textContent =
+              `Job ${job.id}\nEstado: error\n${msg}`;
+
             hideDownloadButton();
           }
         } catch (error) {
           console.error("Polling error:", error);
         }
-      };
-
-      pollOnce();
-      pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+      }, POLL_INTERVAL_MS);
     }
 
     async function upload() {
@@ -4177,15 +4160,35 @@ if (map) {
     }
 
       resetAll();
-renderStoredJobs();
 renderTopbarUser();
+renderStoredJobs();
 syncStoredUserToForm();
 
 window.addEventListener("load", () => {
   initMapWorldView();
-  renderTopbarUser();
-  renderStoredJobs();
-  setTimeout(restoreActiveJobView, 50);
+
+  const user = getStoredUser();
+  const activeJob = getActiveJobState();
+
+  if (user && activeJob && String(activeJob.userId || "") === String(user.id || "") && activeJob.jobId) {
+    pendingProjectName = activeJob.projectName || "";
+    selectedHistoryJobId = activeJob.jobId || "";
+    if (projectTitle) {
+      projectTitle.style.display = "block";
+      projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+    }
+    if (uploadPanel) uploadPanel.style.display = "none";
+    if (datasetPanel) datasetPanel.style.display = "none";
+    if (pricingPanel) pricingPanel.style.display = "none";
+    if (mapWrap) mapWrap.style.display = "none";
+    if (processPanel) processPanel.style.display = "block";
+    if (processStartWrap) processStartWrap.style.display = "none";
+    if (uploadBtn) {
+      uploadBtn.textContent = "Iniciar nuevo proyecto";
+      uploadBtn.disabled = false;
+    }
+    startPolling(activeJob.jobId);
+  }
 });
   </script>
 </body>
