@@ -884,37 +884,6 @@
       line-height: 1.45;
     }
 
-    .selection-summary-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-    }
-
-    .selection-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .selection-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 32px;
-      padding: 0 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
-      color: #18210e;
-      border: 1px solid rgba(158, 224, 0, 0.55);
-      box-shadow: 0 6px 16px rgba(158, 224, 0, 0.16);
-      font-size: 12px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
     .process-stage-wrap {
       display: none;
       gap: 8px;
@@ -2059,37 +2028,20 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
-    function getProcessSelectionItemsFromJob(job) {
-      const items = [];
-      const quality = String(job?.quality_mode || "").trim().toLowerCase();
-      const qualityLabel = formatQualityModeLabel(quality || "normal");
-      items.push(`Calidad: ${qualityLabel}`);
+    function getJobOutputsArray(job) {
+      const direct = Array.isArray(job?.outputs_requested) ? job.outputs_requested : null;
+      if (direct && direct.length) return direct;
 
-      const outputs = getJobOutputsArray(job);
-      outputs.forEach((output) => {
-        items.push(formatOutputLabel(output));
-      });
+      const nested = job?.exif_summary?._xproces?.outputs_requested;
+      if (Array.isArray(nested) && nested.length) return nested;
 
-      return items;
+      return [];
     }
 
-    function updateProcessSelectionSummaryFromJob(job) {
-      if (!processSelectionSummary) return;
-
-      const items = getProcessSelectionItemsFromJob(job);
-      if (!items.length) {
-        processSelectionSummary.style.display = "none";
-        processSelectionSummary.innerHTML = "";
-        return;
-      }
-
-      processSelectionSummary.style.display = "block";
-      processSelectionSummary.innerHTML = `
-        <div class="selection-summary-title">Configuración seleccionada</div>
-        <div class="selection-chips">
-          ${items.map((item) => `<span class="selection-chip">${item}</span>`).join("")}
-        </div>
-      `;
+    function formatJobOutputsText(job) {
+      const outputs = getJobOutputsArray(job);
+      if (!outputs.length) return "Sin seleccionar";
+      return outputs.map(formatOutputLabel).join(", ");
     }
 
     function setSelectedQualityMode(mode, refresh = true) {
@@ -2159,7 +2111,6 @@ function getSelectedQualityMode() {
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
-      saveActiveJobState(job.id || "", pendingProjectName || "", getStoredUser()?.id || "");
       if (uploadPanel) uploadPanel.style.display = "none";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
@@ -2176,11 +2127,10 @@ function getSelectedQualityMode() {
         projectTitle.style.display = "block";
         projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
       }
-      updateProcessSelectionSummaryFromJob(job);
 
       if (jobStatusEl) {
         jobStatusEl.textContent =
-          `Trabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
+          `Archivos solicitados: ${formatJobOutputsText(job)}\nTrabajo ${job.id || "—"}\nEstado: ${formatJobListStatus(job.status)}\nFase: ${formatJobListStage(job.stage)}\nProgreso: ${Number(job.progress || 0)}%`;
       }
 
       if (progressWrap) progressWrap.style.display = "block";
@@ -2212,19 +2162,16 @@ function getSelectedQualityMode() {
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
         jobsPanel.classList.add("jobs-panel-hidden");
-        jobsList.replaceChildren();
+        jobsList.innerHTML = "";
         jobsEmpty.style.display = "block";
         jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
-
-      const hasExistingCards = jobsList.children.length > 0;
-      if (!hasExistingCards) {
-        jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "Cargando trabajos...";
-      }
+      jobsList.innerHTML = "";
+      jobsEmpty.style.display = "block";
+      jobsEmpty.textContent = "Cargando trabajos...";
 
       try {
         const response = await fetch(`${API_BASE}/jobs/mine`, {
@@ -2240,15 +2187,15 @@ function getSelectedQualityMode() {
         }
 
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        jobsList.innerHTML = "";
 
         if (!jobs.length) {
-          jobsList.replaceChildren();
           jobsEmpty.style.display = "block";
           jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
           return;
         }
 
-        const fragment = document.createDocumentFragment();
+        jobsEmpty.style.display = "none";
 
         jobs.forEach((job) => {
           const card = document.createElement("div");
@@ -2271,6 +2218,7 @@ function getSelectedQualityMode() {
             <div class="job-card-meta">Fase: ${stageLabel}</div>
             <div class="job-card-meta">Progreso: ${progressValue}%</div>
             <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
+            <div class="job-card-meta">Archivos: ${formatJobOutputsText(job)}</div>
             <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
@@ -2282,43 +2230,24 @@ function getSelectedQualityMode() {
             await renderStoredJobs();
           });
 
-          fragment.appendChild(card);
+          jobsList.appendChild(card);
         });
-
-        jobsList.replaceChildren(fragment);
-        jobsEmpty.style.display = "none";
       } catch (error) {
         console.error("renderStoredJobs error", error);
-        if (!jobsList.children.length) {
-          jobsEmpty.style.display = "block";
-          jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
-        }
+        jobsList.innerHTML = "";
+        jobsEmpty.style.display = "block";
+        jobsEmpty.textContent = "No se pudieron cargar los trabajos.";
       }
     }
 
-    function getStoredUser() {
-      try {
-        const raw = localStorage.getItem("xproces_user");
-        return raw ? JSON.parse(raw) : null;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function setStoredUser(user) {
-      localStorage.setItem("xproces_user", JSON.stringify(user));
-    }
-
-    function clearStoredUser() {
-      localStorage.removeItem("xproces_user");
-    }
 
     function saveActiveJobState(jobId, projectName, userId) {
       try {
         localStorage.setItem("xproces_active_job", JSON.stringify({
           jobId: jobId || "",
           projectName: projectName || "",
-          userId: userId || ""
+          userId: userId || "",
+          savedAt: Date.now()
         }));
       } catch (_) {}
     }
@@ -2338,33 +2267,21 @@ function getSelectedQualityMode() {
       } catch (_) {}
     }
 
-    function restoreActiveJobView() {
-      const user = getStoredUser();
-      const activeJob = getActiveJobState();
-
-      if (!user || !activeJob) return;
-      if (!activeJob.jobId) return;
-      if (String(activeJob.userId || "") !== String(user.id || "")) return;
-
-      pendingProjectName = activeJob.projectName || "";
-
-      if (projectTitle) {
-        projectTitle.style.display = "block";
-        projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+    function getStoredUser() {
+      try {
+        const raw = localStorage.getItem("xproces_user");
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
       }
+    }
 
-      if (uploadPanel) uploadPanel.style.display = "none";
-      if (datasetPanel) datasetPanel.style.display = "none";
-      if (pricingPanel) pricingPanel.style.display = "none";
-      if (mapWrap) mapWrap.style.display = "none";
-      if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "none";
-      if (uploadBtn) {
-        uploadBtn.textContent = "Iniciar nuevo proyecto";
-        uploadBtn.disabled = false;
-      }
+    function setStoredUser(user) {
+      localStorage.setItem("xproces_user", JSON.stringify(user));
+    }
 
-      startPolling(activeJob.jobId);
+    function clearStoredUser() {
+      localStorage.removeItem("xproces_user");
     }
 
     function openAuthModal(mode = "login") {
@@ -2383,8 +2300,8 @@ function getSelectedQualityMode() {
           : "Introduzca sus credenciales para continuar.";
 
       const user = getStoredUser();
-      authEmail.value = user?.email || "";
-      authName.value = user?.name || "";
+      authEmail.value = mode === "invite" ? (user?.email || "") : "";
+      authName.value = mode === "register" ? "" : "";
       authPassword.value = "";
       authCode.value = "";
 
@@ -2429,6 +2346,7 @@ function getSelectedQualityMode() {
         clearStoredUser();
         clearStoredJobs();
         clearActiveJobState();
+        selectedHistoryJobId = "";
         resetAll();
         renderTopbarUser();
         renderStoredJobs();
@@ -2642,12 +2560,30 @@ function getSelectedQualityMode() {
 
         if (isDifferentUser) {
           clearActiveJobState();
-          resetAll();
         }
 
+        selectedHistoryJobId = "";
+        resetAll();
         renderTopbarUser();
         renderStoredJobs();
-        restoreActiveJobView();
+
+        const activeJob = getActiveJobState();
+        if (activeJob && String(activeJob.userId || "") === String(data.user?.id || "") && activeJob.jobId) {
+          pendingProjectName = activeJob.projectName || "";
+          if (projectTitle) {
+            projectTitle.style.display = "block";
+            projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
+          }
+          if (uploadPanel) uploadPanel.style.display = "none";
+          if (datasetPanel) datasetPanel.style.display = "none";
+          if (pricingPanel) pricingPanel.style.display = "none";
+          if (mapWrap) mapWrap.style.display = "none";
+          if (processPanel) processPanel.style.display = "block";
+          if (processStartWrap) processStartWrap.style.display = "none";
+          if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+          startPolling(activeJob.jobId);
+        }
+
         closeAuthModal();
       } catch (error) {
         console.error(error);
@@ -2983,7 +2919,6 @@ if (map) {
 
       processStageWrap.style.display = "none";
       resetStageClasses();
-      if (processSelectionSummary) { processSelectionSummary.style.display = "none"; processSelectionSummary.innerHTML = ""; }
 
       jobStatusEl.textContent = "";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
@@ -3848,7 +3783,18 @@ if (map) {
 
     function buildProjectStatusText(job) {
       const message = String(job?.message ?? "").trim();
-      return message || "";
+      const outputs = getJobOutputsArray(job);
+      const outputsText = outputs.length ? outputs.map(formatOutputLabel).join(", ") : "Sin seleccionar";
+      const lines = [];
+
+      lines.push(`Archivos solicitados: ${outputsText}`);
+
+      if (message) {
+        lines.push(message);
+      }
+
+      return lines.join("
+");
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -3905,7 +3851,6 @@ if (map) {
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           updateProcessStages(job);
-          updateProcessSelectionSummaryFromJob(job);
           renderStoredJobs();
 
           if (status === "queued" || status === "running") {
@@ -4160,8 +4105,8 @@ if (map) {
     }
 
       resetAll();
-renderTopbarUser();
 renderStoredJobs();
+renderTopbarUser();
 syncStoredUserToForm();
 
 window.addEventListener("load", () => {
@@ -4172,7 +4117,6 @@ window.addEventListener("load", () => {
 
   if (user && activeJob && String(activeJob.userId || "") === String(user.id || "") && activeJob.jobId) {
     pendingProjectName = activeJob.projectName || "";
-    selectedHistoryJobId = activeJob.jobId || "";
     if (projectTitle) {
       projectTitle.style.display = "block";
       projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre");
@@ -4183,10 +4127,7 @@ window.addEventListener("load", () => {
     if (mapWrap) mapWrap.style.display = "none";
     if (processPanel) processPanel.style.display = "block";
     if (processStartWrap) processStartWrap.style.display = "none";
-    if (uploadBtn) {
-      uploadBtn.textContent = "Iniciar nuevo proyecto";
-      uploadBtn.disabled = false;
-    }
+    if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
     startPolling(activeJob.jobId);
   }
 });
