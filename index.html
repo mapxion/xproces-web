@@ -2381,6 +2381,20 @@ function getSelectedQualityMode() {
         jobStatusEl.textContent = "";
       }
 
+      const statusNow = String(job.status || "").toLowerCase();
+
+if (statusNow === "done" || statusNow === "completed") {
+  getJobLog(job.id)
+    .then((logText) => {
+      jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
+      showDownloadButton(job.id);
+    })
+    .catch(() => {
+      jobStatusEl.innerHTML = renderProcessSummary(job, "");
+      showDownloadButton(job.id);
+    });
+}
+      
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
         const pct = Math.max(0, Math.min(100, Number(job.progress || 0)));
