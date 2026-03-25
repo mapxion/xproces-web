@@ -18,8 +18,8 @@
       --border: #dde5df;
       --text: #18211d;
       --muted: #6f7d75;
-      --accent: #b8ff1a;
-      --accent-2: #9ee000;
+      --accent: #7aab39;
+      --accent-2: #6e9b33;
       --ok: #22a34a;
       --warning: #d49a11;
       --danger: #d45555;
@@ -102,17 +102,40 @@
 
     .brand-copy h1 {
       margin: 0;
-      font-size: 34px;
-      letter-spacing: -0.03em;
-      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      flex-wrap: nowrap;
     }
 
     .brand-copy h1 .brand-x {
-      color: #86c600;
+      font-family: "Maiandra GD", serif;
+      font-weight: 400;
+      color: #7aab39;
+      font-size: 72px;
+      line-height: 0.9;
+    }
+
+    .brand-copy h1 .brand-proces {
+      font-family: "Myriad Pro", Arial, sans-serif;
+      font-weight: 700;
+      color: #000000;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .brand-copy h1 .brand-com {
+      font-family: "Myriad Pro", Arial, sans-serif;
+      font-weight: 700;
+      color: #7aab39;
+      font-size: 30px;
+      line-height: 1;
     }
 
     .brand-copy p {
-      margin: 4px 0 0;
+      margin: 6px 0 0;
       color: var(--muted);
       font-size: 14px;
     }
@@ -372,7 +395,7 @@
     }
 
     .quality-mode-btn.active {
-      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      background: linear-gradient(180deg, #d8ff7a 0%, #7aab39 100%);
       color: #18210e;
       border-color: rgba(158, 224, 0, 0.55);
       box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
@@ -663,7 +686,7 @@
     }
 
     .output-mode-btn.active {
-      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      background: linear-gradient(180deg, #d8ff7a 0%, #7aab39 100%);
       color: #18210e;
       border-color: rgba(158, 224, 0, 0.55);
       box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
@@ -751,7 +774,7 @@
     }
 
     .output-btn.active {
-      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      background: linear-gradient(180deg, #d8ff7a 0%, #7aab39 100%);
       color: #18210e;
       border-color: rgba(158, 224, 0, 0.55);
       box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
@@ -906,7 +929,7 @@
       min-height: 32px;
       padding: 0 12px;
       border-radius: 999px;
-      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      background: linear-gradient(180deg, #d8ff7a 0%, #7aab39 100%);
       color: #18210e;
       border: 1px solid rgba(158, 224, 0, 0.55);
       box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
@@ -1256,7 +1279,16 @@
       }
 
       .brand-copy h1 {
-        font-size: 28px;
+        gap: 1px;
+      }
+
+      .brand-copy h1 .brand-x {
+        font-size: 54px;
+      }
+
+      .brand-copy h1 .brand-proces,
+      .brand-copy h1 .brand-com {
+        font-size: 22px;
       }
 
       .dataset-grid,
@@ -1297,8 +1329,8 @@
     <div class="topbar">
       <div class="brand">
         <div class="brand-copy">
-          <h1><span class="brand-x">X</span>proces</h1>
-          <p>Procesado automático de fotogrametría con validación previa del dataset</p>
+          <h1><span class="brand-x">X</span><span class="brand-proces">proces</span><span class="brand-com">.com</span></h1>
+          <p>Procesamiento de datos fotogramétricos</p>
         </div>
       </div>
       <div class="topbar-actions" id="topbarActions">
