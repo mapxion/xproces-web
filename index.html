@@ -866,7 +866,7 @@
 
     .status {
       color: var(--text);
-      min-height: 92px;
+      min-height: 48px;
       white-space: pre-line;
       line-height: 1.55;
       font-size: 14px;
@@ -3728,7 +3728,8 @@ if (map) {
       if (stage) lines.push(`Fase: ${stage}`);
       if (message) lines.push(message);
 
-      return `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong>\n${lines.join("\n")}`;
+      return lines.join("
+");
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -4006,7 +4007,7 @@ if (map) {
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
 
-        return lines.join("\n");
+        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Preparando subida por lotes...`;
 
         const batches = chunkArray(files, BATCH_SIZE);
 
