@@ -4006,7 +4006,7 @@ if (map) {
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
 
-        jobStatusEl.innerHTML = `<strong>${pendingProjectName || "Proyecto sin nombre"}</strong><br>Preparando subida por lotes...`;
+        return lines.join("\n");
 
         const batches = chunkArray(files, BATCH_SIZE);
 
