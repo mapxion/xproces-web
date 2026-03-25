@@ -369,7 +369,7 @@
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--border);
       border-radius: 18px;
-      box-shadow: 0 10px 24px rgba(24, 33, 29, 0.08);
+      box-shadow: none;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -523,21 +523,23 @@
     }
 
     .btn-primary {
-      background: var(--accent);
-      color: #7aab39;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid var(--border);
     }
 
     .btn-primary:hover {
-      background: var(--accent-2);
+      background: #f7f9f7;
     }
 
     .btn-success {
-      background: var(--accent);
-      color: #7aab39;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid var(--border);
     }
 
     .btn-success:hover {
-      background: var(--accent-2);
+      background: #f7f9f7;
     }
 
     .btn-secondary {
@@ -666,7 +668,7 @@
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--border);
       border-radius: 18px;
-      box-shadow: 0 10px 24px rgba(24, 33, 29, 0.08);
+      box-shadow: none;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -735,7 +737,7 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 12px;
-      box-shadow: 0 6px 18px rgba(24, 33, 29, 0.05);
+      box-shadow: none;
     }
 
     .outputs-title {
@@ -937,10 +939,10 @@
       min-height: 32px;
       padding: 0 12px;
       border-radius: 999px;
-      background: linear-gradient(180deg, #d8ff7a 0%, #7aab39 100%);
+      background: #ffffff;
       color: #7aab39;
-      border: 1px solid rgba(122, 171, 57, 0.55);
-      box-shadow: 0 8px 18px rgba(122, 171, 57, 0.22);
+      border: 1px solid rgba(122, 171, 57, 0.35);
+      box-shadow: none;
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
@@ -1054,17 +1056,18 @@
       min-height: 46px;
       padding: 12px 18px;
       border-radius: 14px;
-      background: var(--accent);
-      color: #7aab39;
+      background: #ffffff;
+      color: #000000;
       text-decoration: none;
       font-size: 14px;
       font-weight: 800;
-      border: 1px solid rgba(158, 224, 0, 0.5);
-      transition: 0.2s ease;
+      border: 1px solid var(--border);
+      transition: 0.18s ease;
+      box-shadow: none;
     }
 
     .process-download-btn:hover {
-      background: var(--accent-2);
+      background: #f7f9f7;
     }
 
     #mapWrap {
