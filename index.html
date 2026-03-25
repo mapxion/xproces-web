@@ -884,6 +884,37 @@
       line-height: 1.45;
     }
 
+    .selection-summary-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .selection-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selection-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #d8ff7a 0%, #b8ff1a 100%);
+      color: #18210e;
+      border: 1px solid rgba(158, 224, 0, 0.55);
+      box-shadow: 0 8px 18px rgba(158, 224, 0, 0.22);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
     .process-stage-wrap {
       display: none;
       gap: 8px;
@@ -2028,6 +2059,52 @@ function getSelectedQualityMode() {
       return outputs.map(formatOutputLabel).join(", ");
     }
 
+    function formatOutputModeLabel(mode) {
+      if (mode === "manual") return "Entrega: selección manual";
+      if (mode === "preset") return "Entrega: paquetes recomendados";
+      return "Entrega";
+    }
+
+    function getSelectionSummaryItems() {
+      const items = [];
+      const quality = getSelectedQualityMode();
+      items.push(`Calidad: ${formatQualityModeLabel(quality)}`);
+
+      const outputMode = getSelectedOutputMode();
+      items.push(formatOutputModeLabel(outputMode));
+
+      if (outputMode === "preset") {
+        const presetBtn = document.querySelector('[data-preset].active');
+        const presetLabel = presetBtn ? presetBtn.textContent.trim() : "Sin seleccionar";
+        items.push(`Paquete: ${presetLabel}`);
+      } else {
+        const outputs = getSelectedOutputs();
+        const outputsText = outputs.length
+          ? outputs.map(formatOutputLabel).join(", ")
+          : "Sin seleccionar";
+        items.push(`Archivos de entrega: ${outputsText}`);
+      }
+
+      return items;
+    }
+
+    function renderProcessSelectionChips(items) {
+      if (!processSelectionSummary) return;
+
+      processSelectionSummary.style.display = "block";
+      processSelectionSummary.innerHTML = `
+        <div class="selection-summary-title">Configuración seleccionada</div>
+        <div class="selection-chips">
+          ${items.map((item) => `<span class="selection-chip">${item}</span>`).join("")}
+        </div>
+      `;
+    }
+
+    function updateProcessSelectionSummary() {
+      if (!processSelectionSummary) return;
+      renderProcessSelectionChips(getSelectionSummaryItems());
+    }
+
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
         mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
@@ -2850,6 +2927,11 @@ if (map) {
 
       processStageWrap.style.display = "none";
       resetStageClasses();
+
+      if (processSelectionSummary) {
+        processSelectionSummary.style.display = "none";
+        processSelectionSummary.innerHTML = "";
+      }
 
       jobStatusEl.textContent = "Aquí se mostrará el estado real del trabajo una vez iniciado.";
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
@@ -4004,6 +4086,7 @@ if (map) {
         if (pricingPanel) pricingPanel.style.display = "none";
         if (mapWrap) mapWrap.style.display = "none";
         if (processPanel) processPanel.style.display = "block";
+        updateProcessSelectionSummary();
 
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
