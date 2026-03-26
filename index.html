@@ -926,6 +926,8 @@
       display: grid;
       gap: 10px;
       white-space: normal;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
     }
 
     .process-summary-hero {
@@ -933,6 +935,7 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px 14px;
+      grid-column: span 1;
     }
 
     .process-summary-title {
@@ -982,6 +985,7 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 10px 12px;
+      min-height: 88px;
     }
 
     .process-summary-section-title {
@@ -1444,6 +1448,10 @@
 
       .process-stage-wrap {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .process-summary {
+        grid-template-columns: 1fr;
       }
 
       .drop {
@@ -2416,7 +2424,7 @@ if (statusNow === "done" || statusNow === "completed") {
         const s = String(job.status || "").toLowerCase();
         if (s === "failed") progressLabel.textContent = "Fallido";
         else if (s === "cancelled") progressLabel.textContent = "Cancelado";
-        else if (s === "completed" || s === "done") progressLabel.textContent = "Trabajo procesado correctamente";
+        else if (s === "completed" || s === "done") progressLabel.textContent = "Procesado completado";
         else if (s === "queued") progressLabel.textContent = "En cola";
         else progressLabel.textContent = "Procesando";
       }
