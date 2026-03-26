@@ -924,7 +924,7 @@
 
     .process-summary {
       display: grid;
-      gap: 14px;
+      gap: 10px;
       white-space: normal;
     }
 
@@ -932,20 +932,20 @@
       background: #f9fbf9;
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 14px;
+      padding: 12px 14px;
     }
 
     .process-summary-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--text);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .process-summary-subtitle {
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.45;
+      line-height: 1.35;
     }
 
     .process-summary-grid {
@@ -980,8 +980,8 @@
     .process-summary-section {
       background: rgba(255,255,255,0.88);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 10px 12px;
     }
 
     .process-summary-section-title {
@@ -990,15 +990,15 @@
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .process-summary-list {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       font-size: 14px;
       color: var(--text);
-      line-height: 1.45;
+      line-height: 1.35;
     }
 
     .process-summary-list .ok {
@@ -1076,23 +1076,27 @@
     .process-stage-wrap {
       display: none;
       gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 14px;
-      grid-template-columns: 1fr;
+      margin-top: 8px;
+      margin-bottom: 10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: stretch;
     }
 
     .process-stage {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      min-height: 36px;
-      padding: 8px 10px;
-      border-radius: 12px;
+      justify-content: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
       background: #fafcf9;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
     }
 
     .process-stage-dot {
@@ -1113,7 +1117,7 @@
     }
 
     .process-stage-progress {
-      display: none;
+      display: none !important;
       width: 100%;
       height: 6px;
       margin-top: 6px;
@@ -1436,6 +1440,10 @@
       .price-time-grid,
       .modal-grid {
         grid-template-columns: 1fr;
+      }
+
+      .process-stage-wrap {
+        grid-template-columns: 1fr 1fr;
       }
 
       .drop {
@@ -4122,10 +4130,6 @@ if (map) {
 
       const photosText = parsed.photos || "No disponible";
 
-      const requestedOutputs = parsed.requestedOutputs.length
-        ? parsed.requestedOutputs.map(formatOutputLabel)
-        : [];
-
       const generatedOutputs = parsed.generatedOutputs.length
         ? parsed.generatedOutputs.map((item) => formatOutputLabel(String(item).trim().toLowerCase()))
         : [];
@@ -4134,11 +4138,9 @@ if (map) {
         ? parsed.omittedOutputs.map((item) => formatOutputLabel(String(item).trim().toLowerCase()))
         : [];
 
-      const steps = parsed.steps.length ? parsed.steps : ["✔ Procesado completado"];
-
       const warningLines = [];
       if (omittedOutputs.length) {
-        warningLines.push(`Algunos formatos no se generaron directamente con Xproces: ${omittedOutputs.join(", ")}`);
+        warningLines.push(`Faltan: ${omittedOutputs.join(", ")}`);
       }
       parsed.warnings.forEach((w) => {
         const clean = w.replace(/estas salidas aún no se generan directamente con Xproces y se omitirán:\s*/i, "").trim();
@@ -4147,43 +4149,32 @@ if (map) {
         }
       });
 
-      const paramsList = parsed.params
-        ? parsed.params.split(",").map((x) => x.trim()).filter(Boolean)
-        : [];
+      const generatedText = generatedOutputs.length ? generatedOutputs.join(" · ") : "No disponible";
+      const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: No disponible";
+      const stateText = warningLines.length ? `⚠ ${warningLines.join(" · ")}` : "✔ Todo correcto";
 
       return `
         <div class="process-summary">
+          <div class="process-summary-hero">
+            <div class="process-summary-title">✔ Procesado completado</div>
+            <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
+          </div>
 
-  <div class="process-summary-hero">
-    <div class="process-summary-title">✔ Procesado completado</div>
-    <div class="process-summary-subtitle">
-      3 fotos · Calidad normal
-    </div>
-  </div>
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Archivos generados</div>
+            <div class="process-summary-list">${generatedText}</div>
+          </div>
 
-  <div class="process-summary-section">
-    <div class="process-summary-section-title">Archivos generados</div>
-    <div class="process-summary-list">
-      ✔ LAS  
-      ✔ Informe PDF
-    </div>
-  </div>
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Resumen</div>
+            <div class="process-summary-list">${alignedText}</div>
+          </div>
 
-  <div class="process-summary-section">
-    <div class="process-summary-section-title">Resumen</div>
-    <div class="process-summary-list">
-      Cámaras alineadas: 3 / 3
-    </div>
-  </div>
-
-  <div class="process-summary-section">
-    <div class="process-summary-section-title">Estado</div>
-    <div class="process-summary-list">
-      ✔ Todo correcto
-    </div>
-  </div>
-
-</div>
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Estado</div>
+            <div class="process-summary-list">${stateText}</div>
+          </div>
+        </div>
       `;
     }
 
