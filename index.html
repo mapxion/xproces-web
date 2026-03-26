@@ -1265,6 +1265,41 @@
       font-weight: 800;
       color: var(--text);
     }
+    .job-card-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      background: #f6f8f6;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .job-card-status-badge.ok {
+      background: rgba(34, 163, 74, 0.08);
+      color: var(--ok);
+      border-color: rgba(34, 163, 74, 0.22);
+    }
+
+    .job-card-status-badge.error {
+      background: rgba(212, 85, 85, 0.08);
+      color: var(--danger);
+      border-color: rgba(212, 85, 85, 0.22);
+    }
+
+    .job-card-status-badge.progress {
+      background: rgba(122, 171, 57, 0.10);
+      color: var(--accent);
+      border-color: rgba(122, 171, 57, 0.25);
+    }
+
 
     .job-card-id {
       font-size: 12px;
@@ -2353,12 +2388,80 @@ function getSelectedQualityMode() {
       return `${num} €`;
     }
 
+    function saveSelectedHistoryJobId(jobId) {
+      try {
+        if (jobId) localStorage.setItem("xproces_selected_job_id", String(jobId));
+      } catch (_) {}
+    }
+
+    function getSavedSelectedHistoryJobId() {
+      try {
+        return localStorage.getItem("xproces_selected_job_id") || "";
+      } catch (_) {
+        return "";
+      }
+    }
+
+    function clearSavedSelectedHistoryJobId() {
+      try {
+        localStorage.removeItem("xproces_selected_job_id");
+      } catch (_) {}
+    }
+
+    function getSelectionSummaryItemsForJob(job) {
+      const items = [];
+      const quality = String(job?.quality_mode || "").trim().toLowerCase() || getSelectedQualityMode() || "normal";
+      items.push({ type: "text", text: `Calidad: ${formatQualityModeLabel(quality)}` });
+
+      const requested = Array.isArray(job?.outputs_requested)
+        ? job.outputs_requested
+        : typeof job?.outputs_requested === "string"
+        ? job.outputs_requested.split(",").map((v) => String(v || "").trim()).filter(Boolean)
+        : [];
+
+      const presetOutputsMap = {
+        inspection_standard: ["las", "mesh_obj", "pdf_report"],
+        inspection_tams: ["las", "mesh_obj", "pdf_report"],
+        compact_delivery: ["laz", "mesh_obj", "pdf_report"]
+      };
+
+      const normalizedRequested = requested.map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
+      let matchedPreset = "";
+      for (const [presetKey, presetOutputs] of Object.entries(presetOutputsMap)) {
+        if (
+          normalizedRequested.length === presetOutputs.length &&
+          normalizedRequested.every((item) => presetOutputs.includes(item))
+        ) {
+          matchedPreset = presetKey;
+          break;
+        }
+      }
+
+      if (matchedPreset) {
+        items.push({ type: "text", text: formatOutputModeLabel("preset") });
+        items.push({ type: "text", text: `Paquete: ${formatPresetLabel(matchedPreset)}` });
+
+        if (matchedPreset === "inspection_tams") {
+          items.push({ type: "tams", text: "TAMS" });
+        }
+      } else {
+        const outputsText = normalizedRequested.length
+          ? normalizedRequested.map(formatOutputLabel).join(", ")
+          : "Sin seleccionar";
+        items.push({ type: "text", text: formatOutputModeLabel("manual") });
+        items.push({ type: "text", text: `Archivos de entrega: ${outputsText}` });
+      }
+
+      return items;
+    }
 
     async function openJobFromHistory(job) {
       if (!job || !job.id) return;
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
+      saveSelectedHistoryJobId(selectedHistoryJobId);
+      renderProcessSelectionChips(getSelectionSummaryItemsForJob(job));
       if (uploadPanel) uploadPanel.style.display = "none";
       if (datasetPanel) datasetPanel.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
@@ -2473,11 +2576,17 @@ if (statusNow === "done" || statusNow === "completed") {
           const statusLabel = formatJobListStatus(job.status);
           const stageLabel = formatJobListStage(job.stage);
           const progressValue = Math.max(0, Math.min(100, Number(job.progress || 0)));
-          const canDownload = ["done", "completed"].includes(String(job.status || "").toLowerCase());
+          const statusLower = String(job.status || "").toLowerCase();
+          const canDownload = ["done", "completed"].includes(statusLower);
+          const statusBadgeClass =
+            ["done", "completed"].includes(statusLower) ? "ok" :
+            ["failed", "cancelled"].includes(statusLower) ? "error" :
+            ["queued", "running", "receiving", "created"].includes(statusLower) ? "progress" : "";
 
           card.innerHTML = `
             <div class="job-card-top">
               <div class="job-card-title">${job.project_name || "Proyecto sin nombre"}</div>
+              <div class="job-card-status-badge ${statusBadgeClass}">${statusLabel}</div>
             </div>
             <div class="job-card-id">Job ID: ${job.id || "—"}</div>
             <div class="job-card-meta">Estado: ${statusLabel}</div>
@@ -2491,6 +2600,7 @@ if (statusNow === "done" || statusNow === "completed") {
           card.addEventListener("click", async (event) => {
             if (event.target.closest("a")) return;
             selectedHistoryJobId = job.id || "";
+            saveSelectedHistoryJobId(selectedHistoryJobId);
             await openJobFromHistory(job);
             await renderStoredJobs();
           });
@@ -4571,6 +4681,31 @@ if (map) {
 renderStoredJobs();
 renderTopbarUser();
 syncStoredUserToForm();
+
+setTimeout(async () => {
+  try {
+    const savedJobId = getSavedSelectedHistoryJobId();
+    const user = typeof getStoredUser === "function" ? getStoredUser() : null;
+    if (!savedJobId || !user || !user.id) return;
+
+    const response = await fetch(`${API_BASE}/jobs/mine`, {
+      headers: {
+        "x-user-id": String(user.id)
+      },
+      cache: "no-store"
+    });
+
+    const data = await response.json().catch(() => ({}));
+    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+    const savedJob = jobs.find((job) => String(job.id || "") === String(savedJobId));
+
+    if (savedJob) {
+      selectedHistoryJobId = savedJobId;
+      await openJobFromHistory(savedJob);
+      await renderStoredJobs();
+    }
+  } catch (_) {}
+}, 0);
 
 window.addEventListener("load", () => {
   initMapWorldView();
