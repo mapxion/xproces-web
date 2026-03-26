@@ -1683,11 +1683,6 @@
                           <div class="output-item"><button class="output-btn" type="button" data-output="e57">E57</button><div class="output-tooltip"><strong>E57</strong>Formato profesional de nube de puntos para compatibilidad con software de ingeniería.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="ply">PLY</button><div class="output-tooltip"><strong>PLY</strong>Formato técnico 3D muy usado en software especializado.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="pts">PTS</button><div class="output-tooltip"><strong>PTS</strong>Formato sencillo de nube de puntos usado en algunos flujos técnicos.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="dxf_pointcloud">DXF nube</button><div class="output-tooltip"><strong>DXF nube</strong>Formato CAD para ciertos flujos de nube de puntos.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="cl3">CL3</button><div class="output-tooltip"><strong>CL3</strong>Formato especializado de nube de puntos usado en algunos entornos profesionales.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="u3d">U3D</button><div class="output-tooltip"><strong>U3D</strong>Formato 3D pensado sobre todo para algunos flujos de documentación.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="pdf_pointcloud">PDF nube</button><div class="output-tooltip"><strong>PDF nube</strong>Vista 3D de nube de puntos dentro de un PDF, cuando el flujo lo permita.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="obj_pointcloud">OBJ nube</button><div class="output-tooltip"><strong>OBJ nube</strong>Exportación de nube de puntos en OBJ. Menos habitual, pero disponible en algunos flujos.</div></div>
                         </div>
                       </div>
 
@@ -1700,18 +1695,7 @@
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dae">DAE</button><div class="output-tooltip"><strong>DAE</strong>Formato Collada para intercambio entre distintos programas 3D.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_3ds">3DS</button><div class="output-tooltip"><strong>3DS</strong>Formato 3D clásico, útil sobre todo por compatibilidad antigua.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_wrl">WRL</button><div class="output-tooltip"><strong>WRL</strong>Formato 3D antiguo pero todavía utilizable en algunos flujos concretos.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_pdf">PDF 3D</button><div class="output-tooltip"><strong>PDF 3D</strong>Modelo 3D embebido en PDF para compartir de forma sencilla.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dxf">DXF malla</button><div class="output-tooltip"><strong>DXF malla</strong>Salida de modelo 3D pensada para ciertos entornos CAD.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_ply">Malla PLY</button><div class="output-tooltip"><strong>Malla PLY</strong>Otra forma de exportar la superficie 3D para intercambio técnico.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_u3d">Malla U3D</button><div class="output-tooltip"><strong>Malla U3D</strong>Modelo 3D pensado para algunos flujos de documentación en PDF.</div></div>
-                        </div>
-                      </div>
-
-
-                      <div class="outputs-section">
-                        <div class="outputs-section-title">Visualización web</div>
-                        <div class="outputs-group">
-                          <div class="output-item"><button class="output-btn" type="button" data-output="cesium_tiles_pointcloud">Cesium 3D Tiles</button><div class="output-tooltip"><strong>Cesium 3D Tiles</strong>Salida válida para visualización web 3D jerárquica. Útil cuando el destino final es un visor web.</div></div>
                         </div>
                       </div>
 
@@ -1725,6 +1709,9 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+          </div>
                   </div>
                 </div>
           </div>
@@ -2159,7 +2146,6 @@
       const labels = {
         inspection_standard: "Inspección estándar",
         inspection_tams: "TAMS",
-        web_delivery: "Web",
         compact_delivery: "Entrega compacta"
       };
       return labels[preset] || "Sin seleccionar";
@@ -2221,19 +2207,14 @@ function getSelectedQualityMode() {
         e57: "E57",
         ply: "PLY",
         pts: "PTS",
-        dxf_pointcloud: "DXF nube",
-        cl3: "CL3",
-        u3d: "U3D",
-        pdf_pointcloud: "PDF nube",
-        obj_pointcloud: "OBJ nube",
+
         mesh_obj: "Malla OBJ",
         mesh_fbx: "FBX",
         mesh_stl: "STL",
         mesh_dae: "DAE",
         mesh_3ds: "3DS",
         mesh_wrl: "WRL",
-        mesh_pdf: "PDF 3D",
-        mesh_dxf: "DXF malla",
+
         mesh_ply: "Malla PLY",
         mesh_u3d: "Malla U3D",
         orthomosaic_tif: "Ortomosaico TIFF",
