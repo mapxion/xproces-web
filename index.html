@@ -1180,42 +1180,31 @@
     .process-download-wrap {
       display: none;
       margin-top: 20px;
-      display: flex;
-      justify-content: center;
+      width: 100%;
+      text-align: center;
     }
 
     .process-download-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 240px;
-      height: 48px;
-
-      padding: 0 22px;
-      border-radius: 999px;
-
+      min-height: 46px;
+      padding: 12px 18px;
+      border-radius: 14px;
       background: #ffffff;
-      color: #18211d;
-
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-
-      border: 1px solid #dde5df;
-
-      transition: all 0.18s ease;
-    }
-
-    /* HOVER limpio SaaS */
-    .process-download-btn:hover {
-      border-color: #7aab39;
       color: #7aab39;
-      background: #ffffff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      border: 1px solid var(--border);
+      transition: 0.18s ease;
+      box-shadow: none;
     }
 
-    /* EFECTO CLICK */
-    .process-download-btn:active {
-      transform: scale(0.98);
+    .process-download-btn:hover {
+      background: #f7f9f7;
+    
+      color: #7aab39;
     }
 
     #mapWrap {
@@ -4004,7 +3993,9 @@ if (map) {
     }
 
     async function getJob(jobId) {
-      const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+        cache: "no-store"
+      });
 
       if (!response.ok) {
         throw new Error(`No se pudo consultar el job (${response.status})`);
@@ -4015,7 +4006,9 @@ if (map) {
 
     async function getJobEta(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`);
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`, {
+          cache: "no-store"
+        });
         if (!response.ok) return null;
         return await response.json();
       } catch (_) {
@@ -4027,7 +4020,9 @@ if (map) {
 
     async function getJobLog(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`);
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`, {
+          cache: "no-store"
+        });
         if (!response.ok) return null;
         return await response.text();
       } catch (_) {
@@ -4252,7 +4247,7 @@ if (map) {
           const job = await getJob(jobId);
 
           const progress = Number(job.progress ?? 0);
-          const status = String(job.status ?? "");
+          const status = String(job.status ?? "").toLowerCase();
           if (datasetPanel) datasetPanel.style.display = "none";
           if (pricingPanel) pricingPanel.style.display = "none";
           if (mapWrap) mapWrap.style.display = "none";
@@ -4265,7 +4260,7 @@ if (map) {
           progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
           if (status === "failed") progressLabel.textContent = "Fallido";
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
-          else if (status === "completed") progressLabel.textContent = "Completado";
+          else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
