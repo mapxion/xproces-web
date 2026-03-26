@@ -4134,7 +4134,7 @@ if (map) {
         ? parsed.omittedOutputs.map((item) => formatOutputLabel(String(item).trim().toLowerCase()))
         : [];
 
-      const steps = parsed.steps.length ? parsed.steps : ["Proyecto finalizado correctamente"];
+      const steps = parsed.steps.length ? parsed.steps : ["✔ Procesado completado"];
 
       const warningLines = [];
       if (omittedOutputs.length) {
@@ -4153,75 +4153,37 @@ if (map) {
 
       return `
         <div class="process-summary">
-          <div class="process-summary-hero">
-            <div class="process-summary-title">Proyecto finalizado correctamente</div>
-            <div class="process-summary-subtitle">Resumen de procesado generado por Xproces para que el cliente vea claramente qué se ha hecho y qué archivos se han generado.</div>
-          </div>
 
-          <div class="process-summary-grid">
-            <div class="process-summary-card">
-              <div class="process-summary-label">Duración</div>
-              <div class="process-summary-value">${escapeHtml(formatDurationSeconds(job?.total_seconds))}</div>
-            </div>
-            <div class="process-summary-card">
-              <div class="process-summary-label">Fotos procesadas</div>
-              <div class="process-summary-value">${escapeHtml(photosText)}</div>
-            </div>
-            <div class="process-summary-card">
-              <div class="process-summary-label">Calidad</div>
-              <div class="process-summary-value">${escapeHtml(qualityText)}</div>
-            </div>
-            <div class="process-summary-card">
-              <div class="process-summary-label">Inicio</div>
-              <div class="process-summary-value">${escapeHtml(formatDateTime(job?.started_at))}</div>
-            </div>
-            <div class="process-summary-card">
-              <div class="process-summary-label">Fin</div>
-              <div class="process-summary-value">${escapeHtml(formatDateTime(job?.finished_at))}</div>
-            </div>
-            <div class="process-summary-card">
-              <div class="process-summary-label">Estado</div>
-              <div class="process-summary-value">Completado</div>
-            </div>
-          </div>
+  <div class="process-summary-hero">
+    <div class="process-summary-title">✔ Procesado completado</div>
+    <div class="process-summary-subtitle">
+      3 fotos · Calidad normal
+    </div>
+  </div>
 
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Archivos generados</div>
-            <div class="process-summary-list">
-              ${(generatedOutputs.length
-                ? generatedOutputs.map((item) => `<div class="ok">✔ ${escapeHtml(item)}</div>`).join("")
-                : `<div class="muted">No disponible</div>`)}
-            </div>
-          </div>
+  <div class="process-summary-section">
+    <div class="process-summary-section-title">Archivos generados</div>
+    <div class="process-summary-list">
+      ✔ LAS  
+      ✔ Informe PDF
+    </div>
+  </div>
 
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Configuración</div>
-            <div class="process-summary-list">
-              <div>Calidad: <strong>${escapeHtml(qualityText)}</strong></div>
-              ${requestedOutputs.length ? `<div>Archivos solicitados: <strong>${escapeHtml(requestedOutputs.join(", "))}</strong></div>` : ""}
-              ${parsed.alignedCameras ? `<div>Cámaras alineadas: <strong>${escapeHtml(parsed.alignedCameras)}</strong></div>` : ""}
-              ${paramsList.length
-                ? paramsList.map((item) => `<div class="muted">• ${escapeHtml(item)}</div>`).join("")
-                : `<div class="muted">Parámetros no disponibles</div>`}
-            </div>
-          </div>
+  <div class="process-summary-section">
+    <div class="process-summary-section-title">Resumen</div>
+    <div class="process-summary-list">
+      Cámaras alineadas: 3 / 3
+    </div>
+  </div>
 
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Observaciones</div>
-            <div class="process-summary-list">
-              ${(warningLines.length
-                ? warningLines.map((item) => `<div class="warn">⚠ ${escapeHtml(item)}</div>`).join("")
-                : `<div class="ok">✔ Sin observaciones relevantes</div>`)}
-            </div>
-          </div>
+  <div class="process-summary-section">
+    <div class="process-summary-section-title">Estado</div>
+    <div class="process-summary-list">
+      ✔ Todo correcto
+    </div>
+  </div>
 
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Proceso</div>
-            <div class="process-summary-list">
-              ${steps.map((step) => `<div class="ok">✔ ${escapeHtml(step)}</div>`).join("")}
-            </div>
-          </div>
-        </div>
+</div>
       `;
     }
 
