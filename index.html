@@ -1179,30 +1179,43 @@
 
     .process-download-wrap {
       display: none;
-      margin-top: 16px;
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
     }
 
     .process-download-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 46px;
-      padding: 12px 18px;
-      border-radius: 14px;
+      min-width: 240px;
+      height: 48px;
+
+      padding: 0 22px;
+      border-radius: 999px;
+
       background: #ffffff;
-      color: #7aab39;
-      text-decoration: none;
+      color: #18211d;
+
       font-size: 14px;
-      font-weight: 800;
-      border: 1px solid var(--border);
-      transition: 0.18s ease;
-      box-shadow: none;
+      font-weight: 700;
+      text-decoration: none;
+
+      border: 1px solid #dde5df;
+
+      transition: all 0.18s ease;
     }
 
+    /* HOVER limpio SaaS */
     .process-download-btn:hover {
-      background: #f7f9f7;
-    
+      border-color: #7aab39;
       color: #7aab39;
+      background: #ffffff;
+    }
+
+    /* EFECTO CLICK */
+    .process-download-btn:active {
+      transform: scale(0.98);
     }
 
     #mapWrap {
