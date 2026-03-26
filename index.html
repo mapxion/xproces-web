@@ -2416,6 +2416,8 @@ if (statusNow === "done" || statusNow === "completed") {
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
         const pct = Math.max(0, Math.min(100, Number(job.progress || 0)));
+        progressFill.classList.remove("error");
+        progressFill.style.background = "";
         progressFill.style.width = `${pct}%`;
         progressFill.classList.toggle("error", ["failed", "cancelled"].includes(String(job.status || "").toLowerCase()));
       }
@@ -4256,6 +4258,8 @@ if (map) {
           const message = job.message || "";
 
           progressWrap.style.display = "block";
+          progressFill.classList.remove("error");
+          progressFill.style.background = "";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
           progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
           if (status === "failed") progressLabel.textContent = "Fallido";
@@ -4297,32 +4301,41 @@ if (map) {
             stopPolling();
 
             progressFill.style.width = "100%";
+            progressFill.classList.add("error");
             progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
             progressLabel.textContent = "Procesado fallido";
             progressPercent.textContent = "100%";
 
-            const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
+            const logText = await getJobLog(job.id);
 
-            let msg = "El procesado no se pudo completar.";
+            if (logText) {
+              jobStatusEl.innerHTML = renderProcessSummary(job, logText);
+            } else {
+              const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
-            if (rawError.includes("no_input_files")) {
-              msg = "No se encontraron imágenes válidas en el proyecto.";
-            } else if (
-              rawError.includes("muy pocas cámaras alineadas") ||
-              rawError.includes("cámaras alineadas")
-            ) {
-              msg = "No hay suficiente solape entre las fotos para generar el modelo.";
-            } else if (
-              rawError.includes("point cloud densa") ||
-              rawError.includes("depth maps")
-            ) {
-              msg = "No se ha podido generar la nube de puntos. Revise calidad, solape y resolución de las fotos.";
+              let msg = "El procesado no se pudo completar.";
+
+              if (rawError.includes("no_input_files")) {
+                msg = "No se encontraron imágenes válidas en el proyecto.";
+              } else if (
+                rawError.includes("muy pocas cámaras alineadas") ||
+                rawError.includes("cámaras alineadas")
+              ) {
+                msg = "No hay suficiente solape entre las fotos para generar el modelo.";
+              } else if (
+                rawError.includes("point cloud densa") ||
+                rawError.includes("depth maps")
+              ) {
+                msg = "No se ha podido generar la nube de puntos. Revise calidad, solape y resolución de las fotos.";
+              }
+
+              jobStatusEl.textContent =
+                `Job ${job.id}\nEstado: error\n${msg}`;
+              hideDownloadButton();
+              return;
             }
 
-            jobStatusEl.textContent =
-              `Job ${job.id}\nEstado: error\n${msg}`;
-
-            hideDownloadButton();
+            showDownloadButton(job.id);
           }
         } catch (error) {
           console.error("Polling error:", error);
