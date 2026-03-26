@@ -4142,24 +4142,71 @@ if (map) {
     function renderProcessSummary(job, logText) {
       const parsed = parseProcessLog(logText);
 
+      const normalizeOutputKey = (value) => {
+        const raw = String(value || "").trim().toLowerCase();
+        const aliases = {
+          "obj": "mesh_obj",
+          "pdf": "pdf_report",
+          "pdf report": "pdf_report",
+          "report": "pdf_report",
+          "report.pdf": "pdf_report",
+          "las": "las",
+          "laz": "laz",
+          "e57": "e57",
+          "ply": "ply",
+          "pts": "pts",
+          "dem": "dem_tif",
+          "dem.tif": "dem_tif",
+          "orthomosaic": "orthomosaic_tif",
+          "orthomosaic.tif": "orthomosaic_tif",
+          "orthomosaic.jpg": "orthomosaic_jpg",
+          "ortomosaico": "orthomosaic_tif",
+          "ortomosaico jpg": "orthomosaic_jpg",
+          "ortomosaico tif": "orthomosaic_tif",
+          "mesh obj": "mesh_obj",
+          "malla obj": "mesh_obj",
+          "model.obj": "mesh_obj",
+          "fbx": "mesh_fbx",
+          "stl": "mesh_stl",
+          "dae": "mesh_dae",
+          "3ds": "mesh_3ds",
+          "wrl": "mesh_wrl",
+          "mesh ply": "mesh_ply",
+          "malla ply": "mesh_ply"
+        };
+        return aliases[raw] || raw;
+      };
+
       const qualityText =
         parsed.quality ||
         (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
 
       const photosText = parsed.photos || "No disponible";
 
-      const generatedOutputs = parsed.generatedOutputs.length
-        ? parsed.generatedOutputs.map((item) => formatOutputLabel(String(item).trim().toLowerCase()))
-        : [];
+      const requestedRaw = parsed.requestedOutputs.length ? parsed.requestedOutputs : [];
+      const requestedLabels = requestedRaw.map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
 
-      const omittedOutputs = parsed.omittedOutputs.length
+      const generatedRaw = parsed.generatedOutputs.length ? parsed.generatedOutputs : [];
+      const generatedLabels = generatedRaw.map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
+
+      const omittedLabels = parsed.omittedOutputs.length
         ? parsed.omittedOutputs.map((item) => formatOutputLabel(String(item).trim().toLowerCase()))
         : [];
 
+      const requestedKeys = requestedRaw.map(normalizeOutputKey);
+      const generatedKeys = generatedRaw.map(normalizeOutputKey);
+
+      const missingFromResult = requestedRaw
+        .filter((item) => !generatedKeys.includes(normalizeOutputKey(item)))
+        .map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
+
+      const missingLabels = [...new Set([...omittedLabels, ...missingFromResult])];
+
       const warningLines = [];
-      if (omittedOutputs.length) {
-        warningLines.push(`Faltan: ${omittedOutputs.join(", ")}`);
+      if (missingLabels.length) {
+        warningLines.push(`Faltan: ${missingLabels.join(", ")}`);
       }
+
       parsed.warnings.forEach((w) => {
         const clean = w.replace(/estas salidas aún no se generan directamente con Xproces y se omitirán:\s*/i, "").trim();
         if (clean && !warningLines.some((x) => x.includes(clean))) {
@@ -4167,14 +4214,21 @@ if (map) {
         }
       });
 
-      const generatedText = generatedOutputs.length ? generatedOutputs.join(" · ") : "No disponible";
+      const statusValue = String(job?.status || "").toLowerCase();
+      const failed = statusValue === "failed" || statusValue === "cancelled";
+      if (failed && !warningLines.length) {
+        warningLines.push("El procesado no se completó correctamente.");
+      }
+
+      const generatedText = generatedLabels.length ? generatedLabels.join(" · ") : "No disponible";
       const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: No disponible";
       const stateText = warningLines.length ? `⚠ ${warningLines.join(" · ")}` : "✔ Todo correcto";
+      const titleText = failed ? "✖ Procesado fallido" : "✔ Procesado completado";
 
       return `
         <div class="process-summary">
           <div class="process-summary-hero">
-            <div class="process-summary-title">✔ Procesado completado</div>
+            <div class="process-summary-title">${titleText}</div>
             <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
           </div>
 
