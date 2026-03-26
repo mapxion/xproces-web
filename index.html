@@ -4280,7 +4280,7 @@ if (map) {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
-          if (status === "done" || status === "completed") {
+          if (status === "done" || status === "completed" || status === "failed") {
             stopPolling();
 
             progressFill.style.width = "100%";
