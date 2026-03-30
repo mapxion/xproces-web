@@ -2241,8 +2241,10 @@ function getSelectedQualityMode() {
     }
 
     function getSelectedOutputs() {
-      return Array.from(document.querySelectorAll(".output-btn.active")).map((btn) => btn.dataset.output);
-    }
+  return Array.from(document.querySelectorAll('[data-output].output-btn.active'))
+    .map((btn) => btn.dataset.output)
+    .filter(Boolean);
+}
 
     function isTamsPresetSelected() {
       return getSelectedOutputMode() === "preset" && getSelectedPreset() === "inspection_tams";
