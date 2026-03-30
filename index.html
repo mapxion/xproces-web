@@ -2149,7 +2149,7 @@
       } else if (getSelectedOutputMode() === "preset") {
         const presetTexts = {
           inspection_standard: "Paquetes prediseñados",
-          inspection_tams: "Paquete técnico reservado para flujo interno TAMS.",
+          inspection_tams: "Paquete base para inspección en TAMS.",
           web_delivery: "Paquete orientado a visualización web con Cesium 3D Tiles.",
           compact_delivery: "Paquete recomendado cuando se quiere una entrega más ligera."
         };
@@ -2233,19 +2233,6 @@ function getSelectedQualityMode() {
 
     function getSelectedOutputs() {
       return Array.from(document.querySelectorAll(".output-btn.active")).map((btn) => btn.dataset.output);
-    }
-
-    function isTamsPresetSelected() {
-      return getSelectedOutputMode() === "preset" && getSelectedPreset() === "inspection_tams";
-    }
-
-    function buildXprocesMeta() {
-      return {
-        outputs_requested: getSelectedOutputs(),
-        preset_key: getSelectedPreset() || "",
-        output_mode: getSelectedOutputMode() || "",
-        tams_export: isTamsPresetSelected()
-      };
     }
 
     function formatOutputLabel(output) {
@@ -2434,7 +2421,7 @@ function getSelectedQualityMode() {
 
       const presetOutputsMap = {
         inspection_standard: ["las", "mesh_obj", "pdf_report"],
-        inspection_tams: ["las"],
+        inspection_tams: ["las", "mesh_obj", "pdf_report"],
         compact_delivery: ["laz", "mesh_obj", "pdf_report"]
       };
 
@@ -2985,8 +2972,7 @@ if (statusNow === "done" || statusNow === "completed") {
             photos_count: photoCount,
             total_bytes: totalBytes,
             quality_mode: getSelectedQualityMode(),
-            outputs_requested: getSelectedOutputs(),
-            tams_export: isTamsPresetSelected()
+            outputs_requested: getSelectedOutputs()
           })
         });
 
@@ -4029,17 +4015,13 @@ if (map) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  exif_summary: {
-    ...(latestExifSummary || {}),
-    _xproces: buildXprocesMeta()
-  },
+  exif_summary: latestExifSummary,
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null,
   quality_mode: getSelectedQualityMode(),
-  outputs_requested: getSelectedOutputs(),
-  tams_export: isTamsPresetSelected()
+  outputs_requested: getSelectedOutputs()
 })
       });
 
