@@ -2149,7 +2149,7 @@
       } else if (getSelectedOutputMode() === "preset") {
         const presetTexts = {
           inspection_standard: "Paquetes prediseñados",
-          inspection_tams: "Paquete base para inspección en TAMS.",
+          inspection_tams: "Paquete técnico reservado para flujo interno TAMS.",
           web_delivery: "Paquete orientado a visualización web con Cesium 3D Tiles.",
           compact_delivery: "Paquete recomendado cuando se quiere una entrega más ligera."
         };
@@ -2233,6 +2233,19 @@ function getSelectedQualityMode() {
 
     function getSelectedOutputs() {
       return Array.from(document.querySelectorAll(".output-btn.active")).map((btn) => btn.dataset.output);
+    }
+
+    function isTamsPresetSelected() {
+      return getSelectedOutputMode() === "preset" && getSelectedPreset() === "inspection_tams";
+    }
+
+    function buildXprocesMeta() {
+      return {
+        outputs_requested: getSelectedOutputs(),
+        preset_key: getSelectedPreset() || "",
+        output_mode: getSelectedOutputMode() || "",
+        tams_export: isTamsPresetSelected()
+      };
     }
 
     function formatOutputLabel(output) {
@@ -2421,7 +2434,7 @@ function getSelectedQualityMode() {
 
       const presetOutputsMap = {
         inspection_standard: ["las", "mesh_obj", "pdf_report"],
-        inspection_tams: ["las", "mesh_obj", "pdf_report"],
+        inspection_tams: ["las"],
         compact_delivery: ["laz", "mesh_obj", "pdf_report"]
       };
 
@@ -2669,6 +2682,9 @@ if (statusNow === "done" || statusNow === "completed") {
 
     function closeAuthModal() {
       authBackdrop.classList.remove("show");
+      if (modalState.restoreAuthAfterClose) {
+        modalState.restoreAuthAfterClose = false;
+      }
     }
 
     function renderTopbarUser() {
@@ -2776,13 +2792,28 @@ if (statusNow === "done" || statusNow === "completed") {
       etaBig.textContent = "Sin calcular";
     }
 
+    let modalState = {
+      restoreAuthAfterClose: false
+    };
+
     function closeModal(result = false) {
+      const restoreAuthAfterClose = modalState.restoreAuthAfterClose;
+
       modalBackdrop.classList.remove("show");
       modalBox.className = "modal";
+      modalConfirmBtn.disabled = false;
+      modalCancelBtn.disabled = false;
 
-      if (modalResolver) {
-        modalResolver(result);
-        modalResolver = null;
+      const resolver = modalResolver;
+      modalResolver = null;
+      modalState.restoreAuthAfterClose = false;
+
+      if (resolver) {
+        resolver(result);
+      }
+
+      if (restoreAuthAfterClose) {
+        authBackdrop.classList.add("show");
       }
     }
 
@@ -2793,9 +2824,22 @@ if (statusNow === "done" || statusNow === "completed") {
       confirmText = "Aceptar",
       cancelText = "Cancelar",
       showCancel = true,
-      tone = "default"
+      tone = "default",
+      hideAuthWhileOpen = false
     }) {
       return new Promise((resolve) => {
+        if (modalResolver) {
+          const previousResolver = modalResolver;
+          modalResolver = null;
+          previousResolver(false);
+        }
+
+        const shouldHideAuth = hideAuthWhileOpen && authBackdrop.classList.contains("show");
+        if (shouldHideAuth) {
+          authBackdrop.classList.remove("show");
+        }
+
+        modalState.restoreAuthAfterClose = shouldHideAuth;
         modalResolver = resolve;
 
         modalTitle.textContent = title;
@@ -2804,6 +2848,8 @@ if (statusNow === "done" || statusNow === "completed") {
         modalConfirmBtn.textContent = confirmText;
         modalCancelBtn.textContent = cancelText;
         modalCancelBtn.style.display = showCancel ? "inline-block" : "none";
+        modalConfirmBtn.disabled = false;
+        modalCancelBtn.disabled = false;
 
         modalBox.className = "modal";
         if (tone === "warning") modalBox.classList.add("modal-warning");
@@ -2813,14 +2859,15 @@ if (statusNow === "done" || statusNow === "completed") {
       });
     }
 
-    async function showInfoModal(title, subtitle, message, tone = "default") {
+    async function showInfoModal(title, subtitle, message, tone = "default", options = {}) {
       await openModal({
         title,
         subtitle,
         body: `<div class="modal-note">${message}</div>`,
         confirmText: "Entendido",
         showCancel: false,
-        tone
+        tone,
+        hideAuthWhileOpen: options.hideAuthWhileOpen ?? authBackdrop.classList.contains("show")
       });
     }
 
@@ -2861,7 +2908,8 @@ if (statusNow === "done" || statusNow === "completed") {
             "Falta el código",
             "Debe introducir un código invitado.",
             "Introduzca un código válido para continuar.",
-            "warning"
+            "warning",
+            { hideAuthWhileOpen: true }
           );
           return;
         }
@@ -2972,7 +3020,8 @@ if (statusNow === "done" || statusNow === "completed") {
             photos_count: photoCount,
             total_bytes: totalBytes,
             quality_mode: getSelectedQualityMode(),
-            outputs_requested: getSelectedOutputs()
+            outputs_requested: getSelectedOutputs(),
+            tams_export: isTamsPresetSelected()
           })
         });
 
@@ -4015,13 +4064,17 @@ if (map) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  exif_summary: latestExifSummary,
+  exif_summary: {
+    ...(latestExifSummary || {}),
+    _xproces: buildXprocesMeta()
+  },
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null,
   quality_mode: getSelectedQualityMode(),
-  outputs_requested: getSelectedOutputs()
+  outputs_requested: getSelectedOutputs(),
+  tams_export: isTamsPresetSelected()
 })
       });
 
@@ -4497,7 +4550,8 @@ if (map) {
             "Debe iniciar sesión",
             "Acceso requerido",
             "Debe iniciar sesión antes de proseguir.",
-            "warning"
+            "warning",
+            { hideAuthWhileOpen: true }
           );
           return;
         }
@@ -4512,6 +4566,22 @@ if (map) {
       }
 
       if (uploadBtn.disabled) {
+        const motivos = [];
+        if (latestDataset?.missingExifCore) {
+          motivos.push("Faltan datos EXIF esenciales en las fotos.");
+        }
+        if (Array.isArray(latestDataset?.blockers) && latestDataset.blockers.length > 0) {
+          motivos.push(...latestDataset.blockers);
+        }
+
+        await showInfoModal(
+          "Dataset no válido para procesado",
+          "No se puede iniciar el procesado con las fotos actuales.",
+          motivos.length
+            ? motivos.join("\n")
+            : "Revise el dataset cargado y vuelva a intentarlo.",
+          "error"
+        );
         return;
       }
 
