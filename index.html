@@ -2914,6 +2914,18 @@ if (statusNow === "done" || statusNow === "completed") {
       }
     }
 
+
+    function ensureJobsPanelAccess() {
+      try {
+        const user = typeof getStoredUser === "function" ? getStoredUser() : null;
+        if (!user || !user.id || !jobsPanel) return;
+        jobsPanel.classList.remove("jobs-panel-hidden");
+        if (typeof renderStoredJobs === "function") {
+          renderStoredJobs().catch(() => {});
+        }
+      } catch (_) {}
+    }
+
     function renderTopbarUser() {
       const user = getStoredUser();
 
@@ -2943,6 +2955,8 @@ if (statusNow === "done" || statusNow === "completed") {
         renderTopbarUser();
         renderStoredJobs();
       });
+
+      ensureJobsPanelAccess();
     }
 
     function formatBytes(bytes) {
@@ -3180,6 +3194,7 @@ if (statusNow === "done" || statusNow === "completed") {
         setStoredUser(data.user);
         renderTopbarUser();
         renderStoredJobs();
+        ensureJobsPanelAccess();
         closeAuthModal();
       } catch (error) {
         console.error(error);
