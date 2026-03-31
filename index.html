@@ -923,7 +923,7 @@
     }
 
     .status-details {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 12px;
@@ -1529,6 +1529,7 @@
       .process-summary {
         grid-template-columns: 1fr;
       }
+
       .status-details {
         grid-template-columns: 1fr 1fr;
       }
@@ -1859,7 +1860,7 @@
 
               <div class="process-selection-summary" id="processSelectionSummary"></div>
 
-              <div class="status-details" id="statusDetails" style="display:none;">
+              <div class="status-details" id="statusDetails">
                 <div class="status-detail-card"><div class="status-detail-label">Estado real</div><div class="status-detail-value" id="statusRealValue">Sin iniciar</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Fotos subidas</div><div class="status-detail-value" id="statusUploadedValue">0 / 0</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Tamaño subido</div><div class="status-detail-value" id="statusUploadedBytesValue">0 MB / 0 MB</div></div>
@@ -2291,7 +2292,6 @@ function stripNullCharsDeep(value) {
       return "Sin seleccionar";
     }
 
-
     function getCurrentDeliverySummaryText() {
       const items = getSelectionSummaryItems();
       if (!items || !items.length) return "Sin seleccionar";
@@ -2299,11 +2299,7 @@ function stripNullCharsDeep(value) {
     }
 
     function getCurrentQualitySummaryText(job = null) {
-      const quality = normalizeQualityMode(job?.quality_mode || getSelectedQualityMode());
-      if (quality === "fast") return "Rápido";
-      if (quality === "max") return "Máxima calidad";
-      if (quality === "normal") return "Normal";
-      return "Sin seleccionar";
+      return formatQualityModeLabel(String(job?.quality_mode || getSelectedQualityMode() || ""));
     }
 
     function getUploadStatusLabel(status) {
@@ -2315,27 +2311,25 @@ function stripNullCharsDeep(value) {
       if (value === "failed") return "Procesado fallido";
       if (value === "cancelled") return "Trabajo cancelado";
       if (value === "created") return "Preparando trabajo";
-      return translateStatus(value || "created");
+      return value ? value : "Sin iniciar";
     }
 
     function renderProcessStatusCards(job = null) {
       if (!statusDetails) return;
 
-      const totalFiles = Number(uploadProgressState.totalFiles || files.length || latestExifSummary?.totalPhotos || 0);
-      const uploadedFiles = Math.max(0, Math.min(totalFiles || 0, Number(uploadProgressState.uploadedFiles || 0)));
-      const totalBytes = Number(uploadProgressState.totalBytes || totalSize || latestExifSummary?.totalSize || 0);
-      const uploadedBytes = Math.max(0, Math.min(totalBytes || 0, Number(uploadProgressState.uploadedBytes || 0)));
+      const totalFiles = Number(uploadProgressState.totalFiles || files.length || 0);
+      const uploadedFiles = Number(uploadProgressState.uploadedFiles || 0);
+      const totalBytes = Number(uploadProgressState.totalBytes || totalSize || 0);
+      const uploadedBytes = Number(uploadProgressState.uploadedBytes || 0);
 
       statusDetails.style.display = "grid";
       if (statusRealValue) statusRealValue.textContent = getUploadStatusLabel(job?.status || (uploadProgressState.active ? "receiving" : ""));
-      if (statusUploadedValue) statusUploadedValue.textContent = `${uploadedFiles} / ${totalFiles || 0}`;
+      if (statusUploadedValue) statusUploadedValue.textContent = `${uploadedFiles} / ${totalFiles}`;
       if (statusUploadedBytesValue) statusUploadedBytesValue.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
       if (statusDeliveryValue) statusDeliveryValue.textContent = getCurrentDeliverySummaryText();
       if (statusQualityValue) statusQualityValue.textContent = getCurrentQualitySummaryText(job);
       if (statusPriceValue) statusPriceValue.textContent = formatJobListPrice(job?.price || lastPreview?.price || 0);
-      if (statusEtaValue) statusEtaValue.textContent = (job?.status === "queued" || job?.status === "running")
-        ? (etaBig?.textContent || lastPreview?.estimated_human || "No disponible")
-        : (lastPreview?.estimated_human || etaBig?.textContent || "No disponible");
+      if (statusEtaValue) statusEtaValue.textContent = lastPreview?.estimated_human || etaBig?.textContent || "No disponible";
       if (statusJobIdValue) statusJobIdValue.textContent = job?.id || uploadProgressState.jobId || "—";
     }
 
@@ -2356,6 +2350,7 @@ function stripNullCharsDeep(value) {
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
         progressFill.classList.remove("error");
+        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
       }
       if (progressLabel) progressLabel.textContent = "Recibiendo fotos";
@@ -2368,7 +2363,11 @@ function stripNullCharsDeep(value) {
       });
 
       if (jobStatusEl) {
-        jobStatusEl.textContent = `Estado: Recibiendo fotos\nFotos subidas: ${uploadProgressState.uploadedFiles} / ${uploadProgressState.totalFiles}\nTamaño subido: ${formatBytes(uploadProgressState.uploadedBytes)} / ${formatBytes(uploadProgressState.totalBytes)}\nEsperando completar la subida para enviar el proyecto a procesado.`;
+        jobStatusEl.textContent =
+          `Estado: Recibiendo fotos\n` +
+          `Fotos subidas: ${uploadProgressState.uploadedFiles} / ${uploadProgressState.totalFiles}\n` +
+          `Tamaño subido: ${formatBytes(uploadProgressState.uploadedBytes)} / ${formatBytes(uploadProgressState.totalBytes)}\n` +
+          `Esperando completar la subida para enviar el proyecto a procesado.`;
       }
     }
 
@@ -2381,6 +2380,7 @@ function stripNullCharsDeep(value) {
         jobId: "",
         active: false
       };
+      if (statusDetails) statusDetails.style.display = "none";
     }
 
     function updateProcessSelectionSummary() {
@@ -2526,98 +2526,6 @@ function getSelectedQualityMode() {
           }).join("")}
         </div>
       `;
-    }
-
-
-    function getCurrentDeliverySummaryText() {
-      const items = getSelectionSummaryItems();
-      if (!items || !items.length) return "Sin seleccionar";
-      return items.map((item) => item?.text || String(item ?? "")).join(" · ");
-    }
-
-    function getCurrentQualitySummaryText(job = null) {
-      const quality = normalizeQualityMode(job?.quality_mode || getSelectedQualityMode());
-      if (quality === "fast") return "Rápido";
-      if (quality === "max") return "Máxima calidad";
-      if (quality === "normal") return "Normal";
-      return "Sin seleccionar";
-    }
-
-    function getUploadStatusLabel(status) {
-      const value = String(status || "").toLowerCase();
-      if (value === "receiving") return "Recibiendo fotos";
-      if (value === "queued") return "En cola";
-      if (value === "running") return "Procesando proyecto";
-      if (value === "done" || value === "completed") return "Trabajo completado";
-      if (value === "failed") return "Procesado fallido";
-      if (value === "cancelled") return "Trabajo cancelado";
-      if (value === "created") return "Preparando trabajo";
-      return translateStatus(value || "created");
-    }
-
-    function renderProcessStatusCards(job = null) {
-      if (!statusDetails) return;
-
-      const totalFiles = Number(uploadProgressState.totalFiles || files.length || latestExifSummary?.totalPhotos || 0);
-      const uploadedFiles = Math.max(0, Math.min(totalFiles || 0, Number(uploadProgressState.uploadedFiles || 0)));
-      const totalBytes = Number(uploadProgressState.totalBytes || totalSize || latestExifSummary?.totalSize || 0);
-      const uploadedBytes = Math.max(0, Math.min(totalBytes || 0, Number(uploadProgressState.uploadedBytes || 0)));
-
-      statusDetails.style.display = "grid";
-      if (statusRealValue) statusRealValue.textContent = getUploadStatusLabel(job?.status || (uploadProgressState.active ? "receiving" : ""));
-      if (statusUploadedValue) statusUploadedValue.textContent = `${uploadedFiles} / ${totalFiles || 0}`;
-      if (statusUploadedBytesValue) statusUploadedBytesValue.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
-      if (statusDeliveryValue) statusDeliveryValue.textContent = getCurrentDeliverySummaryText();
-      if (statusQualityValue) statusQualityValue.textContent = getCurrentQualitySummaryText(job);
-      if (statusPriceValue) statusPriceValue.textContent = formatJobListPrice(job?.price || lastPreview?.price || 0);
-      if (statusEtaValue) statusEtaValue.textContent = (job?.status === "queued" || job?.status === "running")
-        ? (etaBig?.textContent || lastPreview?.estimated_human || "No disponible")
-        : (lastPreview?.estimated_human || etaBig?.textContent || "No disponible");
-      if (statusJobIdValue) statusJobIdValue.textContent = job?.id || uploadProgressState.jobId || "—";
-    }
-
-    function setUploadProgressDisplay(jobId, totalFiles, uploadedFiles, totalBytes, uploadedBytes) {
-      uploadProgressState = {
-        totalFiles: Number(totalFiles || 0),
-        uploadedFiles: Number(uploadedFiles || 0),
-        totalBytes: Number(totalBytes || 0),
-        uploadedBytes: Number(uploadedBytes || 0),
-        jobId: jobId || uploadProgressState.jobId || "",
-        active: true
-      };
-
-      const percent = uploadProgressState.totalFiles > 0
-        ? Math.round((uploadProgressState.uploadedFiles / uploadProgressState.totalFiles) * 100)
-        : 0;
-
-      if (progressWrap) progressWrap.style.display = "block";
-      if (progressFill) {
-        progressFill.classList.remove("error");
-        progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-      }
-      if (progressLabel) progressLabel.textContent = "Recibiendo fotos";
-      if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, percent))}%`;
-
-      renderProcessStatusCards({
-        id: jobId,
-        status: "receiving",
-        price: lastPreview?.price || 0
-      });
-
-      if (jobStatusEl) {
-        jobStatusEl.textContent = `Estado: Recibiendo fotos\nFotos subidas: ${uploadProgressState.uploadedFiles} / ${uploadProgressState.totalFiles}\nTamaño subido: ${formatBytes(uploadProgressState.uploadedBytes)} / ${formatBytes(uploadProgressState.totalBytes)}\nEsperando completar la subida para enviar el proyecto a procesado.`;
-      }
-    }
-
-    function clearUploadProgressState() {
-      uploadProgressState = {
-        totalFiles: 0,
-        uploadedFiles: 0,
-        totalBytes: 0,
-        uploadedBytes: 0,
-        jobId: "",
-        active: false
-      };
     }
 
     function updateProcessSelectionSummary() {
@@ -3566,6 +3474,7 @@ if (statusNow === "done" || statusNow === "completed") {
 
     function resetAll() {
       stopPolling();
+      clearUploadProgressState();
       resetPreviewState();
 
       files = [];
@@ -4423,36 +4332,42 @@ if (map) {
       return response.json();
     }
 
-    async function uploadBatch(jobId, batch, batchIndex, totalBatches, uploadedFilesBefore = 0, uploadedBytesBefore = 0) {
-      const form = new FormData();
-      batch.forEach((file) => form.append("photos", file));
+    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches, uploadedFilesBefore = 0, uploadedBytesBefore = 0) {
+      return new Promise((resolve, reject) => {
+        const form = new FormData();
+        batchFiles.forEach((file) => form.append("photos", file));
 
-      console.log(`📦 Subiendo lote ${batchIndex + 1}/${totalBatches} (${batch.length} fotos)`);
+        const batchBytes = batchFiles.reduce((acc, file) => acc + Number(file?.size || 0), 0);
 
-      const response = await fetchWithTimeout(`${API_BASE}/jobs/${jobId}/upload`, {
-        method: "POST",
-        body: form
-      }, 600000);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
 
-      console.log(`📡 RESPUESTA lote ${batchIndex + 1}: status=${response.status}`);
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable) {
+            const batchPercent = e.loaded / e.total;
+            const currentUploadedFiles = uploadedFilesBefore + Math.round(batchFiles.length * batchPercent);
+            const currentUploadedBytes = uploadedBytesBefore + Math.round(batchBytes * batchPercent);
+            setUploadProgressDisplay(jobId, files.length, currentUploadedFiles, totalSize, currentUploadedBytes);
+          }
+        };
 
-      let payload = {};
-      try {
-        payload = await response.json();
-      } catch (_) {}
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const uploadedFiles = uploadedFilesBefore + batchFiles.length;
+            const uploadedBytes = uploadedBytesBefore + batchBytes;
+            setUploadProgressDisplay(jobId, files.length, uploadedFiles, totalSize, uploadedBytes);
+            resolve({ uploadedFiles, uploadedBytes });
+          } else {
+            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
+          }
+        };
 
-      if (!response.ok || payload?.ok === false) {
-        const serverMessage = payload?.message || payload?.error || `Error subiendo lote ${batchIndex + 1} (HTTP ${response.status})`;
-        throw new Error(serverMessage);
-      }
+        xhr.onerror = function () {
+          reject(new Error(`Error de red en lote ${batchIndex + 1}`));
+        };
 
-      const batchBytes = batch.reduce((acc, file) => acc + Number(file?.size || 0), 0);
-      const uploadedFiles = uploadedFilesBefore + batch.length;
-      const uploadedBytes = uploadedBytesBefore + batchBytes;
-
-      setUploadProgressDisplay(jobId, files.length, uploadedFiles, totalSize, uploadedBytes);
-
-      return { uploadedFiles, uploadedBytes, payload };
+        xhr.send(form);
+      });
     }
 
     async function submitJob(jobId) {
@@ -4733,21 +4648,20 @@ if (map) {
       const message = String(job?.message ?? "").trim();
       const lines = [];
 
-      if (status === "failed") lines.push("Estado: Procesado fallido");
-      else if (status === "cancelled") lines.push("Estado: Trabajo cancelado");
-      else if (status === "completed" || status === "done") lines.push("Estado: Trabajo completado");
+      if (status === "failed") lines.push("Estado: Fallido");
+      else if (status === "cancelled") lines.push("Estado: Cancelado");
+      else if (status === "completed" || status === "done") lines.push("Estado: Completado");
       else if (status === "queued") lines.push("Estado: En cola");
       else if (status === "receiving") lines.push("Estado: Recibiendo fotos");
       else if (status === "running") lines.push("Estado: Procesando proyecto");
       else if (status === "created") lines.push("Estado: Preparando trabajo");
-      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
+      else if (status) lines.push(`Estado: ${status}`);
 
       if (job?.photos_count !== undefined && job?.photos_count !== null) lines.push(`Fotos registradas: ${job.photos_count}`);
       if (stage) lines.push(`Fase: ${stage}`);
       if (message) lines.push(message);
 
-      return lines.join("
-");
+      return lines.join("\n");
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -4802,7 +4716,6 @@ if (map) {
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
           else if (status === "receiving") progressLabel.textContent = "Recibiendo fotos";
-          else if (status === "queued") progressLabel.textContent = "En cola";
           else progressLabel.textContent = "Procesando proyecto";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
@@ -5042,6 +4955,7 @@ if (map) {
       progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         progressLabel.textContent = "Creando proyecto...";
         progressPercent.textContent = "0%";
+        renderProcessStatusCards({ status: "created", price: lastPreview?.price || 0 });
         jobStatusEl.textContent = "Creando job...";
 
         const createdJob = await createJob();
@@ -5057,8 +4971,6 @@ if (map) {
         if (processPanel) processPanel.style.display = "block";
         updateProcessSelectionSummary();
 
-        clearUploadProgressState();
-        renderProcessStatusCards({ status: "created", price: lastPreview?.price || 0 });
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
@@ -5067,15 +4979,14 @@ if (map) {
         setUploadProgressDisplay(jobId, files.length, 0, totalSize, 0);
 
         for (let i = 0; i < batches.length; i++) {
-          const result = await uploadBatch(jobId, batches[i], i, batches.length, uploadedFiles, uploadedBytes);
-          uploadedFiles = result.uploadedFiles;
-          uploadedBytes = result.uploadedBytes;
+          const batchResult = await uploadBatch(jobId, batches[i], i, batches.length, uploadedFiles, uploadedBytes);
+          uploadedFiles = batchResult.uploadedFiles;
+          uploadedBytes = batchResult.uploadedBytes;
         }
 
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
-        setUploadProgressDisplay(jobId, files.length, files.length, totalSize, totalSize);
         jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
 
         await submitJob(jobId);
