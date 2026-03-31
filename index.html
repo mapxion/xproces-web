@@ -1942,7 +1942,7 @@ function syncStoredUserToForm() {
   if (typeof authName !== 'undefined' && authName) authName.value = user.name || "";
 }
 
-    const BATCH_SIZE = 5;
+    const BATCH_SIZE = 20;
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
     const PREVIEW_DEBOUNCE_MS = 400;
@@ -2517,8 +2517,26 @@ function getSelectedQualityMode() {
       return items;
     }
 
+
+    async function fetchFullJob(jobOrId) {
+      const jobId = typeof jobOrId === "string" ? jobOrId : jobOrId?.id;
+      if (!jobId) return null;
+
+      try {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return null;
+        return data?.job || data || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
     async function openJobFromHistory(job) {
       if (!job || !job.id) return;
+
+      const fullJob = (await fetchFullJob(job)) || job;
+      job = { ...job, ...fullJob };
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
@@ -2538,7 +2556,8 @@ function getSelectedQualityMode() {
 
       if (projectTitle) {
         projectTitle.style.display = "block";
-        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
+        const priceText = formatJobListPrice(job.price);
+        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre") + (priceText !== "—" ? ` · Precio: ${priceText}` : "");
       }
 
       if (jobStatusEl) {
@@ -4142,9 +4161,6 @@ if (map) {
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
-        xhr.timeout = 10 * 60 * 1000;
-
-        console.log(`📦 Subiendo lote ${batchIndex + 1}/${totalBatches} (${batchFiles.length} fotos)`);
 
         xhr.upload.onprogress = function (e) {
           if (e.lengthComputable) {
@@ -4159,24 +4175,15 @@ if (map) {
         };
 
         xhr.onload = function () {
-          console.log(`📡 RESPUESTA lote ${batchIndex + 1}: status=${xhr.status}`);
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
           } else {
-            const responseText = xhr.responseText || "";
-            console.error(`❌ ERROR lote ${batchIndex + 1}`, responseText);
-            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status} ${responseText}`.trim()));
+            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
           }
         };
 
         xhr.onerror = function () {
-          console.error(`❌ ERROR DE RED en lote ${batchIndex + 1}`);
           reject(new Error(`Error de red en lote ${batchIndex + 1}`));
-        };
-
-        xhr.ontimeout = function () {
-          console.error(`❌ TIMEOUT en lote ${batchIndex + 1}`);
-          reject(new Error(`Tiempo agotado subiendo lote ${batchIndex + 1}`));
         };
 
         xhr.send(form);
@@ -4781,31 +4788,17 @@ if (map) {
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
-        let uploadErrors = 0;
 
         for (let i = 0; i < batches.length; i++) {
-          try {
-            await uploadBatch(jobId, batches[i], i, batches.length);
-          } catch (batchError) {
-            uploadErrors++;
-            console.error(`🔥 Fallo en lote ${i + 1}/${batches.length}:`, batchError);
-            jobStatusEl.textContent = batchError.message || `Error subiendo lote ${i + 1}`;
-            progressFill.classList.add("error");
-            progressLabel.textContent = "Fallido";
-            throw batchError;
-          }
+          await uploadBatch(jobId, batches[i], i, batches.length);
         }
-
-        console.log(`📊 Subida completada. Errores: ${uploadErrors}`);
 
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
         jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
 
-        console.log("🚀 Enviando submit del job...");
         await submitJob(jobId);
-        console.log("✅ Submit enviado");
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
