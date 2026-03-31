@@ -916,10 +916,10 @@
 
     .status {
       color: var(--text);
-      min-height: 92px;
+      min-height: 68px;
       white-space: pre-line;
-      line-height: 1.55;
-      font-size: 14px;
+      line-height: 1.45;
+      font-size: 13px;
     }
 
     .status-details {
@@ -1532,6 +1532,7 @@
 
       .status-details {
         grid-template-columns: 1fr 1fr;
+        gap: 6px;
       }
 
       .drop {
@@ -1821,14 +1822,14 @@
               <div class="job-status-header">
                 <div>
                   <div id="projectTitle" style="display:none; font-weight:700; margin-bottom:4px;"></div>
-                  <div class="job-status-title">Estado del procesado</div>
+                  <div class="job-status-title">Proyecto</div>
                 </div>
               </div>
 
               
             <div class="progress-wrap" id="progressWrap">
               <div class="progress-top">
-                <span id="progressLabel">Procesando...</span>
+                <span id="progressLabel">Estado</span>
                 <span id="progressPercent">0%</span>
               </div>
               <div class="progress-bar">
@@ -1866,7 +1867,6 @@
                 <div class="status-detail-card"><div class="status-detail-label">Tamaño subido</div><div class="status-detail-value" id="statusUploadedBytesValue">0 MB / 0 MB</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Entrega</div><div class="status-detail-value" id="statusDeliveryValue">Sin seleccionar</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Calidad</div><div class="status-detail-value" id="statusQualityValue">Sin seleccionar</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Precio</div><div class="status-detail-value" id="statusPriceValue">—</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Tiempo estimado</div><div class="status-detail-value" id="statusEtaValue">No disponible</div></div>
                 <div class="status-detail-card"><div class="status-detail-label">Job</div><div class="status-detail-value" id="statusJobIdValue">—</div></div>
               </div>
@@ -2085,7 +2085,6 @@ function stripNullCharsDeep(value) {
     const statusUploadedBytesValue = document.getElementById("statusUploadedBytesValue");
     const statusDeliveryValue = document.getElementById("statusDeliveryValue");
     const statusQualityValue = document.getElementById("statusQualityValue");
-    const statusPriceValue = document.getElementById("statusPriceValue");
     const statusEtaValue = document.getElementById("statusEtaValue");
     const statusJobIdValue = document.getElementById("statusJobIdValue");
     const projectTitle = document.getElementById("projectTitle");
@@ -2328,7 +2327,6 @@ function stripNullCharsDeep(value) {
       if (statusUploadedBytesValue) statusUploadedBytesValue.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
       if (statusDeliveryValue) statusDeliveryValue.textContent = getCurrentDeliverySummaryText();
       if (statusQualityValue) statusQualityValue.textContent = getCurrentQualitySummaryText(job);
-      if (statusPriceValue) statusPriceValue.textContent = formatJobListPrice(job?.price || lastPreview?.price || 0);
       if (statusEtaValue) statusEtaValue.textContent = lastPreview?.estimated_human || etaBig?.textContent || "No disponible";
       if (statusJobIdValue) statusJobIdValue.textContent = job?.id || uploadProgressState.jobId || "—";
     }
