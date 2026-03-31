@@ -1942,7 +1942,7 @@ function syncStoredUserToForm() {
   if (typeof authName !== 'undefined' && authName) authName.value = user.name || "";
 }
 
-    const BATCH_SIZE = 20;
+    const BATCH_SIZE = 5;
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
     const PREVIEW_DEBOUNCE_MS = 400;
@@ -4142,6 +4142,9 @@ if (map) {
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
+        xhr.timeout = 10 * 60 * 1000;
+
+        console.log(`📦 Subiendo lote ${batchIndex + 1}/${totalBatches} (${batchFiles.length} fotos)`);
 
         xhr.upload.onprogress = function (e) {
           if (e.lengthComputable) {
@@ -4156,15 +4159,24 @@ if (map) {
         };
 
         xhr.onload = function () {
+          console.log(`📡 RESPUESTA lote ${batchIndex + 1}: status=${xhr.status}`);
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
           } else {
-            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
+            const responseText = xhr.responseText || "";
+            console.error(`❌ ERROR lote ${batchIndex + 1}`, responseText);
+            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status} ${responseText}`.trim()));
           }
         };
 
         xhr.onerror = function () {
+          console.error(`❌ ERROR DE RED en lote ${batchIndex + 1}`);
           reject(new Error(`Error de red en lote ${batchIndex + 1}`));
+        };
+
+        xhr.ontimeout = function () {
+          console.error(`❌ TIMEOUT en lote ${batchIndex + 1}`);
+          reject(new Error(`Tiempo agotado subiendo lote ${batchIndex + 1}`));
         };
 
         xhr.send(form);
@@ -4769,17 +4781,31 @@ if (map) {
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
+        let uploadErrors = 0;
 
         for (let i = 0; i < batches.length; i++) {
-          await uploadBatch(jobId, batches[i], i, batches.length);
+          try {
+            await uploadBatch(jobId, batches[i], i, batches.length);
+          } catch (batchError) {
+            uploadErrors++;
+            console.error(`🔥 Fallo en lote ${i + 1}/${batches.length}:`, batchError);
+            jobStatusEl.textContent = batchError.message || `Error subiendo lote ${i + 1}`;
+            progressFill.classList.add("error");
+            progressLabel.textContent = "Fallido";
+            throw batchError;
+          }
         }
+
+        console.log(`📊 Subida completada. Errores: ${uploadErrors}`);
 
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
         jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
 
+        console.log("🚀 Enviando submit del job...");
         await submitJob(jobId);
+        console.log("✅ Submit enviado");
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
