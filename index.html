@@ -916,40 +916,40 @@
 
     .status {
       color: var(--text);
-      min-height: 68px;
+      min-height: 92px;
       white-space: pre-line;
-      line-height: 1.45;
-      font-size: 13px;
+      line-height: 1.55;
+      font-size: 14px;
     }
 
     .status-details {
       display: none;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .status-detail-card {
-      background: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.78);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      min-height: 72px;
+      border-radius: 12px;
+      padding: 8px 10px;
+      min-height: 54px;
     }
 
     .status-detail-label {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
     }
 
     .status-detail-value {
-      font-size: 16px;
+      font-size: 13px;
       color: var(--text);
-      font-weight: 800;
-      line-height: 1.3;
+      font-weight: 700;
+      line-height: 1.25;
       word-break: break-word;
     }
 
@@ -1829,7 +1829,7 @@
               
             <div class="progress-wrap" id="progressWrap">
               <div class="progress-top">
-                <span id="progressLabel">Estado</span>
+                <span id="progressLabel">Procesando...</span>
                 <span id="progressPercent">0%</span>
               </div>
               <div class="progress-bar">
@@ -1861,17 +1861,36 @@
 
               <div class="process-selection-summary" id="processSelectionSummary"></div>
 
+              
               <div class="status-details" id="statusDetails">
-                <div class="status-detail-card"><div class="status-detail-label">Estado real</div><div class="status-detail-value" id="statusRealValue">Sin iniciar</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Fotos subidas</div><div class="status-detail-value" id="statusUploadedValue">0 / 0</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Tamaño subido</div><div class="status-detail-value" id="statusUploadedBytesValue">0 MB / 0 MB</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Entrega</div><div class="status-detail-value" id="statusDeliveryValue">Sin seleccionar</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Calidad</div><div class="status-detail-value" id="statusQualityValue">Sin seleccionar</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Tiempo estimado</div><div class="status-detail-value" id="statusEtaValue">No disponible</div></div>
-                <div class="status-detail-card"><div class="status-detail-label">Job</div><div class="status-detail-value" id="statusJobIdValue">—</div></div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Estado</div>
+                  <div class="status-detail-value" id="statusRealValue">Sin iniciar</div>
+                </div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Fotos</div>
+                  <div class="status-detail-value" id="statusUploadedValue">0 / 0</div>
+                </div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Subida</div>
+                  <div class="status-detail-value" id="statusUploadedBytesValue">0 MB / 0 MB</div>
+                </div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Entrega</div>
+                  <div class="status-detail-value" id="statusDeliveryValue">Sin seleccionar</div>
+                </div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Calidad</div>
+                  <div class="status-detail-value" id="statusQualityValue">Sin seleccionar</div>
+                </div>
+                <div class="status-detail-card">
+                  <div class="status-detail-label">Job</div>
+                  <div class="status-detail-value" id="statusJobIdValue">—</div>
+                </div>
               </div>
 
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
+
 
               <div class="process-download-wrap" id="processDownloadWrap">
                 <a class="process-download-btn" id="processDownloadBtn" href="#" target="_blank">Descargar resultados</a>
@@ -2079,15 +2098,14 @@ function stripNullCharsDeep(value) {
     const projectNameInput = document.getElementById("projectName");
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
+    const projectTitle = document.getElementById("projectTitle");
     const statusDetails = document.getElementById("statusDetails");
     const statusRealValue = document.getElementById("statusRealValue");
     const statusUploadedValue = document.getElementById("statusUploadedValue");
     const statusUploadedBytesValue = document.getElementById("statusUploadedBytesValue");
     const statusDeliveryValue = document.getElementById("statusDeliveryValue");
     const statusQualityValue = document.getElementById("statusQualityValue");
-    const statusEtaValue = document.getElementById("statusEtaValue");
     const statusJobIdValue = document.getElementById("statusJobIdValue");
-    const projectTitle = document.getElementById("projectTitle");
     const analysisBadgeEl = document.getElementById("analysisBadge");
 
     const priceBig = document.getElementById("priceBig");
@@ -2191,6 +2209,64 @@ function stripNullCharsDeep(value) {
 
 
 
+
+    function getCurrentDeliverySummaryText() {
+      try {
+        const txt = formatSelectedOutputsText();
+        return txt && txt.trim() ? txt : "Sin seleccionar";
+      } catch (_) {
+        return "Sin seleccionar";
+      }
+    }
+
+    function getCurrentQualitySummaryText(job = null) {
+      const quality = normalizeQualityMode((job && job.quality_mode) || getSelectedQualityMode());
+      if (quality === "fast") return "Rápido";
+      if (quality === "max") return "Máxima calidad";
+      if (quality === "normal") return "Normal";
+      return "Sin seleccionar";
+    }
+
+    function getVisualStatusLabel(status) {
+      const value = String(status || "").toLowerCase();
+      if (value === "receiving") return "Recibiendo fotos";
+      if (value === "queued") return "En cola";
+      if (value === "running") return "Procesando";
+      if (value === "completed" || value === "done") return "Completado";
+      if (value === "failed") return "Fallido";
+      if (value === "cancelled") return "Cancelado";
+      if (value === "created") return "Preparando";
+      return value ? translateStatus(value) : "Sin iniciar";
+    }
+
+    function renderProcessStatusCards(job = null) {
+      if (!statusDetails) return;
+
+      const totalFiles = Number(uploadProgressState.totalFiles || files.length || 0);
+      const uploadedFiles = Number(uploadProgressState.uploadedFiles || 0);
+      const totalBytes = Number(uploadProgressState.totalBytes || totalSize || 0);
+      const uploadedBytes = Number(uploadProgressState.uploadedBytes || 0);
+
+      statusDetails.style.display = "grid";
+      if (statusRealValue) statusRealValue.textContent = getVisualStatusLabel((job && job.status) || (uploadProgressState.active ? "receiving" : ""));
+      if (statusUploadedValue) statusUploadedValue.textContent = `${uploadedFiles} / ${totalFiles}`;
+      if (statusUploadedBytesValue) statusUploadedBytesValue.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
+      if (statusDeliveryValue) statusDeliveryValue.textContent = getCurrentDeliverySummaryText();
+      if (statusQualityValue) statusQualityValue.textContent = getCurrentQualitySummaryText(job);
+      if (statusJobIdValue) statusJobIdValue.textContent = (job && job.id) || uploadProgressState.jobId || "—";
+    }
+
+    function resetUploadProgressState() {
+      uploadProgressState = {
+        totalFiles: 0,
+        uploadedFiles: 0,
+        totalBytes: 0,
+        uploadedBytes: 0,
+        jobId: "",
+        active: false
+      };
+    }
+
     function getSelectedOutputMode() {
       const active = document.querySelector(".output-mode-btn.active");
       return active?.dataset.outputMode || "";
@@ -2289,96 +2365,6 @@ function stripNullCharsDeep(value) {
       if (mode === "preset") return "Paquetes recomendados";
       if (mode === "manual") return "Selección manual";
       return "Sin seleccionar";
-    }
-
-    function getCurrentDeliverySummaryText() {
-      const items = getSelectionSummaryItems();
-      if (!items || !items.length) return "Sin seleccionar";
-      return items.map((item) => item?.text || String(item ?? "")).join(" · ");
-    }
-
-    function getCurrentQualitySummaryText(job = null) {
-      return formatQualityModeLabel(String(job?.quality_mode || getSelectedQualityMode() || ""));
-    }
-
-    function getUploadStatusLabel(status) {
-      const value = String(status || "").toLowerCase();
-      if (value === "receiving") return "Recibiendo fotos";
-      if (value === "queued") return "En cola";
-      if (value === "running") return "Procesando proyecto";
-      if (value === "done" || value === "completed") return "Trabajo completado";
-      if (value === "failed") return "Procesado fallido";
-      if (value === "cancelled") return "Trabajo cancelado";
-      if (value === "created") return "Preparando trabajo";
-      return value ? value : "Sin iniciar";
-    }
-
-    function renderProcessStatusCards(job = null) {
-      if (!statusDetails) return;
-
-      const totalFiles = Number(uploadProgressState.totalFiles || files.length || 0);
-      const uploadedFiles = Number(uploadProgressState.uploadedFiles || 0);
-      const totalBytes = Number(uploadProgressState.totalBytes || totalSize || 0);
-      const uploadedBytes = Number(uploadProgressState.uploadedBytes || 0);
-
-      statusDetails.style.display = "grid";
-      if (statusRealValue) statusRealValue.textContent = getUploadStatusLabel(job?.status || (uploadProgressState.active ? "receiving" : ""));
-      if (statusUploadedValue) statusUploadedValue.textContent = `${uploadedFiles} / ${totalFiles}`;
-      if (statusUploadedBytesValue) statusUploadedBytesValue.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
-      if (statusDeliveryValue) statusDeliveryValue.textContent = getCurrentDeliverySummaryText();
-      if (statusQualityValue) statusQualityValue.textContent = getCurrentQualitySummaryText(job);
-      if (statusEtaValue) statusEtaValue.textContent = lastPreview?.estimated_human || etaBig?.textContent || "No disponible";
-      if (statusJobIdValue) statusJobIdValue.textContent = job?.id || uploadProgressState.jobId || "—";
-    }
-
-    function setUploadProgressDisplay(jobId, totalFiles, uploadedFiles, totalBytes, uploadedBytes) {
-      uploadProgressState = {
-        totalFiles: Number(totalFiles || 0),
-        uploadedFiles: Number(uploadedFiles || 0),
-        totalBytes: Number(totalBytes || 0),
-        uploadedBytes: Number(uploadedBytes || 0),
-        jobId: jobId || uploadProgressState.jobId || "",
-        active: true
-      };
-
-      const percent = uploadProgressState.totalFiles > 0
-        ? Math.round((uploadProgressState.uploadedFiles / uploadProgressState.totalFiles) * 100)
-        : 0;
-
-      if (progressWrap) progressWrap.style.display = "block";
-      if (progressFill) {
-        progressFill.classList.remove("error");
-        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
-        progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-      }
-      if (progressLabel) progressLabel.textContent = "Recibiendo fotos";
-      if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, percent))}%`;
-
-      renderProcessStatusCards({
-        id: jobId,
-        status: "receiving",
-        price: lastPreview?.price || 0
-      });
-
-      if (jobStatusEl) {
-        jobStatusEl.textContent =
-          `Estado: Recibiendo fotos\n` +
-          `Fotos subidas: ${uploadProgressState.uploadedFiles} / ${uploadProgressState.totalFiles}\n` +
-          `Tamaño subido: ${formatBytes(uploadProgressState.uploadedBytes)} / ${formatBytes(uploadProgressState.totalBytes)}\n` +
-          `Esperando completar la subida para enviar el proyecto a procesado.`;
-      }
-    }
-
-    function clearUploadProgressState() {
-      uploadProgressState = {
-        totalFiles: 0,
-        uploadedFiles: 0,
-        totalBytes: 0,
-        uploadedBytes: 0,
-        jobId: "",
-        active: false
-      };
-      if (statusDetails) statusDetails.style.display = "none";
     }
 
     function updateProcessSelectionSummary() {
@@ -3472,7 +3458,6 @@ if (statusNow === "done" || statusNow === "completed") {
 
     function resetAll() {
       stopPolling();
-      clearUploadProgressState();
       resetPreviewState();
 
       files = [];
@@ -4330,12 +4315,13 @@ if (map) {
       return response.json();
     }
 
-    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches, uploadedFilesBefore = 0, uploadedBytesBefore = 0) {
+    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches) {
       return new Promise((resolve, reject) => {
         const form = new FormData();
         batchFiles.forEach((file) => form.append("photos", file));
-
-        const batchBytes = batchFiles.reduce((acc, file) => acc + Number(file?.size || 0), 0);
+        const bytesBefore = files.slice(0, batchIndex * BATCH_SIZE).reduce((acc, file) => acc + Number(file.size || 0), 0);
+        const filesBefore = Math.min(batchIndex * BATCH_SIZE, files.length);
+        const batchBytes = batchFiles.reduce((acc, file) => acc + Number(file.size || 0), 0);
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
@@ -4343,18 +4329,36 @@ if (map) {
         xhr.upload.onprogress = function (e) {
           if (e.lengthComputable) {
             const batchPercent = e.loaded / e.total;
-            const currentUploadedFiles = uploadedFilesBefore + Math.round(batchFiles.length * batchPercent);
-            const currentUploadedBytes = uploadedBytesBefore + Math.round(batchBytes * batchPercent);
-            setUploadProgressDisplay(jobId, files.length, currentUploadedFiles, totalSize, currentUploadedBytes);
+            const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
+            const rounded = Math.round(overallPercent);
+
+            progressFill.style.width = `${rounded}%`;
+            progressLabel.textContent = "Recibiendo fotos";
+            progressPercent.textContent = `${rounded}%`;
+
+            uploadProgressState.active = true;
+            uploadProgressState.jobId = jobId;
+            uploadProgressState.totalFiles = files.length;
+            uploadProgressState.totalBytes = totalSize;
+            uploadProgressState.uploadedFiles = Math.min(files.length, filesBefore + Math.round(batchFiles.length * batchPercent));
+            uploadProgressState.uploadedBytes = Math.min(totalSize, bytesBefore + Math.round(batchBytes * batchPercent));
+            renderProcessStatusCards({ id: jobId, status: "receiving" });
+
+            jobStatusEl.textContent =
+              `Estado: Recibiendo fotos
+` +
+              `Fotos subidas: ${uploadProgressState.uploadedFiles} / ${uploadProgressState.totalFiles}
+` +
+              `Subida: ${formatBytes(uploadProgressState.uploadedBytes)} / ${formatBytes(uploadProgressState.totalBytes)}`;
           }
         };
 
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
-            const uploadedFiles = uploadedFilesBefore + batchFiles.length;
-            const uploadedBytes = uploadedBytesBefore + batchBytes;
-            setUploadProgressDisplay(jobId, files.length, uploadedFiles, totalSize, uploadedBytes);
-            resolve({ uploadedFiles, uploadedBytes });
+            uploadProgressState.uploadedFiles = Math.min(files.length, filesBefore + batchFiles.length);
+            uploadProgressState.uploadedBytes = Math.min(totalSize, bytesBefore + batchBytes);
+            renderProcessStatusCards({ id: jobId, status: "receiving" });
+            resolve();
           } else {
             reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
           }
@@ -4648,14 +4652,11 @@ if (map) {
 
       if (status === "failed") lines.push("Estado: Fallido");
       else if (status === "cancelled") lines.push("Estado: Cancelado");
-      else if (status === "completed" || status === "done") lines.push("Estado: Completado");
+      else if (status === "completed") lines.push("Estado: Completado");
       else if (status === "queued") lines.push("Estado: En cola");
-      else if (status === "receiving") lines.push("Estado: Recibiendo fotos");
-      else if (status === "running") lines.push("Estado: Procesando proyecto");
-      else if (status === "created") lines.push("Estado: Preparando trabajo");
-      else if (status) lines.push(`Estado: ${status}`);
+      else if (status === "running") lines.push("Estado: Procesando");
+      else if (status) lines.push(`Estado: ${translateStatus(status)}`);
 
-      if (job?.photos_count !== undefined && job?.photos_count !== null) lines.push(`Fotos registradas: ${job.photos_count}`);
       if (stage) lines.push(`Fase: ${stage}`);
       if (message) lines.push(message);
 
@@ -4714,12 +4715,12 @@ if (map) {
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
           else if (status === "receiving") progressLabel.textContent = "Recibiendo fotos";
-          else progressLabel.textContent = "Procesando proyecto";
+          else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
+          renderProcessStatusCards(job);
           updateProcessStages(job);
           renderStoredJobs();
-          renderProcessStatusCards(job);
 
           if (status === "queued" || status === "running") {
             const eta = await getJobEta(job.id);
@@ -4953,7 +4954,6 @@ if (map) {
       progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         progressLabel.textContent = "Creando proyecto...";
         progressPercent.textContent = "0%";
-        renderProcessStatusCards({ status: "created", price: lastPreview?.price || 0 });
         jobStatusEl.textContent = "Creando job...";
 
         const createdJob = await createJob();
@@ -4969,19 +4969,23 @@ if (map) {
         if (processPanel) processPanel.style.display = "block";
         updateProcessSelectionSummary();
 
+        resetUploadProgressState();
+        uploadProgressState.totalFiles = files.length;
+        uploadProgressState.totalBytes = totalSize;
+        uploadProgressState.jobId = jobId;
+        renderProcessStatusCards({ id: jobId, status: "created" });
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
-        let uploadedFiles = 0;
-        let uploadedBytes = 0;
-        setUploadProgressDisplay(jobId, files.length, 0, totalSize, 0);
 
         for (let i = 0; i < batches.length; i++) {
-          const batchResult = await uploadBatch(jobId, batches[i], i, batches.length, uploadedFiles, uploadedBytes);
-          uploadedFiles = batchResult.uploadedFiles;
-          uploadedBytes = batchResult.uploadedBytes;
+          await uploadBatch(jobId, batches[i], i, batches.length);
         }
 
+        uploadProgressState.uploadedFiles = files.length;
+        uploadProgressState.uploadedBytes = totalSize;
+        uploadProgressState.active = true;
+        renderProcessStatusCards({ id: jobId, status: "receiving" });
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
@@ -4991,7 +4995,7 @@ if (map) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        renderProcessStatusCards({ id: jobId, status: "queued", price: lastPreview?.price || 0 });
+        renderProcessStatusCards({ id: jobId, status: "queued" });
         jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
