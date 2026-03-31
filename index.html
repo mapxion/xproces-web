@@ -925,16 +925,16 @@
     .status-mini {
       display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 6px;
+      margin-bottom: 8px;
     }
 
     .status-mini-item {
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.78);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 6px 9px;
-      min-height: 42px;
+      padding: 6px 8px;
+      min-height: 40px;
     }
 
     .status-mini-label {
@@ -947,7 +947,7 @@
 
     .status-mini-value {
       color: var(--text);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       line-height: 1.15;
       word-break: break-word;
@@ -2219,16 +2219,6 @@ function stripNullCharsDeep(value) {
       return value ? translateStatus(value) : "Sin iniciar";
     }
 
-    function getCurrentDeliveryText(job = null) {
-      const manual = Array.isArray(job?.outputs_requested) && job.outputs_requested.length ? job.outputs_requested.join(", ") : "";
-      if (manual) return manual;
-      const chips = getSelectionSummaryItemsForJob ? getSelectionSummaryItemsForJob(job || {}) : [];
-      if (Array.isArray(chips) && chips.length) {
-        return chips.map((item) => item?.text || "").filter(Boolean).join(" · ") || "Sin seleccionar";
-      }
-      return "Sin seleccionar";
-    }
-
     function getCurrentQualityText(job = null) {
       const q = normalizeQualityMode(job?.quality_mode || getSelectedQualityMode());
       if (q === "fast") return "Rápido";
@@ -2237,21 +2227,26 @@ function stripNullCharsDeep(value) {
       return "Sin seleccionar";
     }
 
-    function renderUpperPanelSummary(job = null) {
+    function getCurrentDeliveryText(job = null) {
+      try {
+        const items = typeof getSelectionSummaryItemsForJob === "function"
+          ? getSelectionSummaryItemsForJob(job || {})
+          : [];
+        if (Array.isArray(items) && items.length) {
+          const txt = items.map((item) => item?.text || "").filter(Boolean).join(" · ");
+          if (txt) return txt;
+        }
+      } catch (_) {}
+      return "Sin seleccionar";
+    }
+
+    function renderUpperMiniSummary(job = null) {
       if (!statusMini) return;
 
       const totalFiles = Number(uploadSummaryState.totalFiles || files.length || job?.photos_count || 0);
-      const uploadedFiles = Number(
-        statusMini.dataset.history === "1"
-          ? (job?.photos_count || 0)
-          : (uploadSummaryState.uploadedFiles || 0)
-      );
+      const uploadedFiles = Number(uploadSummaryState.uploadedFiles || job?.photos_count || 0);
       const totalBytes = Number(uploadSummaryState.totalBytes || totalSize || 0);
-      const uploadedBytes = Number(
-        statusMini.dataset.history === "1"
-          ? totalBytes
-          : (uploadSummaryState.uploadedBytes || 0)
-      );
+      const uploadedBytes = Number(uploadSummaryState.uploadedBytes || 0);
 
       statusMini.style.display = "grid";
       if (statusMiniState) statusMiniState.textContent = getMiniStatusLabel(job?.status || "");
@@ -2262,7 +2257,7 @@ function stripNullCharsDeep(value) {
       if (statusMiniJob) statusMiniJob.textContent = job?.id || uploadSummaryState.jobId || "—";
     }
 
-    function resetUpperPanelSummary() {
+    function resetUpperMiniSummary() {
       uploadSummaryState = {
         totalFiles: 0,
         uploadedFiles: 0,
@@ -2270,10 +2265,7 @@ function stripNullCharsDeep(value) {
         uploadedBytes: 0,
         jobId: ""
       };
-      if (statusMini) {
-        statusMini.style.display = "none";
-        statusMini.dataset.history = "0";
-      }
+      if (statusMini) statusMini.style.display = "none";
     }
 
     function getSelectedOutputMode() {
@@ -2736,8 +2728,7 @@ function getSelectedQualityMode() {
       uploadSummaryState.totalBytes = 0;
       uploadSummaryState.uploadedBytes = 0;
       uploadSummaryState.jobId = job.id || "";
-      if (statusMini) statusMini.dataset.history = "1";
-      renderUpperPanelSummary(job);
+      renderUpperMiniSummary(job);
 
       const statusNow = String(job.status || "").toLowerCase();
 
@@ -3481,7 +3472,7 @@ if (statusNow === "done" || statusNow === "completed") {
       latestDataset = null;
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
-      resetUpperPanelSummary();
+      resetUpperMiniSummary();
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -4353,7 +4344,7 @@ if (map) {
             const rounded = Math.round(overallPercent);
 
             progressFill.style.width = `${rounded}%`;
-            progressLabel.textContent = "Recibiendo fotos";
+            progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
             progressPercent.textContent = `${rounded}%`;
 
             uploadSummaryState.totalFiles = files.length;
@@ -4361,9 +4352,7 @@ if (map) {
             uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + Math.round(batchFiles.length * batchPercent));
             uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + Math.round(batchBytes * batchPercent));
             uploadSummaryState.jobId = jobId;
-
-            if (statusMini) statusMini.dataset.history = "0";
-            renderUpperPanelSummary({ id: jobId, status: "receiving" });
+            renderUpperMiniSummary({ id: jobId, status: "receiving" });
           }
         };
 
@@ -4374,8 +4363,7 @@ if (map) {
             uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + batchFiles.length);
             uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + batchBytes);
             uploadSummaryState.jobId = jobId;
-            if (statusMini) statusMini.dataset.history = "0";
-            renderUpperPanelSummary({ id: jobId, status: "receiving" });
+            renderUpperMiniSummary({ id: jobId, status: "receiving" });
             resolve();
           } else {
             reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
@@ -4735,8 +4723,7 @@ if (map) {
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
-          if (statusMini) statusMini.dataset.history = "0";
-          renderUpperPanelSummary(job);
+          renderUpperMiniSummary(job);
           updateProcessStages(job);
           renderStoredJobs();
 
@@ -5000,8 +4987,7 @@ if (map) {
         uploadSummaryState.uploadedFiles = files.length;
         uploadSummaryState.uploadedBytes = totalSize;
         uploadSummaryState.jobId = jobId;
-        if (statusMini) statusMini.dataset.history = "0";
-        renderUpperPanelSummary({ id: jobId, status: "receiving" });
+        renderUpperMiniSummary({ id: jobId, status: "receiving" });
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
@@ -5011,7 +4997,7 @@ if (map) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        renderUpperPanelSummary({ id: jobId, status: "queued", quality_mode: getSelectedQualityMode() });
+        renderUpperMiniSummary({ id: jobId, status: "queued", quality_mode: getSelectedQualityMode() });
         jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
