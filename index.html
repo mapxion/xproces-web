@@ -1942,6 +1942,25 @@ function syncStoredUserToForm() {
   if (typeof authName !== 'undefined' && authName) authName.value = user.name || "";
 }
 
+
+function stripNullCharsDeep(value) {
+  if (typeof value === "string") {
+    return value.replace(/\u0000/g, "").replace(/\x00/g, "").replace(/\0/g, "");
+  }
+  if (Array.isArray(value)) {
+    return value.map(stripNullCharsDeep);
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = stripNullCharsDeep(val);
+    }
+    return out;
+  }
+  return value;
+}
+
+
     const BATCH_SIZE = 3;
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
@@ -4126,16 +4145,18 @@ if (map) {
     });
 
     async function createJob() {
+      const cleanExifSummary = stripNullCharsDeep({
+        ...(latestExifSummary || {}),
+        _xproces: buildXprocesMeta()
+      });
+
       const response = await fetch(`${API_BASE}/jobs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  exif_summary: {
-    ...(latestExifSummary || {}),
-    _xproces: buildXprocesMeta()
-  },
+  exif_summary: cleanExifSummary,
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
