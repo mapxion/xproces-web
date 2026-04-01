@@ -1942,7 +1942,26 @@ function syncStoredUserToForm() {
   if (typeof authName !== 'undefined' && authName) authName.value = user.name || "";
 }
 
-    const BATCH_SIZE = 20;
+
+function stripNullCharsDeep(value) {
+  if (typeof value === "string") {
+    return value.replace(/\u0000/g, "").replace(/\x00/g, "").replace(/\0/g, "");
+  }
+  if (Array.isArray(value)) {
+    return value.map(stripNullCharsDeep);
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = stripNullCharsDeep(val);
+    }
+    return out;
+  }
+  return value;
+}
+
+
+    const BATCH_SIZE = 3;
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
     const PREVIEW_DEBOUNCE_MS = 400;
@@ -2517,8 +2536,26 @@ function getSelectedQualityMode() {
       return items;
     }
 
+
+    async function fetchFullJob(jobOrId) {
+      const jobId = typeof jobOrId === "string" ? jobOrId : jobOrId?.id;
+      if (!jobId) return null;
+
+      try {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return null;
+        return data?.job || data || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
     async function openJobFromHistory(job) {
       if (!job || !job.id) return;
+
+      const fullJob = (await fetchFullJob(job)) || job;
+      job = { ...job, ...fullJob };
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
@@ -2538,7 +2575,8 @@ function getSelectedQualityMode() {
 
       if (projectTitle) {
         projectTitle.style.display = "block";
-        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
+        const priceText = formatJobListPrice(job.price);
+        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre") + (priceText !== "—" ? ` · Precio: ${priceText}` : "");
       }
 
       if (jobStatusEl) {
@@ -4107,16 +4145,18 @@ if (map) {
     });
 
     async function createJob() {
+      const cleanExifSummary = stripNullCharsDeep({
+        ...(latestExifSummary || {}),
+        _xproces: buildXprocesMeta()
+      });
+
       const response = await fetch(`${API_BASE}/jobs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  exif_summary: {
-    ...(latestExifSummary || {}),
-    _xproces: buildXprocesMeta()
-  },
+  exif_summary: cleanExifSummary,
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
@@ -4695,7 +4735,7 @@ if (map) {
               <input
                 id="modalProjectName"
                 type="text"
-                placeholder="Ej: Torre Barcelona Norte"
+                placeholder="Ej: Estación 000564 "
                 style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white;"
               >
             </div>
