@@ -922,38 +922,6 @@
       font-size: 14px;
     }
 
-    .status-mini {
-      display: none;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .status-mini-item {
-      background: rgba(255,255,255,0.78);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px 8px;
-      min-height: 40px;
-    }
-
-    .status-mini-label {
-      color: var(--muted);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 2px;
-    }
-
-    .status-mini-value {
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.15;
-      word-break: break-word;
-      white-space: pre-line;
-    }
-
     .process-summary {
       display: grid;
       gap: 10px;
@@ -1531,10 +1499,6 @@
         grid-template-columns: 1fr;
       }
 
-      .status-mini {
-        grid-template-columns: 1fr 1fr;
-      }
-
       .drop {
         min-height: 150px;
       }
@@ -1861,33 +1825,6 @@
 
               <div class="process-selection-summary" id="processSelectionSummary"></div>
 
-              <div class="status-mini" id="statusMini">
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Estado</div>
-                  <div class="status-mini-value" id="statusMiniState">Sin iniciar</div>
-                </div>
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Fotos</div>
-                  <div class="status-mini-value" id="statusMiniPhotos">0 / 0</div>
-                </div>
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Subida</div>
-                  <div class="status-mini-value" id="statusMiniBytes">0 MB / 0 MB</div>
-                </div>
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Entrega</div>
-                  <div class="status-mini-value" id="statusMiniDelivery">Sin seleccionar</div>
-                </div>
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Calidad</div>
-                  <div class="status-mini-value" id="statusMiniQuality">Sin seleccionar</div>
-                </div>
-                <div class="status-mini-item">
-                  <div class="status-mini-label">Job</div>
-                  <div class="status-mini-value" id="statusMiniJob">—</div>
-                </div>
-              </div>
-
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
               <div class="process-download-wrap" id="processDownloadWrap">
@@ -2005,26 +1942,7 @@ function syncStoredUserToForm() {
   if (typeof authName !== 'undefined' && authName) authName.value = user.name || "";
 }
 
-
-function stripNullCharsDeep(value) {
-  if (typeof value === "string") {
-    return value.replace(/\u0000/g, "").replace(/\x00/g, "").replace(/\0/g, "");
-  }
-  if (Array.isArray(value)) {
-    return value.map(stripNullCharsDeep);
-  }
-  if (value && typeof value === "object") {
-    const out = {};
-    for (const [key, val] of Object.entries(value)) {
-      out[key] = stripNullCharsDeep(val);
-    }
-    return out;
-  }
-  return value;
-}
-
-
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 20;
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
     const PREVIEW_DEBOUNCE_MS = 400;
@@ -2046,14 +1964,6 @@ function stripNullCharsDeep(value) {
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
     let selectedHistoryJobId = "";
-
-    let uploadSummaryState = {
-      totalFiles: 0,
-      uploadedFiles: 0,
-      totalBytes: 0,
-      uploadedBytes: 0,
-      jobId: ""
-    };
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
@@ -2096,13 +2006,6 @@ function stripNullCharsDeep(value) {
     const statusEl = document.getElementById("status");
     const jobStatusEl = document.getElementById("jobStatus");
     const projectTitle = document.getElementById("projectTitle");
-    const statusMini = document.getElementById("statusMini");
-    const statusMiniState = document.getElementById("statusMiniState");
-    const statusMiniPhotos = document.getElementById("statusMiniPhotos");
-    const statusMiniBytes = document.getElementById("statusMiniBytes");
-    const statusMiniDelivery = document.getElementById("statusMiniDelivery");
-    const statusMiniQuality = document.getElementById("statusMiniQuality");
-    const statusMiniJob = document.getElementById("statusMiniJob");
     const analysisBadgeEl = document.getElementById("analysisBadge");
 
     const priceBig = document.getElementById("priceBig");
@@ -2205,68 +2108,6 @@ function stripNullCharsDeep(value) {
     updateProcessSelectionSummary();
 
 
-
-
-    function getMiniStatusLabel(status) {
-      const value = String(status || "").toLowerCase();
-      if (value === "receiving") return "Recibiendo fotos";
-      if (value === "queued") return "En cola";
-      if (value === "running") return "Procesando";
-      if (value === "done" || value === "completed") return "Completado";
-      if (value === "failed") return "Fallido";
-      if (value === "cancelled") return "Cancelado";
-      if (value === "created") return "Preparando";
-      return value ? translateStatus(value) : "Sin iniciar";
-    }
-
-    function getCurrentQualityText(job = null) {
-      const q = normalizeQualityMode(job?.quality_mode || getSelectedQualityMode());
-      if (q === "fast") return "Rápido";
-      if (q === "max") return "Máxima calidad";
-      if (q === "normal") return "Normal";
-      return "Sin seleccionar";
-    }
-
-    function getCurrentDeliveryText(job = null) {
-      try {
-        const items = typeof getSelectionSummaryItemsForJob === "function"
-          ? getSelectionSummaryItemsForJob(job || {})
-          : [];
-        if (Array.isArray(items) && items.length) {
-          const txt = items.map((item) => item?.text || "").filter(Boolean).join(" · ");
-          if (txt) return txt;
-        }
-      } catch (_) {}
-      return "Sin seleccionar";
-    }
-
-    function renderUpperMiniSummary(job = null) {
-      if (!statusMini) return;
-
-      const totalFiles = Number(uploadSummaryState.totalFiles || files.length || job?.photos_count || 0);
-      const uploadedFiles = Number(uploadSummaryState.uploadedFiles || job?.photos_count || 0);
-      const totalBytes = Number(uploadSummaryState.totalBytes || totalSize || 0);
-      const uploadedBytes = Number(uploadSummaryState.uploadedBytes || 0);
-
-      statusMini.style.display = "grid";
-      if (statusMiniState) statusMiniState.textContent = getMiniStatusLabel(job?.status || "");
-      if (statusMiniPhotos) statusMiniPhotos.textContent = `${uploadedFiles} / ${totalFiles}`;
-      if (statusMiniBytes) statusMiniBytes.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
-      if (statusMiniDelivery) statusMiniDelivery.textContent = getCurrentDeliveryText(job);
-      if (statusMiniQuality) statusMiniQuality.textContent = getCurrentQualityText(job);
-      if (statusMiniJob) statusMiniJob.textContent = job?.id || uploadSummaryState.jobId || "—";
-    }
-
-    function resetUpperMiniSummary() {
-      uploadSummaryState = {
-        totalFiles: 0,
-        uploadedFiles: 0,
-        totalBytes: 0,
-        uploadedBytes: 0,
-        jobId: ""
-      };
-      if (statusMini) statusMini.style.display = "none";
-    }
 
     function getSelectedOutputMode() {
       const active = document.querySelector(".output-mode-btn.active");
@@ -2676,26 +2517,8 @@ function getSelectedQualityMode() {
       return items;
     }
 
-
-    async function fetchFullJob(jobOrId) {
-      const jobId = typeof jobOrId === "string" ? jobOrId : jobOrId?.id;
-      if (!jobId) return null;
-
-      try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) return null;
-        return data?.job || data || null;
-      } catch (_) {
-        return null;
-      }
-    }
-
     async function openJobFromHistory(job) {
       if (!job || !job.id) return;
-
-      const fullJob = (await fetchFullJob(job)) || job;
-      job = { ...job, ...fullJob };
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
@@ -2715,20 +2538,12 @@ function getSelectedQualityMode() {
 
       if (projectTitle) {
         projectTitle.style.display = "block";
-        const priceText = formatJobListPrice(job.price);
-        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre") + (priceText !== "—" ? ` · Precio: ${priceText}` : "");
+        projectTitle.textContent = "Proyecto: " + (job.project_name || "Sin nombre");
       }
 
       if (jobStatusEl) {
         jobStatusEl.textContent = "";
       }
-
-      uploadSummaryState.totalFiles = Number(job.photos_count || 0);
-      uploadSummaryState.uploadedFiles = Number(job.photos_count || 0);
-      uploadSummaryState.totalBytes = 0;
-      uploadSummaryState.uploadedBytes = 0;
-      uploadSummaryState.jobId = job.id || "";
-      renderUpperMiniSummary(job);
 
       const statusNow = String(job.status || "").toLowerCase();
 
@@ -3472,7 +3287,6 @@ if (statusNow === "done" || statusNow === "completed") {
       latestDataset = null;
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
-      resetUpperMiniSummary();
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -4293,18 +4107,16 @@ if (map) {
     });
 
     async function createJob() {
-      const cleanExifSummary = stripNullCharsDeep({
-        ...(latestExifSummary || {}),
-        _xproces: buildXprocesMeta()
-      });
-
       const response = await fetch(`${API_BASE}/jobs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  exif_summary: cleanExifSummary,
+  exif_summary: {
+    ...(latestExifSummary || {}),
+    _xproces: buildXprocesMeta()
+  },
   client_email: getStoredUser()?.email || "",
   project_name: pendingProjectName,
   client_name: getStoredUser()?.name || "",
@@ -4328,12 +4140,6 @@ if (map) {
         const form = new FormData();
         batchFiles.forEach((file) => form.append("photos", file));
 
-        const bytesBefore = files
-          .slice(0, batchIndex * BATCH_SIZE)
-          .reduce((acc, file) => acc + Number(file.size || 0), 0);
-        const filesBefore = Math.min(batchIndex * BATCH_SIZE, files.length);
-        const batchBytes = batchFiles.reduce((acc, file) => acc + Number(file.size || 0), 0);
-
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
 
@@ -4346,24 +4152,11 @@ if (map) {
             progressFill.style.width = `${rounded}%`;
             progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
             progressPercent.textContent = `${rounded}%`;
-
-            uploadSummaryState.totalFiles = files.length;
-            uploadSummaryState.totalBytes = totalSize;
-            uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + Math.round(batchFiles.length * batchPercent));
-            uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + Math.round(batchBytes * batchPercent));
-            uploadSummaryState.jobId = jobId;
-            renderUpperMiniSummary({ id: jobId, status: "receiving" });
           }
         };
 
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
-            uploadSummaryState.totalFiles = files.length;
-            uploadSummaryState.totalBytes = totalSize;
-            uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + batchFiles.length);
-            uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + batchBytes);
-            uploadSummaryState.jobId = jobId;
-            renderUpperMiniSummary({ id: jobId, status: "receiving" });
             resolve();
           } else {
             reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
@@ -4723,7 +4516,6 @@ if (map) {
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
-          renderUpperMiniSummary(job);
           updateProcessStages(job);
           renderStoredJobs();
 
@@ -4903,7 +4695,7 @@ if (map) {
               <input
                 id="modalProjectName"
                 type="text"
-                placeholder="Ej: Estación 000564 "
+                placeholder="Ej: Torre Barcelona Norte"
                 style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white;"
               >
             </div>
@@ -4982,12 +4774,6 @@ if (map) {
           await uploadBatch(jobId, batches[i], i, batches.length);
         }
 
-        uploadSummaryState.totalFiles = files.length;
-        uploadSummaryState.totalBytes = totalSize;
-        uploadSummaryState.uploadedFiles = files.length;
-        uploadSummaryState.uploadedBytes = totalSize;
-        uploadSummaryState.jobId = jobId;
-        renderUpperMiniSummary({ id: jobId, status: "receiving" });
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
@@ -4997,7 +4783,6 @@ if (map) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        renderUpperMiniSummary({ id: jobId, status: "queued", quality_mode: getSelectedQualityMode() });
         jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
