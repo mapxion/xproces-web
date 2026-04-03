@@ -652,25 +652,10 @@
   color: var(--ok);
 }
 
-.price-card-value {
+    .price-card-value {
   font-size: 20px;
   font-weight: bold;
   color: var(--ok);
-}
-
-/* añadir esto */
-#priceBig,
-#priceBig::before,
-#priceBig::after {
-  display: none;
-}
-
-.price-time-grid .price-card:first-child {
-  display: none;
-}
-
-.price-time-grid {
-  grid-template-columns: 1fr;
 }
 
     .selected-quality-row {
@@ -894,7 +879,7 @@
     }
 
     .progress-wrap {
-      display: none;
+      display: block;
       margin-top: 2px;
       margin-bottom: 16px;
     }
@@ -1777,22 +1762,23 @@
         </div>
 
 <div class="panel" id="pricingPanel" style="display:none;">
-  <div class="panel-inner">
-    <div class="price-time-box">
-      <div class="price-time-grid">
-        <div class="price-card">
-          <div class="price-card-label">Precio</div>
-          <div class="price-card-value" id="priceBig">0 €</div>
-        </div>
+          <div class="panel-inner">
+            <div class="price-time-box">
+              <div class="price-time-grid">
+                <div class="price-card">
+                  <div class="price-card-label">Precio</div>
+                  <div class="price-card-value" id="priceBig">0 €</div>
+                </div>
 
-        <div class="price-card">
-          <div class="price-card-label">Tiempo estimado</div>
-          <div class="price-card-value" id="etaBig">Sin calcular</div>
+                <div class="price-card">
+                  <div class="price-card-label">Tiempo estimado</div>
+                  <div class="price-card-value" id="etaBig">Sin calcular</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
       <div class="right-stack">
 <div class="panel" id="processPanel" style="display:none;">
