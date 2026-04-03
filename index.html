@@ -922,6 +922,7 @@
       font-size: 14px;
     }
 
+    
     .process-summary {
       display: grid;
       gap: 10px;
@@ -1764,7 +1765,13 @@
           <div class="panel-inner">
             <div class="price-time-box">
               <div class="price-time-grid">
-                <div class="price-card" style="grid-column: 1 / -1;">
+  <div class="price-card" style="grid-column: 1 / -1;">
+    <div class="price-card-label">Tiempo estimado</div>
+    <div class="price-card-value" id="etaBig">Sin calcular</div>
+  </div>
+</div>
+
+                <div class="price-card">
                   <div class="price-card-label">Tiempo estimado</div>
                   <div class="price-card-value" id="etaBig">Sin calcular</div>
                 </div>
@@ -1819,7 +1826,7 @@
               </div>
 
               <div class="process-selection-summary" id="processSelectionSummary"></div>
-
+                 
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
               <div class="process-download-wrap" id="processDownloadWrap">
@@ -1979,6 +1986,7 @@ function stripNullCharsDeep(value) {
     let pendingProjectName = "";
     let selectedHistoryJobId = "";
 
+    
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
     const uploadPanel = document.getElementById("uploadPanel");
@@ -2120,8 +2128,7 @@ function stripNullCharsDeep(value) {
     setSelectedOutputMode("");
     setSelectedPreset("");
     updateProcessSelectionSummary();
-
-
+    
 
     function getSelectedOutputMode() {
       const active = document.querySelector(".output-mode-btn.active");
@@ -2577,6 +2584,13 @@ function getSelectedQualityMode() {
       if (jobStatusEl) {
         jobStatusEl.textContent = "";
       }
+
+      uploadSummaryState.totalFiles = Number(job.photos_count || 0);
+      uploadSummaryState.uploadedFiles = Number(job.photos_count || 0);
+      uploadSummaryState.totalBytes = 0;
+      uploadSummaryState.uploadedBytes = 0;
+      uploadSummaryState.jobId = job.id || "";
+    
 
       const statusNow = String(job.status || "").toLowerCase();
 
@@ -3320,6 +3334,7 @@ if (statusNow === "done" || statusNow === "completed") {
       latestDataset = null;
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
+      resetUpperMiniSummary();
       fileInput.value = "";
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
@@ -4175,6 +4190,12 @@ if (map) {
         const form = new FormData();
         batchFiles.forEach((file) => form.append("photos", file));
 
+        const bytesBefore = files
+          .slice(0, batchIndex * BATCH_SIZE)
+          .reduce((acc, file) => acc + Number(file.size || 0), 0);
+        const filesBefore = Math.min(batchIndex * BATCH_SIZE, files.length);
+        const batchBytes = batchFiles.reduce((acc, file) => acc + Number(file.size || 0), 0);
+
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
 
@@ -4187,11 +4208,24 @@ if (map) {
             progressFill.style.width = `${rounded}%`;
             progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
             progressPercent.textContent = `${rounded}%`;
+
+            uploadSummaryState.totalFiles = files.length;
+            uploadSummaryState.totalBytes = totalSize;
+            uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + Math.round(batchFiles.length * batchPercent));
+            uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + Math.round(batchBytes * batchPercent));
+            uploadSummaryState.jobId = jobId;
+            
           }
         };
 
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
+            uploadSummaryState.totalFiles = files.length;
+            uploadSummaryState.totalBytes = totalSize;
+            uploadSummaryState.uploadedFiles = Math.min(files.length, filesBefore + batchFiles.length);
+            uploadSummaryState.uploadedBytes = Math.min(totalSize, bytesBefore + batchBytes);
+            uploadSummaryState.jobId = jobId;
+            renderUpperMiniSummary({ id: jobId, status: "receiving" });
             resolve();
           } else {
             reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
@@ -4551,6 +4585,7 @@ if (map) {
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
+          renderUpperMiniSummary(job);
           updateProcessStages(job);
           renderStoredJobs();
 
@@ -4809,6 +4844,12 @@ if (map) {
           await uploadBatch(jobId, batches[i], i, batches.length);
         }
 
+        uploadSummaryState.totalFiles = files.length;
+        uploadSummaryState.totalBytes = totalSize;
+        uploadSummaryState.uploadedFiles = files.length;
+        uploadSummaryState.uploadedBytes = totalSize;
+        uploadSummaryState.jobId = jobId;
+        renderUpperMiniSummary({ id: jobId, status: "receiving" });
         progressFill.style.width = "100%";
         progressLabel.textContent = "Subida completada";
         progressPercent.textContent = "100%";
@@ -4818,6 +4859,7 @@ if (map) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
+        renderUpperMiniSummary({ id: jobId, status: "queued", quality_mode: getSelectedQualityMode() });
         jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
         progressLabel.textContent = "En cola...";
         progressPercent.textContent = "0%";
