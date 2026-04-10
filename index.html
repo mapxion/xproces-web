@@ -3207,16 +3207,19 @@ if (statusNow === "done" || statusNow === "completed") {
 
     function mapJobToStage(job) {
       const stage = String(job.stage || "").toLowerCase();
+      const message = String(job.message || "").toLowerCase();
 
-      if (
-        stage === "matching" ||
-        stage === "aligning" ||
-        stage === "report" ||
-        stage === "depth" ||
-        stage === "pointcloud" ||
-        stage === "export"
-      ) {
-        return stage;
+      if (stage === "matching") return "matching";
+      if (stage === "aligning") return "aligning";
+      if (stage === "depth" || stage === "depth_maps") return "depth";
+      if (stage === "pointcloud" || stage === "point_cloud") return "pointcloud";
+      if (stage === "export" || stage === "uploading" || stage === "report") return "export";
+
+      if (stage === "running") {
+        if (message.includes("profundidad")) return "depth";
+        if (message.includes("nube")) return "pointcloud";
+        if (message.includes("export") || message.includes("subiendo") || message.includes("comprimiendo")) return "export";
+        return "matching";
       }
 
       return null;
@@ -3231,7 +3234,7 @@ if (statusNow === "done" || statusNow === "completed") {
 
       resetStageClasses();
 
-      const order = ["matching", "aligning", "report", "depth", "pointcloud", "export"];
+      const order = ["matching", "aligning", "depth", "pointcloud", "export"];
       const currentStage = mapJobToStage(job);
 
       if (!currentStage && job.status !== "done" && job.status !== "failed") return;
@@ -4571,7 +4574,7 @@ if (map) {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
-          if (status === "done" || status === "completed" || status === "failed") {
+          if (status === "done" || status === "completed") {
             stopPolling();
 
             progressFill.style.width = "100%";
