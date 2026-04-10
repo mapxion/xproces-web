@@ -3206,27 +3206,28 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function mapJobToStage(job) {
-      const stage = String(job.stage || "").toLowerCase();
+      const rawStage = String(job.stage || "").toLowerCase();
       const message = String(job.message || "").toLowerCase();
 
-      if (stage === "matching") return "matching";
-      if (stage === "aligning") return "aligning";
-      if (stage === "depth" || stage === "depth_maps") return "depth";
-      if (stage === "pointcloud" || stage === "point_cloud") return "pointcloud";
-      if (stage === "export" || stage === "uploading" || stage === "report") return "export";
+      if (rawStage === "matching") return "matching";
+      if (rawStage === "aligning") return "aligning";
+      if (rawStage === "depth" || rawStage === "depth_maps") return "depth";
+      if (rawStage === "pointcloud" || rawStage === "point_cloud") return "pointcloud";
+      if (rawStage === "export" || rawStage === "report" || rawStage === "uploading") return "export";
 
-      if (stage === "running") {
+      if (rawStage === "running") {
         if (message.includes("profundidad")) return "depth";
-        if (message.includes("nube")) return "pointcloud";
-        if (message.includes("export") || message.includes("subiendo") || message.includes("comprimiendo")) return "export";
-        return "matching";
+        if (message.includes("nube de puntos")) return "pointcloud";
+        if (message.includes("export") || message.includes("comprimiendo") || message.includes("subiendo")) return "export";
+        if (message.includes("alineando")) return "aligning";
+        if (message.includes("detectando puntos") || message.includes("alineación inicial")) return "matching";
       }
 
       return null;
     }
 
     function updateProcessStages(job) {
-      if (job.status === "queued" || job.status === "running" || job.status === "done" || job.status === "failed") {
+      if (job.status === "queued" || job.status === "running" || job.status === "done" || job.status === "failed" || job.status === "cancelled") {
         processStageWrap.style.display = "grid";
       } else {
         processStageWrap.style.display = "none";
@@ -4585,15 +4586,16 @@ if (map) {
             jobStatusEl.innerHTML = renderProcessSummary(job, logText);
 
             showDownloadButton(job.id);
+            return;
           }
 
-          if (status === "failed") {
+          if (status === "failed" || status === "cancelled") {
             stopPolling();
 
             progressFill.style.width = "100%";
             progressFill.classList.add("error");
             progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
-            progressLabel.textContent = "Procesado fallido";
+            progressLabel.textContent = status === "cancelled" ? "Procesado cancelado" : "Procesado fallido";
             progressPercent.textContent = "100%";
 
             const logText = await getJobLog(job.id);
