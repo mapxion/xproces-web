@@ -2853,6 +2853,22 @@ if (statusNow === "done" || statusNow === "completed") {
       processDownloadWrap.style.display = "block";
     }
 
+    function isTamsJob(job) {
+      const xp = job?.exif_summary?._xproces || {};
+      if (xp?.tams_export === true) return true;
+      const rawTams = String(xp?.tams_export ?? "").toLowerCase();
+      if (["true", "1", "yes", "y", "on", "tams"].includes(rawTams)) return true;
+
+      const preset = String(xp?.preset_key || "").toLowerCase();
+      if (preset === "inspection_tams") return true;
+
+      const outputs = Array.isArray(xp?.outputs_requested) ? xp.outputs_requested.map(v => String(v || "").toLowerCase()) : [];
+      if (outputs.includes("tams")) return true;
+
+      return false;
+    }
+
+
     function resetDetectionInfo() {
       fieldCamera.textContent = "Sin detectar";
       fieldDrone.textContent = "Sin detectar";
@@ -4582,10 +4598,16 @@ if (map) {
             progressLabel.textContent = "Trabajo procesado correctamente";
             progressPercent.textContent = "100%";
 
-            const logText = await getJobLog(job.id);
-            jobStatusEl.innerHTML = renderProcessSummary(job, logText);
+            if (isTamsJob(job)) {
+              hideDownloadButton();
+              jobStatusEl.textContent =
+                "Procesado completado correctamente.\nPreparando entrega del proyecto.";
+            } else {
+              const logText = await getJobLog(job.id);
+              jobStatusEl.innerHTML = renderProcessSummary(job, logText);
+              showDownloadButton(job.id);
+            }
 
-            showDownloadButton(job.id);
             return;
           }
 
