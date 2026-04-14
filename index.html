@@ -1184,128 +1184,6 @@
       text-align: center;
     }
 
-    .process-live-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 6px;
-    }
-
-    .process-live-head {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 4px;
-    }
-
-    .process-live-pill {
-      background: rgba(255,255,255,0.88);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 14px;
-    }
-
-    .process-live-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-      font-weight: 800;
-    }
-
-    .process-live-value {
-      font-size: 15px;
-      color: var(--text);
-      font-weight: 800;
-      line-height: 1.35;
-    }
-
-    .process-checklist {
-      display: grid;
-      gap: 8px;
-    }
-
-    .process-check-item {
-      display: grid;
-      grid-template-columns: 18px 1fr;
-      gap: 10px;
-      align-items: start;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.86);
-      color: var(--muted);
-    }
-
-    .process-check-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      background: #c9d3cc;
-      margin-top: 2px;
-    }
-
-    .process-check-item.done {
-      border-color: rgba(34, 163, 74, 0.26);
-      background: rgba(34, 163, 74, 0.06);
-      color: var(--ok);
-    }
-
-    .process-check-item.done .process-check-dot {
-      background: var(--ok);
-    }
-
-    .process-check-item.active {
-      border-color: rgba(122, 171, 57, 0.35);
-      background: rgba(122, 171, 57, 0.08);
-      color: var(--text);
-    }
-
-    .process-check-item.active .process-check-dot {
-      background: #7aab39;
-    }
-
-    .process-check-item.error {
-      border-color: rgba(212, 85, 85, 0.24);
-      background: rgba(212, 85, 85, 0.06);
-      color: var(--danger);
-    }
-
-    .process-check-item.error .process-check-dot {
-      background: var(--danger);
-    }
-
-    .process-check-title {
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1.35;
-    }
-
-    .process-check-note {
-      margin-top: 2px;
-      font-size: 12px;
-      line-height: 1.4;
-      color: var(--muted);
-    }
-
-    .process-check-item.done .process-check-note {
-      color: #4d7f5d;
-    }
-
-    .process-check-item.active .process-check-note {
-      color: var(--muted);
-    }
-
-    .process-check-item.error .process-check-note {
-      color: #9b3737;
-    }
-
-    @media (max-width: 760px) {
-      .process-live-head {
-        grid-template-columns: 1fr;
-      }
-    }
-
     .process-download-btn {
       display: inline-flex;
       align-items: center;
@@ -3343,7 +3221,9 @@ if (statusNow === "done" || statusNow === "completed") {
       });
     }
 
-    function mapJobToStage(job) {
+    function mapJobToStage(job, parsedLog = null) {
+      if (parsedLog?.currentStage) return parsedLog.currentStage;
+
       const rawStage = String(job.stage || "").toLowerCase();
       const message = String(job.message || "").toLowerCase();
 
@@ -3354,14 +3234,11 @@ if (statusNow === "done" || statusNow === "completed") {
       if (rawStage === "export" || rawStage === "report" || rawStage === "uploading") return "export";
 
       if (rawStage === "running") {
-        if (message.includes("profundidad")) return "depth";
-        if (message.includes("nube de puntos")) return "pointcloud";
-        if (message.includes("export") || message.includes("comprimiendo") || message.includes("subiendo")) return "export";
-        if (message.includes("alineando")) return "aligning";
-        if (message.includes("detectando puntos") || message.includes("alineación inicial")) return "matching";
+        const inferred = inferStageFromText(message);
+        if (inferred) return inferred;
       }
 
-      return null;
+      return inferStageFromText(message) || null;
     }
 
     function updateProcessStages(job) {
@@ -3374,7 +3251,7 @@ if (statusNow === "done" || statusNow === "completed") {
       resetStageClasses();
 
       const order = ["matching", "aligning", "depth", "pointcloud", "export"];
-      const currentStage = mapJobToStage(job);
+      const currentStage = mapJobToStage(job, window.__lastParsedProcessLog || null);
 
       if (!currentStage && job.status !== "done" && job.status !== "failed") return;
 
@@ -4435,28 +4312,19 @@ if (map) {
       return `${seconds} s`;
     }
 
-    
-    const PROCESS_CHECKLIST = [
-      { key: "prepare", title: "Preparando proyecto", aliases: ["Preparando proyecto"] },
-      { key: "import", title: "Importando fotografías", aliases: ["Importando fotografías", "Fotos añadidas al chunk", "chunk_1: fotos añadidas", "Fotos añadidas al chunk"] },
-      { key: "match", title: "Detectando puntos clave", aliases: ["Detectando puntos clave", "matchPhotos inicio", "matchPhotos completado"] },
-      { key: "align", title: "Alineando cámaras", aliases: ["Alineando cámaras", "alignCameras inicio", "alignCameras completado", "Cámaras alineadas:"] },
-      { key: "optimize", title: "Optimizando cámaras", aliases: ["optimizeCameras completado", "Limpieza y optimización TAMS completadas", "Limpieza TAMS desactivada"] },
-      { key: "tams", title: "Preparando entrega TAMS", aliases: ["Exportando datos TAMS", "TAMS externos y posiciones exportados", "TAMS intrínsecos exportados", "TAMS undistorted exportadas"] },
-      { key: "depth", title: "Generando mapas de profundidad", aliases: ["Generando mapas de profundidad", "buildDepthMaps completado"] },
-      { key: "pointcloud", title: "Generando nube de puntos", aliases: ["Generando nube de puntos", "buildPointCloud completado", "Point cloud creada con"] },
-      { key: "model", title: "Generando modelo 3D", aliases: ["Generando modelo 3D", "buildModel completado", "buildTexture completado"] },
-      { key: "dem", title: "Generando DEM", aliases: ["Generando DEM", "buildDem completado"] },
-      { key: "ortho", title: "Generando ortomosaico", aliases: ["Generando ortomosaico", "buildOrthomosaic completado"] },
-      { key: "export", title: "Exportando archivos finales", aliases: ["Exportando archivos finales", "LAS exportado", "LAZ exportado", "E57 exportado", "OBJ exportado", "Ortomosaico TIFF exportado", "DEM exportado", "Trabajo procesado correctamente", "PROCESO OK"] }
-    ];
-
     function stripLogPrefix(line) {
-      return String(line || "")
-        .replace(/^\[[^\]]+\]\s*/, "")
-        .replace(/^Metashape stdout:\s*/i, "")
-        .replace(/^Metashape stderr:\s*/i, "")
-        .trim();
+      return String(line || "").replace(/^\[[^\]]+\]\s*/, "").trim();
+    }
+
+    function inferStageFromText(text) {
+      const value = String(text || "").toLowerCase();
+      if (!value) return "";
+      if (value.includes("detectando puntos") || value.includes("alineación inicial") || value.includes("importando fotografías") || value.includes("preparando proyecto") || value.includes("matchphotos")) return "matching";
+      if (value.includes("alineando cámaras") || value.includes("aligncameras") || value.includes("limpiando tie points") || value.includes("optimizaci")) return "aligning";
+      if (value.includes("mapas de profundidad") || value.includes("builddepthmaps") || value.includes("depthmaps")) return "depth";
+      if (value.includes("nube de puntos") || value.includes("buildpointcloud") || value.includes("point cloud")) return "pointcloud";
+      if (value.includes("exportando") || value.includes("archivos finales") || value.includes("las exportado") || value.includes("pdf report exportado") || value.includes("e57 exportado") || value.includes("obj exportado") || value.includes("ortomosaico") || value.includes("dem exportado")) return "export";
+      return "";
     }
 
     function parseProcessLog(text) {
@@ -4470,172 +4338,102 @@ if (map) {
         steps: [],
         alignedCameras: "",
         warnings: [],
-        cleanLines: [],
-        checklist: [],
-        currentStepKey: "",
-        currentDetail: ""
+        latestProgressPercent: null,
+        latestProgressMessage: "",
+        currentStage: "",
+        pointCount: "",
+        latestDetail: ""
       };
 
       if (!text) return info;
 
       const lines = String(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-      const cleanLines = lines.map(stripLogPrefix).filter(Boolean);
-      info.cleanLines = cleanLines;
 
-      const stepState = new Map(PROCESS_CHECKLIST.map((item) => [item.key, { ...item, state: "pending", note: "" }]));
-      let currentStepKey = "";
-      let lastMeaningful = "";
+      for (const rawLine of lines) {
+        const line = stripLogPrefix(rawLine);
+        if (!line) continue;
 
-      for (const rawLine of cleanLines) {
-        const line = rawLine.replace(/Metashape/gi, "Xproces");
-
-        if (line.startsWith("Modo solicitado por UI:") || line.startsWith("Modo de calidad:")) {
-          info.quality = line.split(":").slice(1).join(":").trim();
+        if (line.startsWith("Modo de calidad:") || line.startsWith("Modo solicitado por UI:")) {
+          info.quality = line.split(":").slice(1).join(":").trim().replace(/Metashape/gi, "Xproces");
           continue;
         }
-
+        if (line.startsWith("Preset activo:") && !info.quality) {
+          info.quality = line.replace("Preset activo:", "").trim().replace(/Metashape/gi, "Xproces");
+          continue;
+        }
         if (line.startsWith("Fotos encontradas:")) {
           info.photos = line.replace("Fotos encontradas:", "").trim();
+          continue;
         }
-
         if (line.startsWith("Salidas solicitadas:")) {
-          info.requestedOutputs = line
-            .replace("Salidas solicitadas:", "")
-            .split(",")
-            .map((x) => x.trim())
-            .filter(Boolean);
+          info.requestedOutputs = line.replace("Salidas solicitadas:", "").split(",").map((x) => x.trim()).filter(Boolean);
           continue;
         }
-
         if (line.startsWith("Aviso:")) {
-          info.warnings.push(line.replace("Aviso:", "").trim());
+          info.warnings.push(line.replace("Aviso:", "").trim().replace(/Metashape/gi, "Xproces"));
           const omittedMatch = line.match(/se omitirán:\s*(.*)$/i);
-          if (omittedMatch) {
-            info.omittedOutputs = omittedMatch[1].split(",").map((x) => x.trim()).filter(Boolean);
-          }
+          if (omittedMatch) info.omittedOutputs = omittedMatch[1].split(",").map((x) => x.trim()).filter(Boolean);
           continue;
         }
-
         if (line.startsWith("Parámetros:")) {
           info.params = line.replace("Parámetros:", "").trim();
           continue;
         }
-
         if (line.startsWith("Cámaras alineadas:")) {
           info.alignedCameras = line.replace("Cámaras alineadas:", "").trim();
+          info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
+          continue;
         }
-
+        if (/Point cloud creada con/i.test(line)) {
+          const m = line.match(/Point cloud creada con\s+([\d.]+)/i);
+          info.pointCount = m ? m[1] : line.replace(/.*Point cloud creada con\s*/i, "").trim();
+          info.latestDetail = `Puntos reconstruidos: ${info.pointCount}`;
+          continue;
+        }
+        if (/Tie points válidos tras alignment:/i.test(line)) {
+          info.latestDetail = line.replace(/Tie points válidos tras alignment:/i, "Tie points válidos:").trim();
+          continue;
+        }
+        if (line.includes("No se pudieron exportar")) {
+          info.warnings.push(line);
+          info.latestDetail = line;
+          continue;
+        }
         if (line.includes(" exportado")) {
           const name = line.replace(" exportado", "").trim();
           if (name) info.generatedOutputs.push(name);
+          info.latestDetail = line;
+          continue;
         }
-
         if (line.startsWith("XPROCES_PROGRESS|")) {
           const parts = line.split("|");
           if (parts.length >= 3) {
-            const msg = parts[2].trim().replace(/Metashape/gi, "Xproces");
+            const percent = Number(parts[1]);
+            const msg = parts.slice(2).join("|").trim().replace(/Metashape/gi, "Xproces");
             info.steps.push(msg);
-            lastMeaningful = msg;
+            info.latestProgressPercent = Number.isFinite(percent) ? percent : info.latestProgressPercent;
+            info.latestProgressMessage = msg;
+            const stage = inferStageFromText(msg);
+            if (stage) info.currentStage = stage;
           }
-        } else if (
-          /completado|alineadas|exportad|Preparando proyecto|Importando fotografías|Detectando puntos clave|Alineando cámaras|Generando mapas de profundidad|Generando nube de puntos|Generando modelo 3D|Generando DEM|Generando ortomosaico|Exportando archivos finales|PROCESO OK|Trabajo procesado correctamente/i.test(line)
-        ) {
-          lastMeaningful = line;
+          continue;
         }
-
-        for (const item of PROCESS_CHECKLIST) {
-          if (item.aliases.some((alias) => line.includes(alias))) {
-            const state = stepState.get(item.key);
-            state.state = /completado|exportado|alineadas|PROCESO OK|Trabajo procesado correctamente|desactivada/i.test(line) ? "done" : "active";
-            state.note = line;
-            currentStepKey = item.key;
-          }
+        const inferred = inferStageFromText(line);
+        if (inferred) {
+          info.currentStage = inferred || info.currentStage;
+          info.latestDetail = line;
         }
       }
-
-      const order = PROCESS_CHECKLIST.map((item) => item.key);
-      const currentIdx = currentStepKey ? order.indexOf(currentStepKey) : -1;
-      order.forEach((key, idx) => {
-        const state = stepState.get(key);
-        if (currentIdx >= 0 && idx < currentIdx && state.state === "pending") {
-          state.state = "done";
-        }
-        if (currentIdx >= 0 && idx > currentIdx && state.state === "active") {
-          state.state = "pending";
-        }
-      });
 
       info.generatedOutputs = [...new Set(info.generatedOutputs)];
       info.requestedOutputs = [...new Set(info.requestedOutputs)];
       info.omittedOutputs = [...new Set(info.omittedOutputs)];
       info.steps = [...new Set(info.steps)];
-      info.checklist = PROCESS_CHECKLIST
-        .map((item) => stepState.get(item.key))
-        .filter((item) => item.state !== "pending" || ["prepare", "import", "match", "align", "optimize", "depth", "pointcloud", "export"].includes(item.key));
-      info.currentStepKey = currentStepKey;
-      info.currentDetail = lastMeaningful;
-
+      info.warnings = [...new Set(info.warnings)];
       return info;
     }
 
-    function renderRunningProcess(job, logText, etaText) {
-      const parsed = parseProcessLog(logText);
-      const current = parsed.checklist.find((item) => item.key === parsed.currentStepKey && item.state !== "done") || null;
-      const currentTitle = current ? current.title : (job?.message || "Procesando proyecto");
-      const detail = parsed.currentDetail || job?.message || "Procesando proyecto";
-      const photosText = parsed.photos || "No disponible";
-      const etaValue = etaText || "Calculando...";
-      const progressValue = `${Math.max(0, Math.min(100, Number(job?.progress || 0)))}%`;
-
-      const checklistHtml = parsed.checklist.map((item) => {
-        const stateClass = item.state === "done" ? "done" : (item.state === "active" ? "active" : "");
-        const note = item.note && item.note !== item.title ? `<div class="process-check-note">${item.note}</div>` : "";
-        return `
-          <div class="process-check-item ${stateClass}">
-            <div class="process-check-dot"></div>
-            <div>
-              <div class="process-check-title">${item.title}</div>
-              ${note}
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      return `
-        <div class="process-live-list">
-          <div class="process-live-head">
-            <div class="process-live-pill">
-              <div class="process-live-label">Fase actual</div>
-              <div class="process-live-value">${currentTitle}</div>
-            </div>
-            <div class="process-live-pill">
-              <div class="process-live-label">Avance</div>
-              <div class="process-live-value">${progressValue}${etaValue ? ` · ETA ${etaValue}` : ""}</div>
-            </div>
-            <div class="process-live-pill">
-              <div class="process-live-label">Proyecto</div>
-              <div class="process-live-value">${photosText} fotos</div>
-            </div>
-          </div>
-          <div class="process-checklist">
-            ${checklistHtml}
-          </div>
-        </div>
-      `;
-    }
-
-    function getStageKeyFromLog(logText, job) {
-      const parsed = parseProcessLog(logText);
-      const key = parsed.currentStepKey;
-      if (["prepare", "import", "match"].includes(key)) return "matching";
-      if (["align", "optimize", "tams"].includes(key)) return "aligning";
-      if (key === "depth") return "depth";
-      if (["pointcloud", "model", "dem", "ortho"].includes(key)) return "pointcloud";
-      if (key === "export") return "export";
-      return mapJobToStage(job);
-    }
-
-function renderProcessSummary(job, logText) {
+    function renderProcessSummary(job, logText) {
       const parsed = parseProcessLog(logText);
 
       const normalizeOutputKey = (value) => {
@@ -4765,6 +4563,50 @@ function renderProcessSummary(job, logText) {
       return lines.join("\n");
     }
 
+    function renderLiveProcessSummary(job, logText, eta) {
+      const parsed = parseProcessLog(logText || "");
+      window.__lastParsedProcessLog = parsed;
+
+      const statusValue = String(job?.status || "").toLowerCase();
+      const titleText = statusValue === "queued" ? "⏳ Proyecto en cola" : "⚙ Procesando proyecto";
+      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
+      const photosText = parsed.photos || job?.photos_count || "No disponible";
+      const phaseText = parsed.latestProgressMessage || job?.message || (statusValue === "queued" ? "Esperando turno" : "Procesando proyecto");
+      const detailLines = [];
+      if (parsed.alignedCameras) detailLines.push(`Cámaras alineadas: ${parsed.alignedCameras}`);
+      if (parsed.pointCount) detailLines.push(`Puntos reconstruidos: ${parsed.pointCount}`);
+      if (parsed.latestDetail && !detailLines.includes(parsed.latestDetail)) detailLines.push(parsed.latestDetail);
+      if (!detailLines.length && job?.message) detailLines.push(job.message);
+      if (!detailLines.length) detailLines.push("Sin detalles todavía");
+      const etaText = eta?.ok ? (eta.total_estimated_human || "No disponible") : "Calculando";
+      const progressValue = Number.isFinite(Number(job?.progress)) ? `${Math.max(0, Math.min(100, Number(job.progress)))}%` : (parsed.latestProgressPercent != null ? `${parsed.latestProgressPercent}%` : "No disponible");
+      const warningText = parsed.warnings.length ? parsed.warnings[parsed.warnings.length - 1] : "";
+
+      return `
+        <div class="process-summary">
+          <div class="process-summary-hero">
+            <div class="process-summary-title">${titleText}</div>
+            <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Fase actual</div>
+            <div class="process-summary-list">${escapeHtml(phaseText)}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Avance</div>
+            <div class="process-summary-list">${escapeHtml(progressValue)} · ETA ${escapeHtml(etaText)}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Detalle</div>
+            <div class="process-summary-list">${detailLines.map((x) => `<div>${escapeHtml(x)}</div>`).join("")}${warningText ? `<div class="warn">⚠ ${escapeHtml(warningText)}</div>` : ""}</div>
+          </div>
+        </div>
+      `;
+    }
+
     async function buildQueuedOrRunningMessage(job) {
       const eta = await getJobEta(job.id);
 
@@ -4791,58 +4633,53 @@ function renderProcessSummary(job, logText) {
       return `Job ${job.id}\nEstado: ${job.status}\n${job.message || ""}`.trim();
     }
 
-    
     function startPolling(jobId) {
       stopPolling();
 
       pollTimer = setInterval(async () => {
         try {
           const job = await getJob(jobId);
+
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "").toLowerCase();
-
           if (datasetPanel) datasetPanel.style.display = "none";
           if (pricingPanel) pricingPanel.style.display = "none";
           if (mapWrap) mapWrap.style.display = "none";
           if (uploadPanel) uploadPanel.style.display = "none";
           if (processPanel) processPanel.style.display = "block";
+          const message = job.message || "";
 
           progressWrap.style.display = "block";
           progressFill.classList.remove("error");
           progressFill.style.background = "";
           progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
           progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
-
           if (status === "failed") progressLabel.textContent = "Fallido";
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
           else progressLabel.textContent = "Procesando";
-
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
-          renderStoredJobs();
-
-          let etaText = "";
-          let logText = "";
-          try {
-            const eta = await getJobEta(job.id);
-            if (eta && eta.ok) {
-              etaBig.textContent = eta.total_estimated_human || "No disponible";
-              etaText = eta.total_estimated_human || "";
-            }
-          } catch (_) {}
-
-          try {
+          let logText = null;
+          if (["queued", "running", "done", "completed", "failed", "cancelled"].includes(status)) {
             logText = await getJobLog(job.id);
-          } catch (_) {
-            logText = "";
+            window.__lastParsedProcessLog = parseProcessLog(logText || "");
+          } else {
+            window.__lastParsedProcessLog = null;
           }
 
-          updateProcessStages({ ...job, stage: getStageKeyFromLog(logText, job) });
+          updateProcessStages(job);
+          renderStoredJobs();
 
           if (status === "queued" || status === "running") {
-            jobStatusEl.innerHTML = renderRunningProcess(job, logText, etaText);
+            const eta = await getJobEta(job.id);
+
+            if (eta && eta.ok) {
+              etaBig.textContent = eta.total_estimated_human || "No disponible";
+            }
+
+            jobStatusEl.innerHTML = renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -4856,13 +4693,11 @@ function renderProcessSummary(job, logText) {
 
             if (isTamsJob(job)) {
               hideDownloadButton();
-              jobStatusEl.innerHTML = renderRunningProcess(
-                { ...job, progress: 100, message: "Trabajo procesado correctamente" },
-                (logText || "") + "\nPROCESO OK",
-                ""
-              );
+              jobStatusEl.textContent =
+                "Procesado completado correctamente.\nPreparando entrega del proyecto.";
             } else {
-              jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
+              const doneLogText = logText || await getJobLog(job.id);
+              jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
               showDownloadButton(job.id);
             }
 
@@ -4878,21 +4713,282 @@ function renderProcessSummary(job, logText) {
             progressLabel.textContent = status === "cancelled" ? "Procesado cancelado" : "Procesado fallido";
             progressPercent.textContent = "100%";
 
-            if (logText) {
-              const failedHtml = renderRunningProcess(
-                { ...job, progress: 100, message: job.message || "El procesado no se pudo completar" },
-                logText,
-                ""
-              );
-              jobStatusEl.innerHTML = failedHtml;
+            const failedLogText = logText || await getJobLog(job.id);
+
+            if (failedLogText) {
+              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
             } else {
-              jobStatusEl.textContent = buildProjectStatusText(job);
+              const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
+
+              let msg = "El procesado no se pudo completar.";
+
+              if (rawError.includes("no_input_files")) {
+                msg = "No se encontraron imágenes válidas en el proyecto.";
+              } else if (
+                rawError.includes("muy pocas cámaras alineadas") ||
+                rawError.includes("cámaras alineadas")
+              ) {
+                msg = "No hay suficiente solape entre las fotos para generar el modelo.";
+              } else if (
+                rawError.includes("point cloud densa") ||
+                rawError.includes("depth maps")
+              ) {
+                msg = "No se ha podido generar la nube de puntos. Revise calidad, solape y resolución de las fotos.";
+              }
+
+              jobStatusEl.textContent =
+                `Job ${job.id}\nEstado: error\n${msg}`;
+              hideDownloadButton();
+              return;
             }
+
+            showDownloadButton(job.id);
           }
-        } catch (err) {
-          console.error("Polling job failed", err);
+        } catch (error) {
+          console.error("Polling error:", error);
         }
-      }, 3000);
+      }, POLL_INTERVAL_MS);
     }
 
+    async function upload() {
 
+        const currentUser = getStoredUser();
+
+        if (!currentUser || !currentUser.email) {
+          await showInfoModal(
+            "Debe iniciar sesión",
+            "Acceso requerido",
+            "Debe iniciar sesión antes de proseguir.",
+            "warning",
+            { hideAuthWhileOpen: true }
+          );
+          return;
+        }
+      if (files.length === 0) {
+        await showInfoModal(
+          "No hay fotos seleccionadas",
+          "Debe subir imágenes antes de iniciar el procesado.",
+          "Seleccione o arrastre las fotografías originales del dron para poder calcular el precio, el tiempo y preparar el proyecto.",
+          "warning"
+        );
+        return;
+      }
+
+      if (uploadBtn.disabled) {
+        const motivos = [];
+        if (latestDataset?.missingExifCore) {
+          motivos.push("Faltan datos EXIF esenciales en las fotos.");
+        }
+        if (Array.isArray(latestDataset?.blockers) && latestDataset.blockers.length > 0) {
+          motivos.push(...latestDataset.blockers);
+        }
+
+        await showInfoModal(
+          "Dataset no válido para procesado",
+          "No se puede iniciar el procesado con las fotos actuales.",
+          motivos.length
+            ? motivos.join("\n")
+            : "Revise el dataset cargado y vuelva a intentarlo.",
+          "error"
+        );
+        return;
+      }
+
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+      previewRequestId++;
+
+      let preview = lastPreview;
+
+      if (!preview || !preview.ok) {
+        preview = await fetchPricingPreview(files.length, totalSize);
+      }
+
+      if (!preview || !preview.ok) {
+        await showInfoModal(
+          "No se pudo calcular la previsualización",
+          "Precio y tiempo no están disponibles en este momento.",
+          "Revise la conexión con la API e inténtelo de nuevo.",
+          "error"
+        );
+        return;
+      }
+
+      lastPreview = preview;
+
+      const timeText = preview.estimated_human || "No disponible";
+      const priceText = `${preview.price} €`;
+
+      const ok = await openModal({
+        title: "Confirmar procesado",
+        subtitle: "Revise el resumen antes de enviar el proyecto.",
+        body: `
+          <div class="modal-grid">
+            <div class="modal-card">
+              <div class="modal-label">Fotos</div>
+              <div class="modal-value">${files.length}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Tamaño total</div>
+              <div class="modal-value">${formatBytes(totalSize)}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Precio</div>
+              <div class="modal-value">${priceText}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Tiempo</div>
+              <div class="modal-value">${timeText}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Calidad</div>
+              <div class="modal-value">${formatQualityModeLabel(getSelectedQualityMode())}</div>
+            </div>
+            <div class="modal-card full">
+              <div class="modal-label">Archivos de salida</div>
+              <div class="modal-value">${formatSelectedOutputsText()}</div>
+            </div>
+            <div class="modal-card full">
+              <div class="modal-label">Nombre del proyecto</div>
+              <input
+                id="modalProjectName"
+                type="text"
+                placeholder="Ej: Estación 000564 "
+                style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white;"
+              >
+            </div>
+            <div class="modal-card full">
+              <div class="modal-note">
+                Se creará un nuevo proyecto, se subirán las fotografías al servidor y el trabajo entrará en cola para su procesado automático.
+              </div>
+            </div>
+          </div>
+        `,
+        confirmText: "Sí, iniciar procesado",
+        cancelText: "Cancelar",
+        showCancel: true,
+        tone: "default"
+      });
+
+      if (!ok) return;
+
+      const projectNameValue = document.getElementById("modalProjectName")?.value?.trim() || "";
+
+      if (!projectNameValue) {
+        await showInfoModal(
+          "Falta el nombre del proyecto",
+          "Debe indicar un nombre para identificar el trabajo.",
+          "Introduzca el nombre del proyecto antes de iniciar el procesado.",
+          "warning"
+        );
+        return;
+      }
+
+      const selectedOutputs = typeof getSelectedOutputs === "function" ? getSelectedOutputs() : [];
+      if (!selectedOutputs.length) {
+        await showInfoModal(
+          "Faltan archivos de salida",
+          "Debe seleccionar qué archivos quiere recibir antes de iniciar el procesado.",
+          "Elija un paquete recomendado o use la selección manual y marque al menos un archivo.",
+          "warning"
+        );
+        return;
+      }
+
+      pendingProjectName = projectNameValue;
+
+      try {
+        stopPolling();
+        hideDownloadButton();
+        processStageWrap.style.display = "grid";
+        resetStageClasses();
+
+        progressWrap.style.display = "block";
+        progressFill.style.width = "0%";
+        progressFill.classList.remove("error");
+      progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+        progressLabel.textContent = "Creando proyecto...";
+        progressPercent.textContent = "0%";
+        jobStatusEl.textContent = "Creando job...";
+
+        const createdJob = await createJob();
+        const jobId = createdJob.id;
+        renderStoredJobs();
+
+        if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
+
+        if (uploadPanel) uploadPanel.style.display = "none";
+        if (datasetPanel) datasetPanel.style.display = "none";
+        if (pricingPanel) pricingPanel.style.display = "none";
+        if (mapWrap) mapWrap.style.display = "none";
+        if (processPanel) processPanel.style.display = "block";
+        updateProcessSelectionSummary();
+
+        jobStatusEl.textContent = "Preparando subida por lotes...";
+
+        const batches = chunkArray(files, BATCH_SIZE);
+
+        for (let i = 0; i < batches.length; i++) {
+          await uploadBatch(jobId, batches[i], i, batches.length);
+        }
+
+        progressFill.style.width = "100%";
+        progressLabel.textContent = "Subida completada";
+        progressPercent.textContent = "100%";
+        jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
+
+        await submitJob(jobId);
+        if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+        if (datasetPanel) datasetPanel.style.display = "none";
+
+        jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
+        progressLabel.textContent = "En cola...";
+        progressPercent.textContent = "0%";
+        if (datasetPanel) datasetPanel.style.display = "none";
+        startPolling(jobId);
+      } catch (error) {
+        console.error(error);
+        jobStatusEl.textContent = error.message || "Error durante la subida";
+        progressFill.classList.add("error");
+        progressLabel.textContent = "Fallido";
+      }
+    }
+
+      resetAll();
+renderStoredJobs();
+renderTopbarUser();
+syncStoredUserToForm();
+
+setTimeout(async () => {
+  try {
+    const savedJobId = getSavedSelectedHistoryJobId();
+    const user = typeof getStoredUser === "function" ? getStoredUser() : null;
+    if (!savedJobId || !user || !user.id) return;
+
+    const response = await fetch(`${API_BASE}/jobs/mine`, {
+      headers: {
+        "x-user-id": String(user.id)
+      },
+      cache: "no-store"
+    });
+
+    const data = await response.json().catch(() => ({}));
+    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+    const savedJob = jobs.find((job) => String(job.id || "") === String(savedJobId));
+
+    if (savedJob) {
+      selectedHistoryJobId = savedJobId;
+      await openJobFromHistory(savedJob);
+      await renderStoredJobs();
+    }
+  } catch (_) {}
+}, 0);
+
+window.addEventListener("load", () => {
+  initMapWorldView();
+});
+  </script>
+</body>
+</html>
