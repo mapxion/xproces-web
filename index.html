@@ -3221,7 +3221,9 @@ if (statusNow === "done" || statusNow === "completed") {
       });
     }
 
-    function mapJobToStage(job) {
+    function mapJobToStage(job, parsedLog = null) {
+      if (parsedLog?.currentStage) return parsedLog.currentStage;
+
       const rawStage = String(job.stage || "").toLowerCase();
       const message = String(job.message || "").toLowerCase();
 
@@ -3232,14 +3234,11 @@ if (statusNow === "done" || statusNow === "completed") {
       if (rawStage === "export" || rawStage === "report" || rawStage === "uploading") return "export";
 
       if (rawStage === "running") {
-        if (message.includes("profundidad")) return "depth";
-        if (message.includes("nube de puntos")) return "pointcloud";
-        if (message.includes("export") || message.includes("comprimiendo") || message.includes("subiendo")) return "export";
-        if (message.includes("alineando")) return "aligning";
-        if (message.includes("detectando puntos") || message.includes("alineación inicial")) return "matching";
+        const inferred = inferStageFromText(message);
+        if (inferred) return inferred;
       }
 
-      return null;
+      return inferStageFromText(message) || null;
     }
 
     function updateProcessStages(job) {
@@ -3252,7 +3251,7 @@ if (statusNow === "done" || statusNow === "completed") {
       resetStageClasses();
 
       const order = ["matching", "aligning", "depth", "pointcloud", "export"];
-      const currentStage = mapJobToStage(job);
+      const currentStage = mapJobToStage(job, window.__lastParsedProcessLog || null);
 
       if (!currentStage && job.status !== "done" && job.status !== "failed") return;
 
@@ -4313,6 +4312,21 @@ if (map) {
       return `${seconds} s`;
     }
 
+    function stripLogPrefix(line) {
+      return String(line || "").replace(/^\[[^\]]+\]\s*/, "").trim();
+    }
+
+    function inferStageFromText(text) {
+      const value = String(text || "").toLowerCase();
+      if (!value) return "";
+      if (value.includes("detectando puntos") || value.includes("alineación inicial") || value.includes("importando fotografías") || value.includes("preparando proyecto") || value.includes("matchphotos")) return "matching";
+      if (value.includes("alineando cámaras") || value.includes("aligncameras") || value.includes("limpiando tie points") || value.includes("optimizaci")) return "aligning";
+      if (value.includes("mapas de profundidad") || value.includes("builddepthmaps") || value.includes("depthmaps")) return "depth";
+      if (value.includes("nube de puntos") || value.includes("buildpointcloud") || value.includes("point cloud")) return "pointcloud";
+      if (value.includes("exportando") || value.includes("archivos finales") || value.includes("las exportado") || value.includes("pdf report exportado") || value.includes("e57 exportado") || value.includes("obj exportado") || value.includes("ortomosaico") || value.includes("dem exportado")) return "export";
+      return "";
+    }
+
     function parseProcessLog(text) {
       const info = {
         quality: "",
@@ -4323,64 +4337,91 @@ if (map) {
         params: "",
         steps: [],
         alignedCameras: "",
-        warnings: []
+        warnings: [],
+        latestProgressPercent: null,
+        latestProgressMessage: "",
+        currentStage: "",
+        pointCount: "",
+        latestDetail: ""
       };
 
       if (!text) return info;
 
       const lines = String(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 
-      for (const line of lines) {
-        if (line.startsWith("Modo de calidad:")) {
-          info.quality = line.replace("Modo de calidad:", "").trim().replace(/Metashape/gi, "Xproces");
+      for (const rawLine of lines) {
+        const line = stripLogPrefix(rawLine);
+        if (!line) continue;
+
+        if (line.startsWith("Modo de calidad:") || line.startsWith("Modo solicitado por UI:")) {
+          info.quality = line.split(":").slice(1).join(":").trim().replace(/Metashape/gi, "Xproces");
           continue;
         }
-
+        if (line.startsWith("Preset activo:") && !info.quality) {
+          info.quality = line.replace("Preset activo:", "").trim().replace(/Metashape/gi, "Xproces");
+          continue;
+        }
         if (line.startsWith("Fotos encontradas:")) {
           info.photos = line.replace("Fotos encontradas:", "").trim();
           continue;
         }
-
         if (line.startsWith("Salidas solicitadas:")) {
-          info.requestedOutputs = line
-            .replace("Salidas solicitadas:", "")
-            .split(",")
-            .map((x) => x.trim())
-            .filter(Boolean);
+          info.requestedOutputs = line.replace("Salidas solicitadas:", "").split(",").map((x) => x.trim()).filter(Boolean);
           continue;
         }
-
         if (line.startsWith("Aviso:")) {
           info.warnings.push(line.replace("Aviso:", "").trim().replace(/Metashape/gi, "Xproces"));
           const omittedMatch = line.match(/se omitirán:\s*(.*)$/i);
-          if (omittedMatch) {
-            info.omittedOutputs = omittedMatch[1].split(",").map((x) => x.trim()).filter(Boolean);
-          }
+          if (omittedMatch) info.omittedOutputs = omittedMatch[1].split(",").map((x) => x.trim()).filter(Boolean);
           continue;
         }
-
         if (line.startsWith("Parámetros:")) {
           info.params = line.replace("Parámetros:", "").trim();
           continue;
         }
-
         if (line.startsWith("Cámaras alineadas:")) {
           info.alignedCameras = line.replace("Cámaras alineadas:", "").trim();
+          info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
           continue;
         }
-
+        if (/Point cloud creada con/i.test(line)) {
+          const m = line.match(/Point cloud creada con\s+([\d.]+)/i);
+          info.pointCount = m ? m[1] : line.replace(/.*Point cloud creada con\s*/i, "").trim();
+          info.latestDetail = `Puntos reconstruidos: ${info.pointCount}`;
+          continue;
+        }
+        if (/Tie points válidos tras alignment:/i.test(line)) {
+          info.latestDetail = line.replace(/Tie points válidos tras alignment:/i, "Tie points válidos:").trim();
+          continue;
+        }
+        if (line.includes("No se pudieron exportar")) {
+          info.warnings.push(line);
+          info.latestDetail = line;
+          continue;
+        }
         if (line.includes(" exportado")) {
           const name = line.replace(" exportado", "").trim();
           if (name) info.generatedOutputs.push(name);
+          info.latestDetail = line;
           continue;
         }
-
         if (line.startsWith("XPROCES_PROGRESS|")) {
           const parts = line.split("|");
           if (parts.length >= 3) {
-            info.steps.push(parts[2].trim().replace(/Metashape/gi, "Xproces"));
+            const percent = Number(parts[1]);
+            const msg = parts.slice(2).join("|").trim().replace(/Metashape/gi, "Xproces");
+            info.steps.push(msg);
+            info.latestProgressPercent = Number.isFinite(percent) ? percent : info.latestProgressPercent;
+            info.latestProgressMessage = msg;
+            const stage = inferStageFromText(msg);
+            if (stage) info.currentStage = stage;
           }
           continue;
+        }
+        const inferred = inferStageFromText(line);
+        if (inferred) {
+          info.currentStage = inferred || info.currentStage;
+          info.latestDetail = line;
         }
       }
 
@@ -4388,7 +4429,7 @@ if (map) {
       info.requestedOutputs = [...new Set(info.requestedOutputs)];
       info.omittedOutputs = [...new Set(info.omittedOutputs)];
       info.steps = [...new Set(info.steps)];
-
+      info.warnings = [...new Set(info.warnings)];
       return info;
     }
 
@@ -4522,6 +4563,50 @@ if (map) {
       return lines.join("\n");
     }
 
+    function renderLiveProcessSummary(job, logText, eta) {
+      const parsed = parseProcessLog(logText || "");
+      window.__lastParsedProcessLog = parsed;
+
+      const statusValue = String(job?.status || "").toLowerCase();
+      const titleText = statusValue === "queued" ? "⏳ Proyecto en cola" : "⚙ Procesando proyecto";
+      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
+      const photosText = parsed.photos || job?.photos_count || "No disponible";
+      const phaseText = parsed.latestProgressMessage || job?.message || (statusValue === "queued" ? "Esperando turno" : "Procesando proyecto");
+      const detailLines = [];
+      if (parsed.alignedCameras) detailLines.push(`Cámaras alineadas: ${parsed.alignedCameras}`);
+      if (parsed.pointCount) detailLines.push(`Puntos reconstruidos: ${parsed.pointCount}`);
+      if (parsed.latestDetail && !detailLines.includes(parsed.latestDetail)) detailLines.push(parsed.latestDetail);
+      if (!detailLines.length && job?.message) detailLines.push(job.message);
+      if (!detailLines.length) detailLines.push("Sin detalles todavía");
+      const etaText = eta?.ok ? (eta.total_estimated_human || "No disponible") : "Calculando";
+      const progressValue = Number.isFinite(Number(job?.progress)) ? `${Math.max(0, Math.min(100, Number(job.progress)))}%` : (parsed.latestProgressPercent != null ? `${parsed.latestProgressPercent}%` : "No disponible");
+      const warningText = parsed.warnings.length ? parsed.warnings[parsed.warnings.length - 1] : "";
+
+      return `
+        <div class="process-summary">
+          <div class="process-summary-hero">
+            <div class="process-summary-title">${titleText}</div>
+            <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Fase actual</div>
+            <div class="process-summary-list">${escapeHtml(phaseText)}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Avance</div>
+            <div class="process-summary-list">${escapeHtml(progressValue)} · ETA ${escapeHtml(etaText)}</div>
+          </div>
+
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Detalle</div>
+            <div class="process-summary-list">${detailLines.map((x) => `<div>${escapeHtml(x)}</div>`).join("")}${warningText ? `<div class="warn">⚠ ${escapeHtml(warningText)}</div>` : ""}</div>
+          </div>
+        </div>
+      `;
+    }
+
     async function buildQueuedOrRunningMessage(job) {
       const eta = await getJobEta(job.id);
 
@@ -4576,6 +4661,14 @@ if (map) {
           else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
+          let logText = null;
+          if (["queued", "running", "done", "completed", "failed", "cancelled"].includes(status)) {
+            logText = await getJobLog(job.id);
+            window.__lastParsedProcessLog = parseProcessLog(logText || "");
+          } else {
+            window.__lastParsedProcessLog = null;
+          }
+
           updateProcessStages(job);
           renderStoredJobs();
 
@@ -4586,7 +4679,7 @@ if (map) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.textContent = buildProjectStatusText(job);
+            jobStatusEl.innerHTML = renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -4603,8 +4696,8 @@ if (map) {
               jobStatusEl.textContent =
                 "Procesado completado correctamente.\nPreparando entrega del proyecto.";
             } else {
-              const logText = await getJobLog(job.id);
-              jobStatusEl.innerHTML = renderProcessSummary(job, logText);
+              const doneLogText = logText || await getJobLog(job.id);
+              jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
               showDownloadButton(job.id);
             }
 
@@ -4620,10 +4713,10 @@ if (map) {
             progressLabel.textContent = status === "cancelled" ? "Procesado cancelado" : "Procesado fallido";
             progressPercent.textContent = "100%";
 
-            const logText = await getJobLog(job.id);
+            const failedLogText = logText || await getJobLog(job.id);
 
-            if (logText) {
-              jobStatusEl.innerHTML = renderProcessSummary(job, logText);
+            if (failedLogText) {
+              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
             } else {
               const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
