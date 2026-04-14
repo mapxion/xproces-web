@@ -930,6 +930,119 @@
       align-items: stretch;
     }
 
+    .process-live-list {
+      display: grid;
+      gap: 10px;
+      white-space: normal;
+    }
+
+    .process-live-head {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .process-live-card {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .process-live-card-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+      font-weight: 800;
+    }
+
+    .process-live-card-value {
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .process-live-checklist {
+      display: grid;
+      gap: 8px;
+    }
+
+    .process-live-item {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.86);
+      color: var(--muted);
+    }
+
+    .process-live-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #c9d3cc;
+      margin-top: 2px;
+      flex: 0 0 14px;
+    }
+
+    .process-live-item.done {
+      border-color: rgba(34, 163, 74, 0.24);
+      background: rgba(34, 163, 74, 0.06);
+      color: var(--ok);
+    }
+
+    .process-live-item.done .process-live-dot {
+      background: var(--ok);
+    }
+
+    .process-live-item.active {
+      border-color: rgba(122, 171, 57, 0.35);
+      background: rgba(122, 171, 57, 0.08);
+      color: var(--text);
+    }
+
+    .process-live-item.active .process-live-dot {
+      background: var(--accent);
+    }
+
+    .process-live-item.warn {
+      border-color: rgba(212, 85, 85, 0.24);
+      background: rgba(212, 85, 85, 0.06);
+      color: var(--danger);
+    }
+
+    .process-live-item.warn .process-live-dot {
+      background: var(--danger);
+    }
+
+    .process-live-title {
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .process-live-note {
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .process-live-item.done .process-live-note {
+      color: #4d7f5d;
+    }
+
+    .process-live-item.warn .process-live-note {
+      color: #9b3737;
+    }
+
     .process-summary-hero {
       background: #f9fbf9;
       border: 1px solid var(--border);
@@ -4563,45 +4676,150 @@ if (map) {
       return lines.join("\n");
     }
 
+
+    function buildLiveProcessItems(parsed, statusValue) {
+      const allSteps = [
+        { key: "prepare", title: "Preparando proyecto" },
+        { key: "import", title: "Importando fotografías" },
+        { key: "match", title: "Detectando puntos clave" },
+        { key: "align", title: "Alineando cámaras" },
+        { key: "optimize", title: "Optimizando cámaras" },
+        { key: "tams", title: "Preparando entrega TAMS" },
+        { key: "depth", title: "Generando mapas de profundidad" },
+        { key: "pointcloud", title: "Generando nube de puntos" },
+        { key: "model", title: "Generando modelo 3D" },
+        { key: "dem", title: "Generando DEM" },
+        { key: "ortho", title: "Generando ortomosaico" },
+        { key: "export", title: "Exportando archivos finales" }
+      ];
+
+      const lines = (parsed?.steps || []).slice();
+      const cleanLines = [];
+      for (const item of lines) {
+        const clean = String(item || "").replace(/\s+/g, " ").trim();
+        if (clean && !cleanLines.includes(clean)) cleanLines.push(clean);
+      }
+
+      const detailLines = (parsed?.warnings || []).map((x) => String(x || "").trim()).filter(Boolean);
+      if (parsed?.alignedCameras) detailLines.push(`Cámaras alineadas: ${parsed.alignedCameras}`);
+      if (parsed?.pointCount) detailLines.push(`Puntos reconstruidos: ${parsed.pointCount}`);
+      if (parsed?.latestDetail) detailLines.push(parsed.latestDetail);
+
+      const has = (patterns) => cleanLines.some((line) => patterns.some((pattern) => line.toLowerCase().includes(pattern)));
+      const items = [];
+
+      const mapping = {
+        prepare: ["preparando proyecto"],
+        import: ["importando fotografías", "importando fotografias"],
+        match: ["detectando puntos clave", "matchphotos"],
+        align: ["alineando cámaras", "alineando camaras", "aligncameras"],
+        optimize: ["optimiz", "cámaras alineadas", "camaras alineadas", "limpieza tams"],
+        tams: ["exportando datos tams"],
+        depth: ["generando mapas de profundidad"],
+        pointcloud: ["generando nube de puntos"],
+        model: ["generando modelo 3d"],
+        dem: ["generando dem"],
+        ortho: ["generando ortomosaico"],
+        export: ["exportando archivos finales", "trabajo procesado correctamente"]
+      };
+
+      let activeKey = "";
+      if (parsed?.currentStage === "matching") activeKey = "match";
+      else if (parsed?.currentStage === "aligning") activeKey = "align";
+      else if (parsed?.currentStage === "depth") activeKey = "depth";
+      else if (parsed?.currentStage === "pointcloud") activeKey = "pointcloud";
+      else if (parsed?.currentStage === "export") activeKey = "export";
+
+      for (const step of allSteps) {
+        const patterns = mapping[step.key] || [];
+        const done = has(patterns) && (!activeKey || step.key !== activeKey || statusValue === "done" || statusValue === "completed");
+        items.push({
+          ...step,
+          state: done ? "done" : "pending",
+          note: ""
+        });
+      }
+
+      if (activeKey) {
+        const activeItem = items.find((x) => x.key === activeKey);
+        if (activeItem && activeItem.state !== "done") {
+          activeItem.state = "active";
+          activeItem.note = parsed?.latestProgressMessage || "";
+        }
+      }
+
+      const firstPendingIndex = items.findIndex((x) => x.state === "pending");
+      if (!activeKey && statusValue === "running" && firstPendingIndex >= 0) {
+        items[firstPendingIndex].state = "active";
+        items[firstPendingIndex].note = parsed?.latestProgressMessage || "";
+      }
+
+      if (statusValue === "done" || statusValue === "completed") {
+        items.forEach((x) => {
+          if (["prepare","import","match","align","optimize","tams","depth","pointcloud","export"].includes(x.key)) {
+            x.state = "done";
+          }
+        });
+      }
+
+      if (detailLines.length) {
+        const uniqueDetails = [];
+        for (const line of detailLines) {
+          const clean = String(line || "").replace(/\s+/g, " ").trim();
+          if (clean && !uniqueDetails.includes(clean)) uniqueDetails.push(clean);
+        }
+        uniqueDetails.forEach((line) => {
+          items.push({
+            key: "detail_" + uniqueDetails.indexOf(line),
+            title: line,
+            state: line.toLowerCase().includes("no se pudieron") ? "warn" : "done",
+            note: ""
+          });
+        });
+      }
+
+      return items.filter((item) => item.state !== "pending" || ["prepare","import","match","align","depth","pointcloud","export"].includes(item.key));
+    }
+
     function renderLiveProcessSummary(job, logText, eta) {
       const parsed = parseProcessLog(logText || "");
       window.__lastParsedProcessLog = parsed;
 
       const statusValue = String(job?.status || "").toLowerCase();
-      const titleText = statusValue === "queued" ? "⏳ Proyecto en cola" : "⚙ Procesando proyecto";
+      const titleText = statusValue === "queued" ? "Proyecto en cola" : "Procesando proyecto";
       const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
       const photosText = parsed.photos || job?.photos_count || "No disponible";
       const phaseText = parsed.latestProgressMessage || job?.message || (statusValue === "queued" ? "Esperando turno" : "Procesando proyecto");
-      const detailLines = [];
-      if (parsed.alignedCameras) detailLines.push(`Cámaras alineadas: ${parsed.alignedCameras}`);
-      if (parsed.pointCount) detailLines.push(`Puntos reconstruidos: ${parsed.pointCount}`);
-      if (parsed.latestDetail && !detailLines.includes(parsed.latestDetail)) detailLines.push(parsed.latestDetail);
-      if (!detailLines.length && job?.message) detailLines.push(job.message);
-      if (!detailLines.length) detailLines.push("Sin detalles todavía");
       const etaText = eta?.ok ? (eta.total_estimated_human || "No disponible") : "Calculando";
       const progressValue = Number.isFinite(Number(job?.progress)) ? `${Math.max(0, Math.min(100, Number(job.progress)))}%` : (parsed.latestProgressPercent != null ? `${parsed.latestProgressPercent}%` : "No disponible");
-      const warningText = parsed.warnings.length ? parsed.warnings[parsed.warnings.length - 1] : "";
+      const items = buildLiveProcessItems(parsed, statusValue);
 
       return `
-        <div class="process-summary">
-          <div class="process-summary-hero">
-            <div class="process-summary-title">${titleText}</div>
-            <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
+        <div class="process-live-list">
+          <div class="process-live-head">
+            <div class="process-live-card">
+              <div class="process-live-card-label">Proyecto</div>
+              <div class="process-live-card-value">${escapeHtml(photosText)} fotos · Calidad ${escapeHtml(qualityText)}</div>
+            </div>
+            <div class="process-live-card">
+              <div class="process-live-card-label">Fase actual</div>
+              <div class="process-live-card-value">${escapeHtml(phaseText || titleText)}</div>
+            </div>
+            <div class="process-live-card">
+              <div class="process-live-card-label">Avance</div>
+              <div class="process-live-card-value">${escapeHtml(progressValue)} · ETA ${escapeHtml(etaText)}</div>
+            </div>
           </div>
-
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Fase actual</div>
-            <div class="process-summary-list">${escapeHtml(phaseText)}</div>
-          </div>
-
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Avance</div>
-            <div class="process-summary-list">${escapeHtml(progressValue)} · ETA ${escapeHtml(etaText)}</div>
-          </div>
-
-          <div class="process-summary-section">
-            <div class="process-summary-section-title">Detalle</div>
-            <div class="process-summary-list">${detailLines.map((x) => `<div>${escapeHtml(x)}</div>`).join("")}${warningText ? `<div class="warn">⚠ ${escapeHtml(warningText)}</div>` : ""}</div>
+          <div class="process-live-checklist">
+            ${items.map((item) => `
+              <div class="process-live-item ${item.state}">
+                <div class="process-live-dot"></div>
+                <div>
+                  <div class="process-live-title">${escapeHtml(item.title)}</div>
+                  ${item.note ? `<div class="process-live-note">${escapeHtml(item.note)}</div>` : ""}
+                </div>
+              </div>
+            `).join("")}
           </div>
         </div>
       `;
