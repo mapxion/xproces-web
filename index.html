@@ -2791,10 +2791,15 @@ if (statusNow === "done" || statusNow === "completed") {
       `;
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
+        stopPolling();
         clearStoredUser();
         clearStoredJobs();
+        clearSavedSelectedHistoryJobId();
+        resetAll();
         renderTopbarUser();
         renderStoredJobs();
+        closeAuthModal();
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
 
