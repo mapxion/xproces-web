@@ -2636,7 +2636,7 @@ if (statusNow === "done" || statusNow === "completed") {
       }
 
       try {
-        const response = await fetch(`${API_BASE}/jobs/mine?user_id=${encodeURIComponent(getStoredUser()?.id || "")}`, {
+        const response = await fetch(`${API_BASE}/jobs/mine`, {
           headers: {
             "x-user-id": String(user.id)
           }
@@ -2791,15 +2791,10 @@ if (statusNow === "done" || statusNow === "completed") {
       `;
 
       document.getElementById("logoutBtn").addEventListener("click", () => {
-        stopPolling();
         clearStoredUser();
         clearStoredJobs();
-        clearSavedSelectedHistoryJobId();
-        resetAll();
         renderTopbarUser();
         renderStoredJobs();
-        closeAuthModal();
-        window.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
 
@@ -5047,7 +5042,7 @@ setTimeout(async () => {
     const user = typeof getStoredUser === "function" ? getStoredUser() : null;
     if (!savedJobId || !user || !user.id) return;
 
-    const response = await fetch(`${API_BASE}/jobs/mine?user_id=${encodeURIComponent(getStoredUser()?.id || "")}`, {
+    const response = await fetch(`${API_BASE}/jobs/mine`, {
       headers: {
         "x-user-id": String(user.id)
       },
