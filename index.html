@@ -873,8 +873,8 @@
 
     .progress-wrap {
       display: none;
-      margin-top: 6px;
-      margin-bottom: 10px;
+      margin-top: 2px;
+      margin-bottom: 16px;
     }
 
     .progress-top {
@@ -909,10 +909,10 @@
 
     .status {
       color: var(--text);
-      min-height: 44px;
+      min-height: 92px;
       white-space: pre-line;
-      line-height: 1.4;
-      font-size: 13px;
+      line-height: 1.55;
+      font-size: 14px;
     }
 
     .process-summary {
@@ -1072,9 +1072,9 @@
 
     .process-stage-wrap {
       display: none;
-      gap: 6px;
-      margin-top: 6px;
-      margin-bottom: 8px;
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 10px;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       align-items: stretch;
     }
@@ -1083,14 +1083,14 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      min-height: 30px;
-      padding: 5px 8px;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 10px;
       border-radius: 999px;
       background: #fafcf9;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       text-align: center;
       white-space: nowrap;
@@ -2272,7 +2272,6 @@ function getSelectedQualityMode() {
 
     function buildXprocesMeta() {
       return {
-        quality_mode: getSelectedQualityMode() || "normal",
         outputs_requested: getSelectedOutputs(),
         preset_key: getSelectedPreset() || "",
         output_mode: getSelectedOutputMode() || "",
@@ -4234,13 +4233,7 @@ if (map) {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          quality_mode: getSelectedQualityMode() || "normal",
-          outputs_requested: getSelectedOutputs(),
-          tams_export: isTamsPresetSelected(),
-          xproces_meta: buildXprocesMeta()
-        })
+        }
       });
 
       if (!response.ok) {
