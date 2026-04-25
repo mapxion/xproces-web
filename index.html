@@ -873,7 +873,7 @@
 
     .progress-wrap {
       display: none;
-      margin-top: 8px;
+      margin-top: 6px;
       margin-bottom: 10px;
     }
 
@@ -889,7 +889,7 @@
 
     .progress-bar {
       width: 100%;
-      height: 12px;
+      height: 14px;
       background: #edf1ed;
       border-radius: 999px;
       overflow: hidden;
@@ -909,9 +909,9 @@
 
     .status {
       color: var(--text);
-      min-height: 34px;
+      min-height: 44px;
       white-space: pre-line;
-      line-height: 1.35;
+      line-height: 1.4;
       font-size: 13px;
     }
 
@@ -1083,9 +1083,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      min-height: 28px;
-      padding: 4px 8px;
+      gap: 6px;
+      min-height: 30px;
+      padding: 5px 8px;
       border-radius: 999px;
       background: #fafcf9;
       border: 1px solid var(--border);
@@ -1097,11 +1097,11 @@
     }
 
     .process-stage-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 999px;
       background: #c9d3cc;
-      flex: 0 0 8px;
+      flex: 0 0 10px;
     }
 
     .process-stage-body {
@@ -1686,8 +1686,8 @@
                       <div class="outputs-section">
                         <div class="outputs-group">
                           <div class="output-item">
-                            <button class="output-btn" type="button" data-preset="inspection_standard">3D básico</button>
-                            <div class="output-tooltip"><strong>3D básico</strong>Paquete recomendado para reconstrucción 3D general. Incluye LAS, malla OBJ e informe PDF. No genera DEM ni ortomosaico para evitar tiempos innecesarios.</div>
+                            <button class="output-btn" type="button" data-preset="inspection_standard">Inspección estándar</button>
+                            <div class="output-tooltip"><strong>Inspección estándar</strong>Paquete recomendado para trabajo técnico general. Incluye una nube principal en LAS, una malla OBJ y un informe PDF.</div>
                           </div>
 
                           <div class="output-item">
@@ -1703,8 +1703,8 @@
                           </div>
 
                           <div class="output-item">
-                            <button class="output-btn" type="button" data-preset="compact_delivery">Mapa / ortofoto</button>
-                            <div class="output-tooltip"><strong>Mapa / ortofoto</strong>Paquete para trabajos cartográficos. Incluye LAS, DEM, ortomosaico TIFF/JPG e informe PDF. No genera malla OBJ por defecto.</div>
+                            <button class="output-btn" type="button" data-preset="compact_delivery">Entrega compacta</button>
+                            <div class="output-tooltip"><strong>Entrega compacta</strong>Paquete pensado para entregar archivos más ligeros. Incluye LAZ comprimido, una malla OBJ y un informe PDF.</div>
                           </div>
                         </div>
                       </div>
@@ -1796,23 +1796,23 @@
 <div class="process-stage-wrap" id="processStageWrap">
                 <div class="process-stage" data-stage="matching">
                   <div class="process-stage-dot"></div>
-                  <div>Matching</div>
+                  <div>Alineación inicial</div>
                 </div>
                 <div class="process-stage" data-stage="aligning">
                   <div class="process-stage-dot"></div>
-                  <div>Cámaras</div>
+                  <div>Alineando cámaras</div>
                 </div>
                 <div class="process-stage" data-stage="depth">
                   <div class="process-stage-dot"></div>
-                  <div>Depth</div>
+                  <div>Mapas de profundidad</div>
                 </div>
                 <div class="process-stage" data-stage="pointcloud">
                   <div class="process-stage-dot"></div>
-                  <div>Nube</div>
+                  <div>Nube de puntos</div>
                 </div>
                 <div class="process-stage" data-stage="export">
                   <div class="process-stage-dot"></div>
-                  <div>Exportar</div>
+                  <div>Exportación</div>
                 </div>
               </div>
 
@@ -2155,7 +2155,7 @@ function stripNullCharsDeep(value) {
         inspection_standard: ["las", "mesh_obj", "pdf_report"],
         inspection_tams: ["las"],
         web_delivery: ["cesium_tiles_pointcloud", "pdf_report"],
-        compact_delivery: ["las", "dem_tif", "orthomosaic_tif", "orthomosaic_jpg", "pdf_report"]
+        compact_delivery: ["laz", "mesh_obj", "pdf_report"]
       };
 
       document.querySelectorAll("[data-preset]").forEach((btn) => {
@@ -2180,7 +2180,7 @@ function stripNullCharsDeep(value) {
           inspection_standard: "Paquetes prediseñados",
           inspection_tams: "Paquete técnico reservado para flujo interno TAMS.",
           web_delivery: "Paquete orientado a visualización web con Cesium 3D Tiles.",
-          compact_delivery: "Paquete cartográfico: LAS, DEM, ortomosaico TIFF/JPG e informe PDF. No incluye OBJ por defecto."
+          compact_delivery: "Paquete recomendado cuando se quiere una entrega más ligera."
         };
         el.textContent = presetTexts[getSelectedPreset()] || "Paquetes prediseñados";
       } else {
@@ -2208,9 +2208,9 @@ function stripNullCharsDeep(value) {
 
     function formatPresetLabel(preset) {
       const labels = {
-        inspection_standard: "3D básico",
+        inspection_standard: "Inspección estándar",
         inspection_tams: "TAMS",
-        compact_delivery: "Mapa / ortofoto"
+        compact_delivery: "Entrega compacta"
       };
       return labels[preset] || "Sin seleccionar";
     }
@@ -2455,10 +2455,10 @@ function getSelectedQualityMode() {
 
     function getSelectionSummaryItemsForJob(job) {
       const items = [];
-      const xprocesMeta = job?.exif_summary?._xproces || {};
-      const quality = String(job?.quality_mode || xprocesMeta?.quality_mode || "").trim().toLowerCase() || getSelectedQualityMode() || "normal";
+      const quality = String(job?.quality_mode || "").trim().toLowerCase() || getSelectedQualityMode() || "normal";
       items.push({ type: "text", text: `Calidad: ${formatQualityModeLabel(quality)}` });
 
+      const xprocesMeta = job?.exif_summary?._xproces || {};
       const requestedRaw = Array.isArray(job?.outputs_requested)
         ? job.outputs_requested
         : Array.isArray(xprocesMeta?.outputs_requested)
@@ -2490,7 +2490,7 @@ function getSelectedQualityMode() {
       const presetOutputsMap = {
         inspection_standard: ["las", "mesh_obj", "pdf_report"],
         inspection_tams: ["las"],
-        compact_delivery: ["las", "dem_tif", "orthomosaic_tif", "orthomosaic_jpg", "pdf_report"]
+        compact_delivery: ["laz", "mesh_obj", "pdf_report"]
       };
 
       let matchedPreset = explicitPresetKey;
@@ -4327,7 +4327,7 @@ if (map) {
       if (value.includes("detectando puntos") || value.includes("alineación inicial") || value.includes("importando fotografías") || value.includes("preparando proyecto") || value.includes("matchphotos")) return "matching";
       if (value.includes("alineando cámaras") || value.includes("aligncameras") || value.includes("limpiando tie points") || value.includes("optimizaci")) return "aligning";
       if (value.includes("mapas de profundidad") || value.includes("builddepthmaps") || value.includes("depthmaps")) return "depth";
-      if (value.includes("nube de puntos") || value.includes("buildpointcloud") || value.includes("point cloud") || value.includes("generando modelo") || value.includes("buildmodel") || value.includes("buildtexture") || value.includes("builduv")) return "pointcloud";
+      if (value.includes("nube de puntos") || value.includes("buildpointcloud") || value.includes("point cloud")) return "pointcloud";
       if (value.includes("exportando") || value.includes("archivos finales") || value.includes("las exportado") || value.includes("pdf report exportado") || value.includes("e57 exportado") || value.includes("obj exportado") || value.includes("ortomosaico") || value.includes("dem exportado")) return "export";
       return "";
     }
