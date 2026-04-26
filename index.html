@@ -4777,7 +4777,7 @@ if (map) {
     function renderLiveProcessSummary(job, logText, eta) {
       const parsed = parseProcessLog(logText || "");
       const statusValue = String(job?.status || "").toLowerCase();
-      const liveProgress = getLiveProgressFromJobAndLog(job, parsed);
+      const liveProgress = Math.round(getLiveProgressFromJobAndLog(job, parsed));
       const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
       const photosText = parsed.photos ? `${parsed.photos} fotos` : "Fotos en proceso";
       const outputText = parsed.requestedOutputs.length
@@ -4916,11 +4916,26 @@ if (map) {
           }
 
           const parsedLiveProgress = getLiveProgressFromJobAndLog(job, window.__lastParsedProcessLog || null);
-          if (status === "running" && Number.isFinite(parsedLiveProgress)) {
-            progressFill.style.width = `${parsedLiveProgress}%`;
-            progressPercent.textContent = `${parsedLiveProgress}%`;
-            if (window.__lastParsedProcessLog?.latestProgressMessage) {
-              progressLabel.textContent = window.__lastParsedProcessLog.latestProgressMessage;
+
+          // XPROCES LIVE PROGRESS FIX:
+          // El backend/worker puede quedarse en progress=0/45/50 mientras Metashape avanza.
+          // La fuente real del avance es metashape-python-log.txt vía /jobs/:id/log.
+          if (window.__lastParsedProcessLog) {
+            const parsed = window.__lastParsedProcessLog;
+
+            if (Number.isFinite(parsedLiveProgress)) {
+              progressFill.style.width = `${parsedLiveProgress}%`;
+              progressPercent.textContent = `${parsedLiveProgress}%`;
+              job.progress = parsedLiveProgress;
+            }
+
+            if (parsed.latestProgressMessage) {
+              progressLabel.textContent = parsed.latestProgressMessage;
+              job.message = parsed.latestProgressMessage;
+            }
+
+            if (parsed.currentStage) {
+              job.stage = parsed.currentStage;
             }
           }
 
