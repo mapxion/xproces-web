@@ -910,10 +910,298 @@
 
     .status {
       color: var(--text);
-      min-height: 0;
+      min-height: 92px;
       white-space: pre-line;
       line-height: 1.55;
       font-size: 14px;
+    }
+
+
+    .xproces-live-card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid rgba(122, 171, 57, 0.30);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,252,249,0.94));
+      box-shadow: 0 14px 34px rgba(24, 33, 29, 0.07);
+    }
+
+    .xproces-live-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .xproces-live-eyebrow {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .xproces-live-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(122, 171, 57, 0.28);
+      background: rgba(122, 171, 57, 0.08);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .xproces-live-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .xproces-live-subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .xproces-live-percent {
+      min-width: 116px;
+      text-align: right;
+      font-size: 48px;
+      line-height: 1;
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    .xproces-live-progress {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #edf1ed;
+    }
+
+    .xproces-live-progress > div {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 0.25s ease;
+    }
+
+    .xproces-live-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .xproces-live-metric {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.86);
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 70px;
+    }
+
+    .xproces-live-metric-label {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .xproces-live-metric-value {
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 900;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .xproces-live-phases {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .xproces-live-phase {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 7px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fafcf9;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .xproces-live-phase::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 999px;
+      background: #c9d3cc;
+    }
+
+    .xproces-live-phase.done {
+      color: var(--ok);
+      border-color: rgba(34, 163, 74, 0.22);
+      background: rgba(34, 163, 74, 0.06);
+    }
+
+    .xproces-live-phase.done::before { background: var(--ok); }
+
+    .xproces-live-phase.active {
+      color: var(--text);
+      border-color: rgba(184, 255, 26, 0.75);
+      background: rgba(184, 255, 26, 0.14);
+    }
+
+    .xproces-live-phase.active::before { background: #95db00; }
+
+    @media (max-width: 900px) {
+      .xproces-live-top,
+      .xproces-live-metrics {
+        grid-template-columns: 1fr;
+      }
+      .xproces-live-percent {
+        text-align: left;
+      }
+      .xproces-live-phases {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .process-live-list {
+      display: grid;
+      gap: 12px;
+      white-space: normal;
+    }
+
+    .process-live-head {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .process-live-card {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 78px;
+    }
+
+    .process-live-card-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+      font-weight: 800;
+    }
+
+    .process-live-card-value {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .process-live-card-value.small {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .process-live-checklist {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .process-live-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.72);
+      color: var(--muted);
+      min-height: 48px;
+    }
+
+    .process-live-item.active {
+      background: rgba(184, 255, 26, 0.12);
+      border-color: rgba(122, 171, 57, 0.45);
+      color: var(--text);
+    }
+
+    .process-live-item.done {
+      background: rgba(34, 163, 74, 0.06);
+      border-color: rgba(34, 163, 74, 0.18);
+      color: var(--text);
+    }
+
+    .process-live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #c9d3cc;
+      flex: 0 0 10px;
+      margin-top: 4px;
+    }
+
+    .process-live-item.active .process-live-dot {
+      background: #95db00;
+    }
+
+    .process-live-item.done .process-live-dot {
+      background: var(--ok);
+    }
+
+    .process-live-title {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .process-live-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 900px) {
+      .process-live-head,
+      .process-live-checklist {
+        grid-template-columns: 1fr;
+      }
     }
 
     .process-summary {
@@ -4254,7 +4542,7 @@ if (map) {
     }
 
     async function getJob(jobId) {
-      const response = await fetch(`${API_BASE}/jobs/${jobId}?_=${Date.now()}`, {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
         cache: "no-store"
       });
 
@@ -4267,7 +4555,7 @@ if (map) {
 
     async function getJobEta(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta?_=${Date.now()}`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4281,7 +4569,7 @@ if (map) {
 
     async function getJobLog(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/log?_=${Date.now()}`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4317,62 +4605,6 @@ if (map) {
       if (hours > 0) return `${hours} h ${minutes} min ${seconds} s`;
       if (minutes > 0) return `${minutes} min ${seconds} s`;
       return `${seconds} s`;
-    }
-
-    function getJobStartDate(job) {
-      const candidates = [job?.started_at, job?.processing_started_at, job?.created_at];
-      for (const value of candidates) {
-        if (!value) continue;
-        const d = new Date(value);
-        if (!Number.isNaN(d.getTime())) return d;
-      }
-      return null;
-    }
-
-    function getElapsedSecondsForJob(job) {
-      const start = getJobStartDate(job);
-      if (!start) return 0;
-
-      const status = String(job?.status || "").toLowerCase();
-      const endValue = (status === "done" || status === "completed" || status === "failed" || status === "cancelled")
-        ? (job?.finished_at || job?.updated_at)
-        : null;
-
-      const end = endValue ? new Date(endValue) : new Date();
-      if (Number.isNaN(end.getTime())) return 0;
-      return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
-    }
-
-    function getFriendlyStatusLabel(status) {
-      const s = String(status || "").toLowerCase();
-      if (s === "queued") return "En cola";
-      if (s === "receiving") return "Recibiendo fotos";
-      if (s === "running") return "Procesando";
-      if (s === "done" || s === "completed") return "Finalizado";
-      if (s === "failed") return "Error";
-      if (s === "cancelled") return "Cancelado";
-      if (s === "created") return "Creado";
-      return s || "Procesando";
-    }
-
-
-    function getStageDisplayName(stage) {
-      const s = String(stage || "").toLowerCase();
-      if (s === "matching") return "Alineación inicial";
-      if (s === "aligning") return "Alineando cámaras";
-      if (s === "depth") return "Generando mapas de profundidad";
-      if (s === "pointcloud") return "Generando nube de puntos";
-      if (s === "export") return "Exportando archivos finales";
-      return "Procesando proyecto";
-    }
-
-    function isGenericProcessMessage(text) {
-      const value = String(text || "").trim().toLowerCase();
-      return !value || value === "procesando" || value === "procesando proyecto" || value === "processing" || value === "running";
-    }
-
-    function stripJobId(value) {
-      return String(value || "").replace(/^Job\s+[a-f0-9-]+\s*/i, "").trim();
     }
 
     function stripLogPrefix(line) {
@@ -4713,82 +4945,172 @@ if (map) {
         .trim();
     }
 
-    function estimateProgressFromText(text, statusValue = "") {
-      const status = String(statusValue || "").toLowerCase();
-      if (status === "done" || status === "completed") return 100;
-      if (status === "failed" || status === "cancelled") return 100;
+    function getClientProgressFromXprocesProgress(progress, message, qualityText) {
+      const p = Number(progress || 0);
+      const msg = String(message || "").toLowerCase();
+      const q = String(qualityText || "").toLowerCase();
+      let mapped = p;
 
-      const m = String(text || "").toLowerCase();
-      if (!m) return 0;
+      if (p >= 100 || msg.includes("correctamente")) mapped = 100;
+      else if (p >= 96 || msg.includes("informe")) mapped = 98;
+      else if (p >= 92 || msg.includes("export")) mapped = 94;
+      else if (p >= 86 || msg.includes("textura")) mapped = 86;
+      else if (p >= 84 || msg.includes("modelo")) mapped = 74;
+      else if (p >= 82 || msg.includes("dem")) mapped = 70;
+      else if (p >= 78 || msg.includes("nube")) mapped = q.includes("max") || q.includes("máxima") ? 40 : 48;
+      else if (p >= 65 || msg.includes("profundidad")) mapped = q.includes("max") || q.includes("máxima") ? 18 : 25;
+      else if (p >= 50 || msg.includes("limpiando")) mapped = 8;
+      else if (p >= 45 || msg.includes("alineando")) mapped = 6;
+      else if (p >= 30 || msg.includes("detectando")) mapped = 3;
+      else if (p >= 15 || msg.includes("importando")) mapped = 2;
+      else if (p >= 10 || msg.includes("preparando")) mapped = 1;
 
-      if (m.includes("trabajo procesado correctamente") || m.includes("proceso ok")) return 100;
-      if (m.includes("informe") || m.includes("pdf report")) return 96;
-      if (m.includes("export")) return 92;
-      if (m.includes("textura") || m.includes("texture")) return 90;
-      if (m.includes("uv")) return 88;
-      if (m.includes("modelo") || m.includes("model")) return 84;
-      if (m.includes("dem")) return 82;
-      if (m.includes("nube") || m.includes("point cloud")) return 78;
-      if (m.includes("profundidad") || m.includes("depth")) return 65;
-      if (m.includes("limpiando") || m.includes("tie points") || m.includes("optimización") || m.includes("optimizacion")) return 50;
-      if (m.includes("alineando") || m.includes("align")) return 45;
-      if (m.includes("detectando") || m.includes("puntos clave") || m.includes("match")) return 30;
-      if (m.includes("importando") || m.includes("fotos añadidas")) return 15;
-      if (m.includes("preparando") || m.includes("iniciando")) return 10;
-      if (m.includes("cola")) return 5;
-      return 0;
-    }
-
-    function getDisplayProgressForJob(job, parsed) {
-      const statusValue = String(job?.status || "").toLowerCase();
-      const candidates = [];
-
-      const fromJob = Number(job?.progress ?? 0);
-      if (Number.isFinite(fromJob)) candidates.push(Math.max(0, Math.min(100, fromJob)));
-
-      const fromLog = Number(parsed?.latestProgressPercent);
-      if (Number.isFinite(fromLog)) candidates.push(Math.max(0, Math.min(100, fromLog)));
-
-      const estimatedFromParsed = estimateProgressFromText(parsed?.latestProgressMessage || parsed?.latestDetail || "", statusValue);
-      if (estimatedFromParsed > 0) candidates.push(estimatedFromParsed);
-
-      const estimatedFromJob = estimateProgressFromText(job?.message || job?.stage || "", statusValue);
-      if (estimatedFromJob > 0) candidates.push(estimatedFromJob);
-
-      if (!candidates.length) return 0;
-      return Math.max(0, Math.min(100, Math.round(Math.max(...candidates))));
+      return Math.max(0, Math.min(100, Math.round(mapped)));
     }
 
     function getLiveProgressFromJobAndLog(job, parsed) {
-      return getDisplayProgressForJob(job, parsed);
+      const qualityText = parsed?.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "");
+      const fromLog = Number(parsed?.latestProgressPercent);
+      const message = parsed?.latestProgressMessage || job?.message || "";
+      if (Number.isFinite(fromLog)) return getClientProgressFromXprocesProgress(fromLog, message, qualityText);
+      const fromJob = Number(job?.progress ?? 0);
+      return Number.isFinite(fromJob) ? getClientProgressFromXprocesProgress(fromJob, message, qualityText) : 0;
     }
 
-    function getDynamicRemainingText(job, progress) {
-      const status = String(job?.status || "").toLowerCase();
-      if (status === "done" || status === "completed") return "Finalizado";
-      if (status === "failed" || status === "cancelled") return "—";
-
-      const pct = Math.max(0, Math.min(100, Number(progress || 0)));
-      const elapsedSeconds = getElapsedSecondsForJob(job);
-
-      if (!elapsedSeconds || elapsedSeconds <= 0 || pct <= 2) return "Calculando";
-      if (pct >= 99) return "Finalizando";
-
-      const remainingSeconds = Math.max(0, Math.round((elapsedSeconds / pct) * (100 - pct)));
-      if (!remainingSeconds || remainingSeconds < 60) return "Menos de 1 min";
-      return formatDurationSeconds(remainingSeconds);
+    function getFirstLogDate(logText) {
+      const lines = String(logText || "").split(/\r?\n/);
+      for (const line of lines) {
+        const m = String(line).match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/);
+        if (m) {
+          const d = new Date(m[1].replace(" ", "T"));
+          if (!Number.isNaN(d.getTime())) return d;
+        }
+      }
+      return null;
     }
 
-    function getFriendlyPhaseHint(text) {
-      const m = String(text || "").toLowerCase();
-      if (m.includes("profundidad") || m.includes("depth")) return "Fase pesada: cálculo de geometría base";
-      if (m.includes("nube") || m.includes("point cloud")) return "Creando la nube de puntos del proyecto";
-      if (m.includes("textura") || m.includes("texture")) return "Generando textura final";
-      if (m.includes("modelo") || m.includes("model")) return "Construyendo el modelo 3D";
-      if (m.includes("export") || m.includes("informe") || m.includes("pdf")) return "Preparando archivos de entrega";
-      if (m.includes("alineando") || m.includes("align")) return "Calculando posiciones de cámara";
-      if (m.includes("detectando") || m.includes("match")) return "Buscando puntos comunes entre fotos";
-      return "Procesando";
+    function estimateTotalSecondsFromProfile(qualityText, photosText, progress, elapsedSeconds, eta) {
+      const q = String(qualityText || "").toLowerCase();
+      const photos = Math.max(1, Number(String(photosText || "").match(/\d+/)?.[0] || 372));
+      let baseFor372 = 5400;
+      if (q.includes("normal")) baseFor372 = 9000;
+      if (q.includes("max") || q.includes("máxima")) baseFor372 = 12000;
+      if (q.includes("rápido") || q.includes("rapido") || q.includes("fast")) baseFor372 = 4800;
+      const byProfile = baseFor372 * Math.pow(photos / 372, 1.12);
+      const byBackend = Number(eta?.total_estimated_seconds || eta?.estimated_seconds || 0);
+      const byProgress = progress > 5 ? (elapsedSeconds / progress) * 100 : 0;
+      const candidates = [byBackend, byProfile, byProgress].filter((x) => Number.isFinite(x) && x > 60);
+      if (!candidates.length) return byProfile;
+      return Math.max(elapsedSeconds + 60, Math.round(candidates.reduce((a,b)=>a+b,0) / candidates.length));
+    }
+
+    function formatClockTimeFromSeconds(secondsFromNow) {
+      const d = new Date(Date.now() + Math.max(0, Number(secondsFromNow || 0)) * 1000);
+      return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function getHumanPhaseHint(stage, progress) {
+      if (stage === "depth") return "Calculando geometría base del proyecto.";
+      if (stage === "pointcloud") return "Reconstruyendo la nube de puntos principal.";
+      if (stage === "export") return progress >= 90 ? "Preparando archivos finales para descarga." : "Generando modelo, UV o textura.";
+      if (stage === "aligning") return "Calculando posiciones de cámara y optimizando puntos.";
+      return "Preparando el procesado.";
+    }
+
+    function renderLiveProcessSummary(job, logText, eta) {
+      const parsed = parseProcessLog(logText || "");
+      const statusValue = String(job?.status || "").toLowerCase();
+      const rawProgress = Number(parsed?.latestProgressPercent ?? job?.progress ?? 0);
+      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
+      const photosText = parsed.photos ? `${parsed.photos} fotos` : `${job?.photos_count || ""} fotos`.trim() || "Fotos en proceso";
+      const progress = Math.round(getLiveProgressFromJobAndLog(job, parsed));
+      const outputText = parsed.requestedOutputs.length
+        ? parsed.requestedOutputs.map((x) => formatOutputLabel(String(x).trim().toLowerCase())).join(" · ")
+        : "Inspección estándar";
+
+      const latestFromLog = parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "";
+      const phaseText = latestFromLog || cleanLiveStepText(job?.message || "Procesando proyecto");
+      const stage = parsed.currentStage || job?.stage || inferStageFromText(phaseText);
+      const phaseHint = getHumanPhaseHint(stage, progress);
+
+      const startDate = getFirstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.started_at ? new Date(job.started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
+      const elapsedSeconds = startDate && !Number.isNaN(startDate.getTime())
+        ? Math.max(0, Math.floor((Date.now() - startDate.getTime()) / 1000))
+        : Number(job?.total_seconds || job?.processing_seconds || 0);
+
+      const estimatedTotal = estimateTotalSecondsFromProfile(qualityText, photosText, progress, elapsedSeconds, eta);
+      const remainingSeconds = Math.max(0, Math.round(estimatedTotal - elapsedSeconds));
+      const finishText = remainingSeconds > 0 ? formatClockTimeFromSeconds(remainingSeconds) : "finalizando";
+      const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
+      const remainingText = remainingSeconds > 0 ? formatEtaText(remainingSeconds) : "Finalizando";
+
+      const projectName = job?.project_name || job?.client_name || "Proyecto";
+      const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: pendiente";
+      const detailText = parsed.pointCount ? `Puntos reconstruidos: ${parsed.pointCount}` : alignedText;
+      const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
+
+      const phaseOrder = [
+        ["matching", "Preparación"],
+        ["aligning", "Alineación"],
+        ["depth", "Profundidad"],
+        ["pointcloud", "Nube puntos"],
+        ["export", "Modelo/Textura"],
+        ["final", "Entrega"]
+      ];
+      const currentIndex = stage === "matching" ? 0 : stage === "aligning" ? 1 : stage === "depth" ? 2 : stage === "pointcloud" ? 3 : stage === "export" ? (rawProgress >= 92 ? 5 : 4) : 0;
+
+      return `
+        <div class="xproces-live-card">
+          <div class="xproces-live-top">
+            <div>
+              <div class="xproces-live-eyebrow">
+                <span class="xproces-live-chip">${escapeHtml(statusChip)}</span>
+                <span class="xproces-live-chip">${escapeHtml(qualityText)}</span>
+                <span class="xproces-live-chip">${escapeHtml(photosText)}</span>
+              </div>
+              <h2 class="xproces-live-title">${escapeHtml(phaseText)}</h2>
+              <div class="xproces-live-subtitle">${escapeHtml(phaseHint)} · ${escapeHtml(projectName)}</div>
+            </div>
+            <div class="xproces-live-percent">${escapeHtml(String(progress))}%</div>
+          </div>
+
+          <div class="xproces-live-progress"><div style="width:${Math.max(0, Math.min(100, progress))}%"></div></div>
+
+          <div class="xproces-live-metrics">
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">Tiempo transcurrido</div>
+              <div class="xproces-live-metric-value">${escapeHtml(elapsedText)}</div>
+            </div>
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">Tiempo restante aprox.</div>
+              <div class="xproces-live-metric-value">${escapeHtml(remainingText)}</div>
+            </div>
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">Finalización estimada</div>
+              <div class="xproces-live-metric-value">${escapeHtml(finishText)}</div>
+            </div>
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">Entrega</div>
+              <div class="xproces-live-metric-value">${escapeHtml(outputText)}</div>
+            </div>
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">Control de calidad</div>
+              <div class="xproces-live-metric-value">${escapeHtml(detailText)}</div>
+            </div>
+            <div class="xproces-live-metric">
+              <div class="xproces-live-metric-label">ID del trabajo</div>
+              <div class="xproces-live-metric-value">${escapeHtml(String(job?.id || "").slice(0, 8))}</div>
+            </div>
+          </div>
+
+          <div class="xproces-live-phases">
+            ${phaseOrder.map(([key, label], index) => {
+              const cls = index < currentIndex ? "done" : index === currentIndex ? "active" : "";
+              return `<div class="xproces-live-phase ${cls}">${escapeHtml(label)}</div>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -4824,7 +5146,7 @@ if (map) {
         try {
           const job = await getJob(jobId);
 
-          const progress = getDisplayProgressForJob(job, window.__lastParsedProcessLog || null);
+          const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "").toLowerCase();
           if (datasetPanel) datasetPanel.style.display = "none";
           if (pricingPanel) pricingPanel.style.display = "none";
@@ -4842,10 +5164,7 @@ if (map) {
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
-          else {
-            const stageName = getStageDisplayName(mapJobToStage(job, window.__lastParsedProcessLog || null));
-            progressLabel.textContent = isGenericProcessMessage(message) ? stageName : (message || stageName);
-          }
+          else progressLabel.textContent = "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           let logText = null;
@@ -4890,9 +5209,7 @@ if (map) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            // El bloque inferior duplicado del proceso se ha eliminado.
-            // Durante el procesado solo se usa el bloque superior: barra, fases, porcentaje y configuración.
-            jobStatusEl.textContent = "";
+            jobStatusEl.innerHTML = renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
