@@ -917,6 +917,38 @@
     }
 
 
+    .xproces-status-clean {
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+
+    .xproces-status-clean .status {
+      min-height: 0;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: normal;
+    }
+
+    .xproces-status-clean .process-primary-action {
+      margin-top: 14px;
+    }
+
+    .xproces-live-card {
+      margin: 0;
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(122,171,57,0.28);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,252,249,0.95));
+      box-shadow: 0 14px 34px rgba(24,33,29,0.08);
+    }
+
+    .xproces-live-title {
+      margin-top: 16px;
+    }
+
+
     .xproces-live-card {
       display: grid;
       gap: 14px;
@@ -2064,49 +2096,7 @@
       <div class="right-stack">
 <div class="panel" id="processPanel" style="display:none;">
           <div class="panel-inner">
-            <div class="job-status-box">
-              <div class="job-status-header">
-                <div>
-                  <div id="projectTitle" style="display:none; font-weight:700; margin-bottom:4px;"></div>
-                  <div class="job-status-title">Estado del procesado</div>
-                </div>
-              </div>
-
-              
-            <div class="progress-wrap" id="progressWrap">
-              <div class="progress-top">
-                <span id="progressLabel">Procesando...</span>
-                <span id="progressPercent">0%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-              </div>
-            </div>
-<div class="process-stage-wrap" id="processStageWrap">
-                <div class="process-stage" data-stage="matching">
-                  <div class="process-stage-dot"></div>
-                  <div>Alineación inicial</div>
-                </div>
-                <div class="process-stage" data-stage="aligning">
-                  <div class="process-stage-dot"></div>
-                  <div>Alineando cámaras</div>
-                </div>
-                <div class="process-stage" data-stage="depth">
-                  <div class="process-stage-dot"></div>
-                  <div>Mapas de profundidad</div>
-                </div>
-                <div class="process-stage" data-stage="pointcloud">
-                  <div class="process-stage-dot"></div>
-                  <div>Nube de puntos</div>
-                </div>
-                <div class="process-stage" data-stage="export">
-                  <div class="process-stage-dot"></div>
-                  <div>Exportación</div>
-                </div>
-              </div>
-
-              <div class="process-selection-summary" id="processSelectionSummary"></div>
-
+            <div class="job-status-box xproces-status-clean">
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
               <div class="process-download-wrap" id="processDownloadWrap">
@@ -2320,6 +2310,7 @@ function stripNullCharsDeep(value) {
     const progressPercent = document.getElementById("progressPercent");
 
     const processStageWrap = document.getElementById("processStageWrap");
+    const processSelectionSummary = document.getElementById("processSelectionSummary");
     const processDownloadWrap = document.getElementById("processDownloadWrap");
     const processDownloadBtn = document.getElementById("processDownloadBtn");
 
@@ -3505,6 +3496,7 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function resetStageClasses() {
+      if (!processStageWrap) return;
       processStageWrap.querySelectorAll(".process-stage").forEach((el) => {
         el.classList.remove("active", "done", "error");
       });
@@ -3531,6 +3523,7 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function updateProcessStages(job) {
+      if (!processStageWrap) return;
       if (job.status === "queued" || job.status === "running" || job.status === "done" || job.status === "failed" || job.status === "cancelled") {
         processStageWrap.style.display = "grid";
       } else {
@@ -3682,7 +3675,7 @@ if (map) {
       setAnalysisPlaceholder();
       hideDownloadButton();
 
-      processStageWrap.style.display = "none";
+      if (processStageWrap) processStageWrap.style.display = "none";
       resetStageClasses();
 
       if (processSelectionSummary) {
@@ -3694,12 +3687,14 @@ if (map) {
       if (projectTitle) { projectTitle.style.display = "none"; projectTitle.textContent = ""; }
       if (uploadBtn) uploadBtn.textContent = "Iniciar procesado";
 
-      progressWrap.style.display = "none";
-      progressFill.style.width = "0%";
-      progressFill.classList.remove("error");
-      progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
-      progressLabel.textContent = "Subiendo...";
-      progressPercent.textContent = "0%";
+      if (progressWrap) progressWrap.style.display = "none";
+      if (progressFill) {
+        progressFill.style.width = "0%";
+        progressFill.classList.remove("error");
+        progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+      }
+      if (progressLabel) progressLabel.textContent = "Subiendo...";
+      if (progressPercent) progressPercent.textContent = "0%";
     }
 
     function applyDatasetVisualState(dataset) {
@@ -4497,9 +4492,9 @@ if (map) {
             const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
             const rounded = Math.round(overallPercent);
 
-            progressFill.style.width = `${rounded}%`;
-            progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
-            progressPercent.textContent = `${rounded}%`;
+            if (progressFill) progressFill.style.width = `${rounded}%`;
+            if (progressLabel) progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
+            if (progressPercent) progressPercent.textContent = `${rounded}%`;
           }
         };
 
@@ -5029,8 +5024,15 @@ if (map) {
         : "Inspección estándar";
 
       const latestFromLog = parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "";
-      const phaseText = latestFromLog || cleanLiveStepText(job?.message || "Procesando proyecto");
-      const stage = parsed.currentStage || job?.stage || inferStageFromText(phaseText);
+      const stage = parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || "");
+      const stageTitleMap = {
+        matching: "Preparando proyecto",
+        aligning: "Alineando cámaras",
+        depth: "Generando mapas de profundidad",
+        pointcloud: "Generando nube de puntos",
+        export: "Generando entregables"
+      };
+      const phaseText = latestFromLog || cleanLiveStepText(job?.message || stageTitleMap[stage] || "Procesando proyecto");
       const phaseHint = getHumanPhaseHint(stage, progress);
 
       const startDate = getFirstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.started_at ? new Date(job.started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
@@ -5069,7 +5071,7 @@ if (map) {
                 <span class="xproces-live-chip">${escapeHtml(photosText)}</span>
               </div>
               <h2 class="xproces-live-title">${escapeHtml(phaseText)}</h2>
-              <div class="xproces-live-subtitle">${escapeHtml(phaseHint)} · ${escapeHtml(projectName)}</div>
+              <div class="xproces-live-subtitle">${escapeHtml(projectName)} · ${escapeHtml(phaseHint)}</div>
             </div>
             <div class="xproces-live-percent">${escapeHtml(String(progress))}%</div>
           </div>
@@ -5155,17 +5157,21 @@ if (map) {
           if (processPanel) processPanel.style.display = "block";
           const message = job.message || "";
 
-          progressWrap.style.display = "block";
-          progressFill.classList.remove("error");
-          progressFill.style.background = "";
-          progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-          progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
-          if (status === "failed") progressLabel.textContent = "Fallido";
-          else if (status === "cancelled") progressLabel.textContent = "Cancelado";
-          else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
-          else if (status === "queued") progressLabel.textContent = "En cola";
-          else progressLabel.textContent = "Procesando";
-          progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
+          if (progressWrap) progressWrap.style.display = "block";
+          if (progressFill) {
+            progressFill.classList.remove("error");
+            progressFill.style.background = "";
+            progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
+          }
+          if (progressLabel) {
+            if (status === "failed") progressLabel.textContent = "Fallido";
+            else if (status === "cancelled") progressLabel.textContent = "Cancelado";
+            else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
+            else if (status === "queued") progressLabel.textContent = "En cola";
+            else progressLabel.textContent = "Procesando";
+          }
+          if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           let logText = null;
           if (["queued", "running", "done", "completed", "failed", "cancelled"].includes(status)) {
@@ -5184,13 +5190,13 @@ if (map) {
             const parsed = window.__lastParsedProcessLog;
 
             if (Number.isFinite(parsedLiveProgress)) {
-              progressFill.style.width = `${parsedLiveProgress}%`;
-              progressPercent.textContent = `${parsedLiveProgress}%`;
+              if (progressFill) progressFill.style.width = `${parsedLiveProgress}%`;
+              if (progressPercent) progressPercent.textContent = `${parsedLiveProgress}%`;
               job.progress = parsedLiveProgress;
             }
 
             if (parsed.latestProgressMessage) {
-              progressLabel.textContent = parsed.latestProgressMessage;
+              if (progressLabel) progressLabel.textContent = parsed.latestProgressMessage;
               job.message = parsed.latestProgressMessage;
             }
 
@@ -5217,9 +5223,9 @@ if (map) {
           if (status === "done" || status === "completed") {
             stopPolling();
 
-            progressFill.style.width = "100%";
-            progressLabel.textContent = "Trabajo procesado correctamente";
-            progressPercent.textContent = "100%";
+            if (progressFill) progressFill.style.width = "100%";
+            if (progressLabel) progressLabel.textContent = "Trabajo procesado correctamente";
+            if (progressPercent) progressPercent.textContent = "100%";
 
             if (isTamsJob(job)) {
               hideDownloadButton();
@@ -5237,11 +5243,13 @@ if (map) {
           if (status === "failed" || status === "cancelled") {
             stopPolling();
 
-            progressFill.style.width = "100%";
-            progressFill.classList.add("error");
-            progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
-            progressLabel.textContent = status === "cancelled" ? "Procesado cancelado" : "Procesado fallido";
-            progressPercent.textContent = "100%";
+            if (progressFill) {
+              progressFill.style.width = "100%";
+              progressFill.classList.add("error");
+              progressFill.style.background = "linear-gradient(90deg, #ff7a7a, #ff5252)";
+            }
+            if (progressLabel) progressLabel.textContent = status === "cancelled" ? "Procesado cancelado" : "Procesado fallido";
+            if (progressPercent) progressPercent.textContent = "100%";
 
             const failedLogText = logText || await getJobLog(job.id);
 
@@ -5432,15 +5440,17 @@ if (map) {
       try {
         stopPolling();
         hideDownloadButton();
-        processStageWrap.style.display = "grid";
+        if (processStageWrap) processStageWrap.style.display = "grid";
         resetStageClasses();
 
-        progressWrap.style.display = "block";
-        progressFill.style.width = "0%";
-        progressFill.classList.remove("error");
-      progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
-        progressLabel.textContent = "Creando proyecto...";
-        progressPercent.textContent = "0%";
+        if (progressWrap) progressWrap.style.display = "block";
+        if (progressFill) {
+          progressFill.style.width = "0%";
+          progressFill.classList.remove("error");
+          progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
+        }
+        if (progressLabel) progressLabel.textContent = "Creando proyecto...";
+        if (progressPercent) progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
 
         const createdJob = await createJob();
@@ -5464,9 +5474,9 @@ if (map) {
           await uploadBatch(jobId, batches[i], i, batches.length);
         }
 
-        progressFill.style.width = "100%";
-        progressLabel.textContent = "Subida completada";
-        progressPercent.textContent = "100%";
+        if (progressFill) progressFill.style.width = "100%";
+        if (progressLabel) progressLabel.textContent = "Subida completada";
+        if (progressPercent) progressPercent.textContent = "100%";
         jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
 
         await submitJob(jobId);
@@ -5474,15 +5484,15 @@ if (map) {
         if (datasetPanel) datasetPanel.style.display = "none";
 
         jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
-        progressLabel.textContent = "En cola...";
-        progressPercent.textContent = "0%";
+        if (progressLabel) progressLabel.textContent = "En cola...";
+        if (progressPercent) progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
         startPolling(jobId);
       } catch (error) {
         console.error(error);
         jobStatusEl.textContent = error.message || "Error durante la subida";
-        progressFill.classList.add("error");
-        progressLabel.textContent = "Fallido";
+        if (progressFill) progressFill.classList.add("error");
+        if (progressLabel) progressLabel.textContent = "Fallido";
       }
     }
 
