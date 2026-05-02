@@ -1019,6 +1019,94 @@
       line-height: 1.35;
     }
 
+
+
+    .process-live-hero {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,252,249,0.94));
+      border: 1px solid rgba(122, 171, 57, 0.28);
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 10px 24px rgba(24, 33, 29, 0.06);
+    }
+
+    .process-live-percent {
+      min-width: 98px;
+      font-size: 42px;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: -0.04em;
+      text-align: center;
+    }
+
+    .process-live-main-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .process-live-main-subtitle {
+      margin-top: 5px;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .process-live-timebox {
+      min-width: 235px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .process-live-timebox span {
+      display: block;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .process-live-timebox small {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+
+    .process-live-mini-progress {
+      grid-column: 1 / -1;
+      width: 100%;
+      height: 11px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf1ed;
+      border: 1px solid var(--border);
+    }
+
+    .process-live-mini-progress > div {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
     @media (max-width: 900px) {
       .process-live-hero {
         grid-template-columns: 1fr;
@@ -4831,11 +4919,54 @@ if (map) {
         .trim();
     }
 
-    function getLiveProgressFromJobAndLog(job, parsed) {
-      const fromLog = Number(parsed?.latestProgressPercent);
-      if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, fromLog));
+    function estimateProgressFromText(text, statusValue = "") {
+      const status = String(statusValue || "").toLowerCase();
+      if (status === "done" || status === "completed") return 100;
+      if (status === "failed" || status === "cancelled") return 100;
+
+      const m = String(text || "").toLowerCase();
+      if (!m) return 0;
+
+      if (m.includes("trabajo procesado correctamente") || m.includes("proceso ok")) return 100;
+      if (m.includes("informe") || m.includes("pdf report")) return 96;
+      if (m.includes("export")) return 92;
+      if (m.includes("textura") || m.includes("texture")) return 90;
+      if (m.includes("uv")) return 88;
+      if (m.includes("modelo") || m.includes("model")) return 84;
+      if (m.includes("dem")) return 82;
+      if (m.includes("nube") || m.includes("point cloud")) return 78;
+      if (m.includes("profundidad") || m.includes("depth")) return 65;
+      if (m.includes("limpiando") || m.includes("tie points") || m.includes("optimización") || m.includes("optimizacion")) return 50;
+      if (m.includes("alineando") || m.includes("align")) return 45;
+      if (m.includes("detectando") || m.includes("puntos clave") || m.includes("match")) return 30;
+      if (m.includes("importando") || m.includes("fotos añadidas")) return 15;
+      if (m.includes("preparando") || m.includes("iniciando")) return 10;
+      if (m.includes("cola")) return 5;
+      return 0;
+    }
+
+    function getDisplayProgressForJob(job, parsed) {
+      const statusValue = String(job?.status || "").toLowerCase();
+      const candidates = [];
+
       const fromJob = Number(job?.progress ?? 0);
-      return Number.isFinite(fromJob) ? Math.max(0, Math.min(100, fromJob)) : 0;
+      if (Number.isFinite(fromJob)) candidates.push(Math.max(0, Math.min(100, fromJob)));
+
+      const fromLog = Number(parsed?.latestProgressPercent);
+      if (Number.isFinite(fromLog)) candidates.push(Math.max(0, Math.min(100, fromLog)));
+
+      const estimatedFromParsed = estimateProgressFromText(parsed?.latestProgressMessage || parsed?.latestDetail || "", statusValue);
+      if (estimatedFromParsed > 0) candidates.push(estimatedFromParsed);
+
+      const estimatedFromJob = estimateProgressFromText(job?.message || job?.stage || "", statusValue);
+      if (estimatedFromJob > 0) candidates.push(estimatedFromJob);
+
+      if (!candidates.length) return 0;
+      return Math.max(0, Math.min(100, Math.round(Math.max(...candidates))));
+    }
+
+    function getLiveProgressFromJobAndLog(job, parsed) {
+      return getDisplayProgressForJob(job, parsed);
     }
 
     function renderLiveProcessSummary(job, logText, eta) {
@@ -4973,7 +5104,7 @@ if (map) {
         try {
           const job = await getJob(jobId);
 
-          const progress = Number(job.progress ?? 0);
+          const progress = getDisplayProgressForJob(job, window.__lastParsedProcessLog || null);
           const status = String(job.status ?? "").toLowerCase();
           if (datasetPanel) datasetPanel.style.display = "none";
           if (pricingPanel) pricingPanel.style.display = "none";
