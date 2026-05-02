@@ -4564,8 +4564,9 @@ if (map) {
 
     async function getJobLog(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`, {
-          cache: "no-store"
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/log?ts=${Date.now()}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" }
         });
         if (!response.ok) return null;
         return await response.text();
@@ -4631,6 +4632,7 @@ if (map) {
         warnings: [],
         latestProgressPercent: null,
         latestProgressMessage: "",
+        latestLiveMessage: "",
         currentStage: "",
         pointCount: "",
         latestDetail: ""
@@ -4704,15 +4706,60 @@ if (map) {
             info.steps.push(msg);
             info.latestProgressPercent = Number.isFinite(percent) ? percent : info.latestProgressPercent;
             info.latestProgressMessage = msg;
+            info.latestLiveMessage = msg;
             const stage = inferStageFromText(msg);
             if (stage) info.currentStage = stage;
           }
           continue;
         }
+        if (/^matchPhotos completado/i.test(line)) {
+          info.currentStage = "matching";
+          info.latestDetail = "Puntos clave detectados";
+          info.latestLiveMessage = "Puntos clave detectados";
+          continue;
+        }
+        if (/^alignCameras completado/i.test(line)) {
+          info.currentStage = "aligning";
+          info.latestDetail = "Alineación de cámaras completada";
+          info.latestLiveMessage = "Alineación de cámaras completada";
+          continue;
+        }
+        if (/^buildDepthMaps completado/i.test(line)) {
+          info.currentStage = "depth";
+          info.latestDetail = "Mapas de profundidad completados";
+          info.latestLiveMessage = "Mapas de profundidad completados";
+          continue;
+        }
+        if (/^buildPointCloud completado/i.test(line)) {
+          info.currentStage = "pointcloud";
+          info.latestDetail = "Nube de puntos completada";
+          info.latestLiveMessage = "Nube de puntos completada";
+          continue;
+        }
+        if (/^buildModel completado/i.test(line)) {
+          info.currentStage = "export";
+          info.latestDetail = "Modelo 3D completado";
+          info.latestLiveMessage = "Modelo 3D completado";
+          continue;
+        }
+        if (/^buildUV completado/i.test(line)) {
+          info.currentStage = "export";
+          info.latestDetail = "UV del modelo completado";
+          info.latestLiveMessage = "Preparando textura final";
+          continue;
+        }
+        if (/^buildTexture completado/i.test(line)) {
+          info.currentStage = "export";
+          info.latestDetail = "Textura completada";
+          info.latestLiveMessage = "Textura final completada";
+          continue;
+        }
+
         const inferred = inferStageFromText(line);
         if (inferred) {
           info.currentStage = inferred || info.currentStage;
           info.latestDetail = line;
+          if (!info.latestLiveMessage) info.latestLiveMessage = line;
         }
       }
 
@@ -4949,10 +4996,10 @@ if (map) {
       if (p >= 100 || msg.includes("correctamente")) mapped = 100;
       else if (p >= 96 || msg.includes("informe")) mapped = 98;
       else if (p >= 92 || msg.includes("export")) mapped = 94;
-      else if (p >= 86 || msg.includes("textura")) mapped = 86;
-      else if (p >= 84 || msg.includes("modelo")) mapped = 74;
-      else if (p >= 82 || msg.includes("dem")) mapped = 70;
-      else if (p >= 78 || msg.includes("nube")) mapped = q.includes("max") || q.includes("máxima") ? 40 : 48;
+      else if (p >= 86 || msg.includes("textura")) mapped = q.includes("max") || q.includes("máxima") ? 88 : 86;
+      else if (p >= 84 || msg.includes("modelo")) mapped = q.includes("max") || q.includes("máxima") ? 74 : 78;
+      else if (p >= 82 || msg.includes("dem")) mapped = q.includes("max") || q.includes("máxima") ? 70 : 72;
+      else if (p >= 78 || msg.includes("nube")) mapped = q.includes("max") || q.includes("máxima") ? 45 : 52;
       else if (p >= 65 || msg.includes("profundidad")) mapped = q.includes("max") || q.includes("máxima") ? 18 : 25;
       else if (p >= 50 || msg.includes("limpiando")) mapped = 8;
       else if (p >= 45 || msg.includes("alineando")) mapped = 6;
@@ -5023,7 +5070,7 @@ if (map) {
         ? parsed.requestedOutputs.map((x) => formatOutputLabel(String(x).trim().toLowerCase())).join(" · ")
         : "Inspección estándar";
 
-      const latestFromLog = parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "";
+      const latestFromLog = parsed.latestLiveMessage ? cleanLiveStepText(parsed.latestLiveMessage) : (parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "");
       const stage = parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || "");
       const stageTitleMap = {
         matching: "Preparando proyecto",
