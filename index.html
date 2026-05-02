@@ -1059,6 +1059,15 @@
       font-weight: 700;
     }
 
+    .process-live-main-meta {
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+      font-weight: 700;
+      opacity: 0.92;
+    }
+
     .process-live-timebox {
       min-width: 235px;
       display: grid;
@@ -4460,7 +4469,7 @@ if (map) {
     }
 
     async function getJob(jobId) {
-      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}?_=${Date.now()}`, {
         cache: "no-store"
       });
 
@@ -4473,7 +4482,7 @@ if (map) {
 
     async function getJobEta(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta?_=${Date.now()}`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4487,7 +4496,7 @@ if (map) {
 
     async function getJobLog(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/log?_=${Date.now()}`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4969,6 +4978,34 @@ if (map) {
       return getDisplayProgressForJob(job, parsed);
     }
 
+    function getDynamicRemainingText(job, progress) {
+      const status = String(job?.status || "").toLowerCase();
+      if (status === "done" || status === "completed") return "Finalizado";
+      if (status === "failed" || status === "cancelled") return "—";
+
+      const pct = Math.max(0, Math.min(100, Number(progress || 0)));
+      const elapsedSeconds = getElapsedSecondsForJob(job);
+
+      if (!elapsedSeconds || elapsedSeconds <= 0 || pct <= 2) return "Calculando";
+      if (pct >= 99) return "Finalizando";
+
+      const remainingSeconds = Math.max(0, Math.round((elapsedSeconds / pct) * (100 - pct)));
+      if (!remainingSeconds || remainingSeconds < 60) return "Menos de 1 min";
+      return formatDurationSeconds(remainingSeconds);
+    }
+
+    function getFriendlyPhaseHint(text) {
+      const m = String(text || "").toLowerCase();
+      if (m.includes("profundidad") || m.includes("depth")) return "Fase pesada: cálculo de geometría base";
+      if (m.includes("nube") || m.includes("point cloud")) return "Creando la nube de puntos del proyecto";
+      if (m.includes("textura") || m.includes("texture")) return "Generando textura final";
+      if (m.includes("modelo") || m.includes("model")) return "Construyendo el modelo 3D";
+      if (m.includes("export") || m.includes("informe") || m.includes("pdf")) return "Preparando archivos de entrega";
+      if (m.includes("alineando") || m.includes("align")) return "Calculando posiciones de cámara";
+      if (m.includes("detectando") || m.includes("match")) return "Buscando puntos comunes entre fotos";
+      return "Procesando";
+    }
+
     function renderLiveProcessSummary(job, logText, eta) {
       const parsed = parseProcessLog(logText || "");
       const statusValue = String(job?.status || "").toLowerCase();
@@ -4987,15 +5024,15 @@ if (map) {
       if (isGenericProcessMessage(phaseText)) phaseText = fallbackPhaseText;
       const detailText = parsed.latestDetail ? cleanLiveStepText(parsed.latestDetail) : "";
 
-      const etaText = eta && eta.ok
-        ? (eta.total_estimated_human || "Calculando")
-        : "Calculando";
+      const remainingText = getDynamicRemainingText(job, liveProgress);
 
       const elapsedSeconds = getElapsedSecondsForJob(job);
       const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
       const friendlyStatus = getFriendlyStatusLabel(statusValue);
       const shortJobId = job?.id ? String(job.id).slice(0, 8) : "—";
       const projectName = job?.project_name || job?.name || "Proyecto Xproces";
+      const phaseHint = getFriendlyPhaseHint(phaseText);
+      const compactMeta = [stripJobId(projectName), photosText, qualityText, outputText].filter(Boolean).join(" · ");
 
       const visibleItems = [];
       const pushItem = (title, subtitle = "") => {
@@ -5021,51 +5058,15 @@ if (map) {
             <div>
               <div class="process-live-main-title">${escapeHtml(phaseText)}</div>
               <div class="process-live-main-subtitle">
-                ${detailText && detailText !== phaseText ? `${escapeHtml(detailText)} · ` : ""}${escapeHtml(friendlyStatus)}
+                ${escapeHtml(phaseHint)} · ${escapeHtml(friendlyStatus)}
               </div>
+              <div class="process-live-main-meta">${escapeHtml(compactMeta)}</div>
             </div>
             <div class="process-live-timebox">
               <span><small>Transcurrido</small>${escapeHtml(elapsedText)}</span>
-              <span><small>Restante aprox.</small>${escapeHtml(etaText)}</span>
+              <span><small>Restante aprox.</small>${escapeHtml(remainingText)}</span>
             </div>
             <div class="process-live-mini-progress"><div style="width:${Math.max(0, Math.min(100, liveProgress))}%"></div></div>
-          </div>
-
-          <div class="process-live-head">
-            <div class="process-live-card">
-              <div class="process-live-card-label">Proyecto</div>
-              <div class="process-live-card-value">${escapeHtml(stripJobId(projectName))}</div>
-              <div class="process-live-card-value small">ID ${escapeHtml(shortJobId)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Fotos</div>
-              <div class="process-live-card-value">${escapeHtml(photosText)}</div>
-              <div class="process-live-card-value small">Calidad ${escapeHtml(qualityText)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Entrega</div>
-              <div class="process-live-card-value small">${escapeHtml(outputText)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Estado</div>
-              <div class="process-live-card-value">${escapeHtml(friendlyStatus)}</div>
-              <div class="process-live-card-value small">Progreso ${escapeHtml(String(liveProgress))}%</div>
-            </div>
-          </div>
-          <div class="process-live-checklist">
-            ${recentItems.map((item, index) => {
-              const isLast = index === recentItems.length - 1 && !(statusValue === "done" || statusValue === "completed");
-              const cls = isLast ? "active" : "done";
-              return `
-                <div class="process-live-item ${cls}">
-                  <div class="process-live-dot"></div>
-                  <div>
-                    <div class="process-live-title">${escapeHtml(item.title)}</div>
-                    ${item.subtitle ? `<div class="process-live-subtitle">${escapeHtml(item.subtitle)}</div>` : ""}
-                  </div>
-                </div>
-              `;
-            }).join("")}
           </div>
         </div>
       `;
