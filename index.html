@@ -1020,6 +1020,14 @@
     }
 
     @media (max-width: 900px) {
+      .process-live-hero {
+        grid-template-columns: 1fr;
+      }
+
+      .process-live-timebox {
+        min-width: 0;
+      }
+
       .process-live-head,
       .process-live-checklist {
         grid-template-columns: 1fr;
@@ -4465,6 +4473,22 @@ if (map) {
       return s || "Procesando";
     }
 
+
+    function getStageDisplayName(stage) {
+      const s = String(stage || "").toLowerCase();
+      if (s === "matching") return "Alineación inicial";
+      if (s === "aligning") return "Alineando cámaras";
+      if (s === "depth") return "Generando mapas de profundidad";
+      if (s === "pointcloud") return "Generando nube de puntos";
+      if (s === "export") return "Exportando archivos finales";
+      return "Procesando proyecto";
+    }
+
+    function isGenericProcessMessage(text) {
+      const value = String(text || "").trim().toLowerCase();
+      return !value || value === "procesando" || value === "procesando proyecto" || value === "processing" || value === "running";
+    }
+
     function stripJobId(value) {
       return String(value || "").replace(/^Job\s+[a-f0-9-]+\s*/i, "").trim();
     }
@@ -4826,7 +4850,10 @@ if (map) {
 
       const phaseList = summarizeLogForUser(logText || "").map(cleanLiveStepText).filter(Boolean);
       const latestFromLog = parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "";
-      const phaseText = latestFromLog || (phaseList.length ? phaseList[phaseList.length - 1] : (job?.message || "Procesando proyecto"));
+      const inferredStage = mapJobToStage(job, parsed);
+      const fallbackPhaseText = getStageDisplayName(inferredStage);
+      let phaseText = latestFromLog || (phaseList.length ? phaseList[phaseList.length - 1] : (job?.message || "Procesando proyecto"));
+      if (isGenericProcessMessage(phaseText)) phaseText = fallbackPhaseText;
       const detailText = parsed.latestDetail ? cleanLiveStepText(parsed.latestDetail) : "";
 
       const etaText = eta && eta.ok
@@ -4858,6 +4885,21 @@ if (map) {
 
       return `
         <div class="process-live-list">
+          <div class="process-live-hero">
+            <div class="process-live-percent">${escapeHtml(String(liveProgress))}%</div>
+            <div>
+              <div class="process-live-main-title">${escapeHtml(phaseText)}</div>
+              <div class="process-live-main-subtitle">
+                ${detailText && detailText !== phaseText ? `${escapeHtml(detailText)} · ` : ""}${escapeHtml(friendlyStatus)}
+              </div>
+            </div>
+            <div class="process-live-timebox">
+              <span><small>Transcurrido</small>${escapeHtml(elapsedText)}</span>
+              <span><small>Restante aprox.</small>${escapeHtml(etaText)}</span>
+            </div>
+            <div class="process-live-mini-progress"><div style="width:${Math.max(0, Math.min(100, liveProgress))}%"></div></div>
+          </div>
+
           <div class="process-live-head">
             <div class="process-live-card">
               <div class="process-live-card-label">Proyecto</div>
@@ -4865,24 +4907,18 @@ if (map) {
               <div class="process-live-card-value small">ID ${escapeHtml(shortJobId)}</div>
             </div>
             <div class="process-live-card">
-              <div class="process-live-card-label">Datos</div>
+              <div class="process-live-card-label">Fotos</div>
               <div class="process-live-card-value">${escapeHtml(photosText)}</div>
               <div class="process-live-card-value small">Calidad ${escapeHtml(qualityText)}</div>
             </div>
             <div class="process-live-card">
-              <div class="process-live-card-label">Fase actual</div>
-              <div class="process-live-card-value">${escapeHtml(phaseText)}</div>
-              ${detailText && detailText !== phaseText ? `<div class="process-live-card-value small">${escapeHtml(detailText)}</div>` : ""}
+              <div class="process-live-card-label">Entrega</div>
+              <div class="process-live-card-value small">${escapeHtml(outputText)}</div>
             </div>
             <div class="process-live-card">
-              <div class="process-live-card-label">Progreso</div>
-              <div class="process-live-card-value">${escapeHtml(String(liveProgress))}%</div>
-              <div class="process-live-card-value small">${escapeHtml(friendlyStatus)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Tiempo</div>
-              <div class="process-live-card-value">${escapeHtml(elapsedText)}</div>
-              <div class="process-live-card-value small">ETA: ${escapeHtml(etaText)}</div>
+              <div class="process-live-card-label">Estado</div>
+              <div class="process-live-card-value">${escapeHtml(friendlyStatus)}</div>
+              <div class="process-live-card-value small">Progreso ${escapeHtml(String(liveProgress))}%</div>
             </div>
           </div>
           <div class="process-live-checklist">
@@ -4955,7 +4991,10 @@ if (map) {
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
-          else progressLabel.textContent = message || "Procesando";
+          else {
+            const stageName = getStageDisplayName(mapJobToStage(job, window.__lastParsedProcessLog || null));
+            progressLabel.textContent = isGenericProcessMessage(message) ? stageName : (message || stageName);
+          }
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           let logText = null;
