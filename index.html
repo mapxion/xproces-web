@@ -916,212 +916,6 @@
       font-size: 14px;
     }
 
-    .process-live-list {
-      display: grid;
-      gap: 12px;
-      white-space: normal;
-    }
-
-    .process-live-head {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .process-live-card {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      min-height: 78px;
-    }
-
-    .process-live-card-label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 5px;
-      font-weight: 800;
-    }
-
-    .process-live-card-value {
-      font-size: 15px;
-      color: var(--text);
-      font-weight: 800;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
-    .process-live-card-value.small {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-    }
-
-    .process-live-checklist {
-      display: grid;
-      gap: 8px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .process-live-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: rgba(255,255,255,0.72);
-      color: var(--muted);
-      min-height: 48px;
-    }
-
-    .process-live-item.active {
-      background: rgba(184, 255, 26, 0.12);
-      border-color: rgba(122, 171, 57, 0.45);
-      color: var(--text);
-    }
-
-    .process-live-item.done {
-      background: rgba(34, 163, 74, 0.06);
-      border-color: rgba(34, 163, 74, 0.18);
-      color: var(--text);
-    }
-
-    .process-live-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #c9d3cc;
-      flex: 0 0 10px;
-      margin-top: 4px;
-    }
-
-    .process-live-item.active .process-live-dot {
-      background: #95db00;
-    }
-
-    .process-live-item.done .process-live-dot {
-      background: var(--ok);
-    }
-
-    .process-live-title {
-      font-size: 13px;
-      font-weight: 800;
-      line-height: 1.35;
-    }
-
-    .process-live-subtitle {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-      line-height: 1.35;
-    }
-
-
-
-    .process-live-hero {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: 18px;
-      align-items: center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,252,249,0.94));
-      border: 1px solid rgba(122, 171, 57, 0.28);
-      border-radius: 20px;
-      padding: 18px 20px;
-      box-shadow: 0 10px 24px rgba(24, 33, 29, 0.06);
-    }
-
-    .process-live-percent {
-      min-width: 98px;
-      font-size: 42px;
-      line-height: 1;
-      font-weight: 900;
-      color: var(--accent);
-      letter-spacing: -0.04em;
-      text-align: center;
-    }
-
-    .process-live-main-title {
-      font-size: 22px;
-      font-weight: 900;
-      color: var(--text);
-      line-height: 1.2;
-      word-break: break-word;
-    }
-
-    .process-live-main-subtitle {
-      margin-top: 5px;
-      font-size: 13px;
-      line-height: 1.35;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .process-live-timebox {
-      min-width: 235px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .process-live-timebox span {
-      display: block;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 900;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-
-    .process-live-timebox small {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      line-height: 1;
-    }
-
-    .process-live-mini-progress {
-      grid-column: 1 / -1;
-      width: 100%;
-      height: 11px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: #edf1ed;
-      border: 1px solid var(--border);
-    }
-
-    .process-live-mini-progress > div {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-2), var(--accent));
-      border-radius: 999px;
-      transition: width 0.25s ease;
-    }
-
-    @media (max-width: 900px) {
-      .process-live-hero {
-        grid-template-columns: 1fr;
-      }
-
-      .process-live-timebox {
-        min-width: 0;
-      }
-
-      .process-live-head,
-      .process-live-checklist {
-        grid-template-columns: 1fr;
-      }
-    }
-
     .process-summary {
       display: grid;
       gap: 10px;
@@ -2183,7 +1977,6 @@ function stripNullCharsDeep(value) {
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
     let selectedHistoryJobId = "";
-    let activeProcessingJobId = "";
 
     const mainLayout = document.getElementById("mainLayout");
     const drop = document.getElementById("drop");
@@ -2826,11 +2619,6 @@ if (statusNow === "done" || statusNow === "completed") {
 
     async function renderStoredJobs() {
       if (!jobsPanel || !jobsList || !jobsEmpty) return;
-
-      if (activeProcessingJobId) {
-        jobsPanel.classList.add("jobs-panel-hidden");
-        return;
-      }
 
       const user = typeof getStoredUser === "function" ? getStoredUser() : null;
       if (!user || !user.id) {
@@ -4466,7 +4254,7 @@ if (map) {
     }
 
     async function getJob(jobId) {
-      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}?_=${Date.now()}`, {
         cache: "no-store"
       });
 
@@ -4479,7 +4267,7 @@ if (map) {
 
     async function getJobEta(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/eta?_=${Date.now()}`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4493,7 +4281,7 @@ if (map) {
 
     async function getJobLog(jobId) {
       try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}/log`, {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/log?_=${Date.now()}`, {
           cache: "no-store"
         });
         if (!response.ok) return null;
@@ -4975,106 +4763,32 @@ if (map) {
       return getDisplayProgressForJob(job, parsed);
     }
 
-    function renderLiveProcessSummary(job, logText, eta) {
-      const parsed = parseProcessLog(logText || "");
-      const statusValue = String(job?.status || "").toLowerCase();
-      const liveProgress = Math.round(getLiveProgressFromJobAndLog(job, parsed));
-      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
-      const photosText = parsed.photos ? `${parsed.photos} fotos` : "Fotos en proceso";
-      const outputText = parsed.requestedOutputs.length
-        ? parsed.requestedOutputs.map((x) => formatOutputLabel(String(x).trim().toLowerCase())).join(" · ")
-        : "Inspección estándar";
+    function getDynamicRemainingText(job, progress) {
+      const status = String(job?.status || "").toLowerCase();
+      if (status === "done" || status === "completed") return "Finalizado";
+      if (status === "failed" || status === "cancelled") return "—";
 
-      const phaseList = summarizeLogForUser(logText || "").map(cleanLiveStepText).filter(Boolean);
-      const latestFromLog = parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "";
-      const inferredStage = mapJobToStage(job, parsed);
-      const fallbackPhaseText = getStageDisplayName(inferredStage);
-      let phaseText = latestFromLog || (phaseList.length ? phaseList[phaseList.length - 1] : (job?.message || "Procesando proyecto"));
-      if (isGenericProcessMessage(phaseText)) phaseText = fallbackPhaseText;
-      const detailText = parsed.latestDetail ? cleanLiveStepText(parsed.latestDetail) : "";
-
-      const etaText = eta && eta.ok
-        ? (eta.total_estimated_human || "Calculando")
-        : "Calculando";
-
+      const pct = Math.max(0, Math.min(100, Number(progress || 0)));
       const elapsedSeconds = getElapsedSecondsForJob(job);
-      const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
-      const friendlyStatus = getFriendlyStatusLabel(statusValue);
-      const shortJobId = job?.id ? String(job.id).slice(0, 8) : "—";
-      const projectName = job?.project_name || job?.name || "Proyecto Xproces";
 
-      const visibleItems = [];
-      const pushItem = (title, subtitle = "") => {
-        const cleanTitle = cleanLiveStepText(title);
-        const cleanSubtitle = cleanLiveStepText(subtitle);
-        if (!cleanTitle) return;
-        if (!visibleItems.some((x) => x.title === cleanTitle)) {
-          visibleItems.push({ title: cleanTitle, subtitle: cleanSubtitle });
-        }
-      };
+      if (!elapsedSeconds || elapsedSeconds <= 0 || pct <= 2) return "Calculando";
+      if (pct >= 99) return "Finalizando";
 
-      phaseList.forEach((item) => pushItem(item));
-      if (parsed.alignedCameras) pushItem(`Cámaras alineadas: ${parsed.alignedCameras}`);
-      if (parsed.latestDetail && !parsed.latestDetail.includes("Cámaras alineadas")) pushItem(parsed.latestDetail);
-      parsed.generatedOutputs.forEach((item) => pushItem(`${formatOutputLabel(String(item).trim().toLowerCase())} exportado`));
+      const remainingSeconds = Math.max(0, Math.round((elapsedSeconds / pct) * (100 - pct)));
+      if (!remainingSeconds || remainingSeconds < 60) return "Menos de 1 min";
+      return formatDurationSeconds(remainingSeconds);
+    }
 
-      const recentItems = visibleItems.slice(-8);
-
-      return `
-        <div class="process-live-list">
-          <div class="process-live-hero">
-            <div class="process-live-percent">${escapeHtml(String(liveProgress))}%</div>
-            <div>
-              <div class="process-live-main-title">${escapeHtml(phaseText)}</div>
-              <div class="process-live-main-subtitle">
-                ${detailText && detailText !== phaseText ? `${escapeHtml(detailText)} · ` : ""}${escapeHtml(friendlyStatus)}
-              </div>
-            </div>
-            <div class="process-live-timebox">
-              <span><small>Transcurrido</small>${escapeHtml(elapsedText)}</span>
-              <span><small>Restante aprox.</small>${escapeHtml(etaText)}</span>
-            </div>
-            <div class="process-live-mini-progress"><div style="width:${Math.max(0, Math.min(100, liveProgress))}%"></div></div>
-          </div>
-
-          <div class="process-live-head">
-            <div class="process-live-card">
-              <div class="process-live-card-label">Proyecto</div>
-              <div class="process-live-card-value">${escapeHtml(stripJobId(projectName))}</div>
-              <div class="process-live-card-value small">ID ${escapeHtml(shortJobId)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Fotos</div>
-              <div class="process-live-card-value">${escapeHtml(photosText)}</div>
-              <div class="process-live-card-value small">Calidad ${escapeHtml(qualityText)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Entrega</div>
-              <div class="process-live-card-value small">${escapeHtml(outputText)}</div>
-            </div>
-            <div class="process-live-card">
-              <div class="process-live-card-label">Estado</div>
-              <div class="process-live-card-value">${escapeHtml(friendlyStatus)}</div>
-              <div class="process-live-card-value small">Progreso ${escapeHtml(String(liveProgress))}%</div>
-            </div>
-          </div>
-          <div class="process-live-checklist">
-            ${recentItems.map((item, index) => {
-              const isLast = index === recentItems.length - 1 && !(statusValue === "done" || statusValue === "completed");
-              const cls = isLast ? "active" : "done";
-              return `
-                <div class="process-live-item ${cls}">
-                  <div class="process-live-dot"></div>
-                  <div>
-                    <div class="process-live-title">${escapeHtml(item.title)}</div>
-                    ${item.subtitle ? `<div class="process-live-subtitle">${escapeHtml(item.subtitle)}</div>` : ""}
-                  </div>
-                </div>
-              `;
-            }).join("")}
-          </div>
-        </div>
-      `;
+    function getFriendlyPhaseHint(text) {
+      const m = String(text || "").toLowerCase();
+      if (m.includes("profundidad") || m.includes("depth")) return "Fase pesada: cálculo de geometría base";
+      if (m.includes("nube") || m.includes("point cloud")) return "Creando la nube de puntos del proyecto";
+      if (m.includes("textura") || m.includes("texture")) return "Generando textura final";
+      if (m.includes("modelo") || m.includes("model")) return "Construyendo el modelo 3D";
+      if (m.includes("export") || m.includes("informe") || m.includes("pdf")) return "Preparando archivos de entrega";
+      if (m.includes("alineando") || m.includes("align")) return "Calculando posiciones de cámara";
+      if (m.includes("detectando") || m.includes("match")) return "Buscando puntos comunes entre fotos";
+      return "Procesando";
     }
 
     async function buildQueuedOrRunningMessage(job) {
@@ -5105,12 +4819,6 @@ if (map) {
 
     function startPolling(jobId) {
       stopPolling();
-      activeProcessingJobId = jobId || "";
-      if (jobsPanel) jobsPanel.classList.add("jobs-panel-hidden");
-      if (jobStatusEl) {
-        jobStatusEl.style.display = "none";
-        jobStatusEl.innerHTML = "";
-      }
 
       pollTimer = setInterval(async () => {
         try {
@@ -5182,17 +4890,11 @@ if (map) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            // Solo usamos el bloque superior: barra, fases y configuración.
-            // Evitamos duplicar porcentaje, fase, proyecto y entrega en el bloque inferior.
-            if (jobStatusEl) {
-              jobStatusEl.style.display = "none";
-              jobStatusEl.innerHTML = "";
-            }
+            // El bloque inferior duplicado del proceso se ha eliminado.
+            // Durante el procesado solo se usa el bloque superior: barra, fases, porcentaje y configuración.
+            jobStatusEl.textContent = "";
           } else {
-            if (jobStatusEl) {
-              jobStatusEl.style.display = "none";
-              jobStatusEl.textContent = "";
-            }
+            jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
           if (status === "done" || status === "completed") {
@@ -5227,10 +4929,7 @@ if (map) {
             const failedLogText = logText || await getJobLog(job.id);
 
             if (failedLogText) {
-              if (jobStatusEl) {
-                jobStatusEl.style.display = "none";
-                jobStatusEl.innerHTML = "";
-              }
+              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
             } else {
               const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
