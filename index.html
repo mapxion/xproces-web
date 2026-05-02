@@ -924,7 +924,7 @@
 
     .process-live-head {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -4429,6 +4429,46 @@ if (map) {
       return `${seconds} s`;
     }
 
+    function getJobStartDate(job) {
+      const candidates = [job?.started_at, job?.processing_started_at, job?.created_at];
+      for (const value of candidates) {
+        if (!value) continue;
+        const d = new Date(value);
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+      return null;
+    }
+
+    function getElapsedSecondsForJob(job) {
+      const start = getJobStartDate(job);
+      if (!start) return 0;
+
+      const status = String(job?.status || "").toLowerCase();
+      const endValue = (status === "done" || status === "completed" || status === "failed" || status === "cancelled")
+        ? (job?.finished_at || job?.updated_at)
+        : null;
+
+      const end = endValue ? new Date(endValue) : new Date();
+      if (Number.isNaN(end.getTime())) return 0;
+      return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
+    }
+
+    function getFriendlyStatusLabel(status) {
+      const s = String(status || "").toLowerCase();
+      if (s === "queued") return "En cola";
+      if (s === "receiving") return "Recibiendo fotos";
+      if (s === "running") return "Procesando";
+      if (s === "done" || s === "completed") return "Finalizado";
+      if (s === "failed") return "Error";
+      if (s === "cancelled") return "Cancelado";
+      if (s === "created") return "Creado";
+      return s || "Procesando";
+    }
+
+    function stripJobId(value) {
+      return String(value || "").replace(/^Job\s+[a-f0-9-]+\s*/i, "").trim();
+    }
+
     function stripLogPrefix(line) {
       return String(line || "").replace(/^\[[^\]]+\]\s*/, "").trim();
     }
@@ -4793,6 +4833,12 @@ if (map) {
         ? (eta.total_estimated_human || "Calculando")
         : "Calculando";
 
+      const elapsedSeconds = getElapsedSecondsForJob(job);
+      const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
+      const friendlyStatus = getFriendlyStatusLabel(statusValue);
+      const shortJobId = job?.id ? String(job.id).slice(0, 8) : "—";
+      const projectName = job?.project_name || job?.name || "Proyecto Xproces";
+
       const visibleItems = [];
       const pushItem = (title, subtitle = "") => {
         const cleanTitle = cleanLiveStepText(title);
@@ -4814,7 +4860,12 @@ if (map) {
         <div class="process-live-list">
           <div class="process-live-head">
             <div class="process-live-card">
-              <div class="process-live-card-label">Fotos</div>
+              <div class="process-live-card-label">Proyecto</div>
+              <div class="process-live-card-value">${escapeHtml(stripJobId(projectName))}</div>
+              <div class="process-live-card-value small">ID ${escapeHtml(shortJobId)}</div>
+            </div>
+            <div class="process-live-card">
+              <div class="process-live-card-label">Datos</div>
               <div class="process-live-card-value">${escapeHtml(photosText)}</div>
               <div class="process-live-card-value small">Calidad ${escapeHtml(qualityText)}</div>
             </div>
@@ -4824,13 +4875,13 @@ if (map) {
               ${detailText && detailText !== phaseText ? `<div class="process-live-card-value small">${escapeHtml(detailText)}</div>` : ""}
             </div>
             <div class="process-live-card">
-              <div class="process-live-card-label">Progreso real</div>
+              <div class="process-live-card-label">Progreso</div>
               <div class="process-live-card-value">${escapeHtml(String(liveProgress))}%</div>
-              <div class="process-live-card-value small">${escapeHtml(statusValue === "queued" ? "En cola" : "Procesando")}</div>
+              <div class="process-live-card-value small">${escapeHtml(friendlyStatus)}</div>
             </div>
             <div class="process-live-card">
-              <div class="process-live-card-label">Entrega</div>
-              <div class="process-live-card-value small">${escapeHtml(outputText)}</div>
+              <div class="process-live-card-label">Tiempo</div>
+              <div class="process-live-card-value">${escapeHtml(elapsedText)}</div>
               <div class="process-live-card-value small">ETA: ${escapeHtml(etaText)}</div>
             </div>
           </div>
@@ -4904,7 +4955,7 @@ if (map) {
           else if (status === "cancelled") progressLabel.textContent = "Cancelado";
           else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
           else if (status === "queued") progressLabel.textContent = "En cola";
-          else progressLabel.textContent = "Procesando";
+          else progressLabel.textContent = message || "Procesando";
           progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
 
           let logText = null;
