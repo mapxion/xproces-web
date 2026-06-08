@@ -1857,6 +1857,32 @@
     .tams-info{margin-top:10px;font-size:13px;line-height:1.4;color:var(--muted);font-weight:700;text-align:center;}
     @media(max-width:760px){.project-type-grid,.tams-fields-grid{grid-template-columns:1fr;}}
 
+
+    /* Xproces V1: solo mostramos los entregables definidos para cada tipo de proyecto */
+    #topConfigRow {
+      grid-template-columns: 1fr !important;
+      justify-items: center;
+    }
+
+    #topConfigRow .top-config-card:nth-child(2) {
+      display: none !important;
+    }
+
+    #manualOutputsPanel .output-item.xproces-output-hidden,
+    #manualOutputsPanel .outputs-section.xproces-output-hidden {
+      display: none !important;
+    }
+
+    #manualOutputsPanel .outputs-section-title {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    #manualOutputsPanel .outputs-section {
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+
   </style>
 </head>
 <body>
@@ -2109,10 +2135,10 @@
                       <div class="outputs-section">
                         <div class="outputs-section-title">Ortofotos, elevación y documentación</div>
                         <div class="outputs-group">
-                          <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_tif">Ortomosaico TIFF</button><div class="output-tooltip"><strong>Ortomosaico TIFF</strong>Imagen corregida geométricamente, útil para una vista cenital precisa.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_tif">Ortofoto</button><div class="output-tooltip"><strong>Ortofoto GeoTIFF</strong>Imagen corregida geométricamente, útil para una vista cenital precisa.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_jpg">Ortomosaico JPG</button><div class="output-tooltip"><strong>Ortomosaico JPG</strong>Versión más ligera del ortomosaico, buena para consulta rápida.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DSM TIFF</button><div class="output-tooltip"><strong>DSM TIFF</strong>Modelo digital de superficie para topografía y cartografía.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="dtm_tif">DTM TIFF</button><div class="output-tooltip"><strong>DTM TIFF</strong>Modelo digital del terreno.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DSM</button><div class="output-tooltip"><strong>DSM</strong>Modelo digital de superficie para topografía y cartografía.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="dtm_tif">DTM</button><div class="output-tooltip"><strong>DTM</strong>Modelo digital del terreno.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="contours_dxf">Curvas de nivel</button><div class="output-tooltip"><strong>Curvas de nivel</strong>Entrega de curvas para trabajo topográfico.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="pdf_report">Informe PDF</button><div class="output-tooltip"><strong>Informe PDF</strong>Resumen del proyecto y del procesado para documentación y entrega.</div></div>
                         </div>
@@ -2465,6 +2491,7 @@ function stripNullCharsDeep(value) {
         btn.classList.toggle("active", selectedProjectType && btn.dataset.projectType === selectedProjectType);
       });
       applyProjectTypeVisibility();
+      applyVisibleOutputsForProjectType();
       applyDefaultOutputsForProjectType();
       updateProcessSelectionSummary();
       if (refresh) refreshPricingPreviewDebounced();
@@ -2500,6 +2527,38 @@ function stripNullCharsDeep(value) {
         btn.classList.toggle("active", wanted.has(btn.dataset.output));
       });
     }
+
+    function applyVisibleOutputsForProjectType() {
+      const allowedByType = {
+        fotogrametria: ["las", "orthomosaic_tif", "dem_tif", "dtm_tif", "contours_dxf"],
+        "3d": ["mesh_obj", "glb", "mesh_fbx", "textures"],
+        tams: []
+      };
+
+      const allowed = new Set(allowedByType[selectedProjectType] || []);
+
+      document.querySelectorAll("#manualOutputsPanel .output-item").forEach((item) => {
+        const btn = item.querySelector("[data-output]");
+        const visible = !!btn && allowed.has(btn.dataset.output);
+        item.classList.toggle("xproces-output-hidden", !visible);
+        if (!visible && btn) btn.classList.remove("active");
+      });
+
+      document.querySelectorAll("#manualOutputsPanel .outputs-section").forEach((section) => {
+        const hasVisible = Array.from(section.querySelectorAll(".output-item"))
+          .some((item) => !item.classList.contains("xproces-output-hidden"));
+        section.classList.toggle("xproces-output-hidden", !hasVisible);
+      });
+
+      const note = document.getElementById("outputsModeNote");
+      if (note && selectedProjectType === "fotogrametria") {
+        note.textContent = "Seleccione los entregables topográficos que quiere recibir.";
+      }
+      if (note && selectedProjectType === "3d") {
+        note.textContent = "Seleccione los entregables 3D que quiere recibir.";
+      }
+    }
+
 
     document.querySelectorAll(".project-type-card").forEach((btn) => {
       btn.addEventListener("click", () => setSelectedProjectType(btn.dataset.projectType || ""));
@@ -2558,7 +2617,13 @@ function stripNullCharsDeep(value) {
       const el = document.getElementById("outputsModeNote");
       if (!el) return;
       if (getSelectedOutputMode() === "manual") {
-        el.textContent = "Está activada la selección manual. Puede marcar exactamente los archivos que quiera recibir.";
+        if (selectedProjectType === "fotogrametria") {
+          el.textContent = "Seleccione los entregables topográficos que quiere recibir.";
+        } else if (selectedProjectType === "3d") {
+          el.textContent = "Seleccione los entregables 3D que quiere recibir.";
+        } else {
+          el.textContent = "Está activada la selección manual. Puede marcar exactamente los archivos que quiera recibir.";
+        }
       } else if (getSelectedOutputMode() === "preset") {
         const presetTexts = {
           inspection_standard: "Paquetes prediseñados",
