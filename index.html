@@ -2402,6 +2402,7 @@ function stripNullCharsDeep(value) {
     const projectTypeWrap = document.getElementById("projectTypeWrap");
     const tamsFieldsWrap = document.getElementById("tamsFieldsWrap");
     let selectedProjectType = "";
+    let datasetCanUpload = false;
 
     const modalBackdrop = document.getElementById("modalBackdrop");
     const modalBox = document.getElementById("modalBox");
@@ -2471,6 +2472,7 @@ function stripNullCharsDeep(value) {
         }
         btn.classList.toggle("active");
         updateProcessSelectionSummary();
+        updateStartButtonState();
         refreshPricingPreviewDebounced();
       });
     });
@@ -2492,8 +2494,9 @@ function stripNullCharsDeep(value) {
       });
       applyProjectTypeVisibility();
       applyVisibleOutputsForProjectType();
-      applyDefaultOutputsForProjectType();
+      clearSelectedOutputs();
       updateProcessSelectionSummary();
+      updateStartButtonState();
       if (refresh) refreshPricingPreviewDebounced();
     }
 
@@ -2512,19 +2515,14 @@ function stripNullCharsDeep(value) {
         if (isTams) jobStatusEl.textContent = "Proyecto TAMS: pendiente de enviar. No se calculará precio ni calidad.";
         else if (!selectedProjectType) jobStatusEl.textContent = "Seleccione TAMS, Fotogrametría o 3D para continuar.";
       }
+      updateStartButtonState();
     }
 
-    function applyDefaultOutputsForProjectType() {
-      if (!selectedProjectType) return;
-      setSelectedOutputMode("manual");
-      const defaults = {
-        fotogrametria: ["las", "orthomosaic_tif", "dem_tif", "dtm_tif", "contours_dxf"],
-        "3d": ["mesh_obj", "glb", "mesh_fbx", "textures"],
-        tams: []
-      };
-      const wanted = new Set(defaults[selectedProjectType] || []);
+    function clearSelectedOutputs() {
+      setSelectedOutputMode(selectedProjectType === "tams" ? "" : "manual");
+      setSelectedPreset("");
       document.querySelectorAll("[data-output]").forEach((btn) => {
-        btn.classList.toggle("active", wanted.has(btn.dataset.output));
+        btn.classList.remove("active");
       });
     }
 
@@ -2556,6 +2554,33 @@ function stripNullCharsDeep(value) {
       }
       if (note && selectedProjectType === "3d") {
         note.textContent = "Seleccione los entregables 3D que quiere recibir.";
+      }
+    }
+
+
+    function updateStartButtonState() {
+      if (!uploadBtn) return;
+      const type = getSelectedProjectType();
+      const hasFiles = files.length > 0;
+      const hasQuality = type === "tams" || !!getSelectedQualityMode();
+      const hasOutputs = type === "tams" || getSelectedOutputs().length > 0;
+      const ready = hasFiles && datasetCanUpload && !!type && hasQuality && hasOutputs;
+      uploadBtn.disabled = !ready;
+
+      if (jobStatusEl && hasFiles) {
+        if (!type) {
+          jobStatusEl.textContent = "Seleccione TAMS, Fotogrametría o 3D para continuar.";
+        } else if (type === "tams") {
+          jobStatusEl.textContent = ready
+            ? "Proyecto TAMS listo para enviar. No entrará en procesado."
+            : "Proyecto TAMS: complete los datos y envíe las fotos.";
+        } else if (!getSelectedQualityMode()) {
+          jobStatusEl.textContent = "Seleccione una calidad de procesado.";
+        } else if (!getSelectedOutputs().length) {
+          jobStatusEl.textContent = "Seleccione al menos un archivo de salida.";
+        } else if (ready) {
+          jobStatusEl.textContent = "Pendiente de inicio. El trabajo todavía no se ha enviado a procesado.";
+        }
       }
     }
 
@@ -2846,6 +2871,7 @@ function getSelectedQualityMode() {
 
       updateSelectedQualityBadge();
       updateProcessSelectionSummary();
+      updateStartButtonState();
 
       if (refresh) {
         refreshPricingPreviewDebounced();
@@ -3606,6 +3632,7 @@ if (statusNow === "done" || statusNow === "completed") {
         lastPreview = { ok: true, price: 0, estimated_human: "Recepción de fotos" };
         if (priceBig) priceBig.textContent = "0 €";
         if (etaBig) etaBig.textContent = "Recepción";
+        updateStartButtonState();
         return;
       }
 
@@ -3764,6 +3791,7 @@ if (statusNow === "done" || statusNow === "completed") {
       selectedHistoryJobId = "";
       selectedHistoryJobId = "";
       fileInput.value = "";
+      datasetCanUpload = false;
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
       dropSubtitle.textContent =
@@ -3802,7 +3830,8 @@ if (statusNow === "done" || statusNow === "completed") {
       resetPreviewState();
       setAnalysisPlaceholder();
       jobStatusEl.textContent = "Puede subir otra selección manteniendo la calidad y los archivos de salida elegidos.";
-      enableUploadButton();
+      datasetCanUpload = false;
+      updateStartButtonState();
     }
 
     function resetAll() {
@@ -3815,6 +3844,7 @@ if (statusNow === "done" || statusNow === "completed") {
       latestMissionType = "Sin detectar";
       pendingProjectName = "";
       fileInput.value = "";
+      datasetCanUpload = false;
 
       dropTitle.textContent = "Arrastra tus fotos aquí";
       dropSubtitle.textContent =
@@ -3833,7 +3863,7 @@ if (statusNow === "done" || statusNow === "completed") {
       if (processStartWrap) processStartWrap.style.display = "none";
       if (uploadBtn) {
         uploadBtn.textContent = "Iniciar procesado";
-        uploadBtn.disabled = false;
+        uploadBtn.disabled = true;
       }
       if (pricingPanel) pricingPanel.style.display = "none";
       if (processPanel) processPanel.style.display = "none";
@@ -3842,7 +3872,7 @@ if (statusNow === "done" || statusNow === "completed") {
       if (outputsWrap) outputsWrap.style.display = "none";
       if (outputModeWrap) outputModeWrap.style.display = "none";
       if (selectedQualityRow) selectedQualityRow.style.display = "none";
-      setSelectedQualityMode("normal", false);
+      setSelectedQualityMode("", false);
       hideDatasetHighlight();
 
       fieldSize.textContent = "0 MB";
@@ -3863,7 +3893,7 @@ if (map) {
     if (baseLayer) baseLayer.redraw();
   }, 150);
 }
-      enableUploadButton();
+      updateStartButtonState();
       setAnalysisPlaceholder();
       hideDownloadButton();
 
@@ -3897,7 +3927,8 @@ if (map) {
           uploadValid.style.color = "var(--danger)";
           uploadValid.textContent = "Dataset no válido para procesado";
         }
-        disableUploadButton();
+        datasetCanUpload = false;
+        updateStartButtonState();
         return;
       }
 
@@ -3908,7 +3939,8 @@ if (map) {
           uploadValid.style.color = "var(--warning)";
           uploadValid.textContent = "Dataset con advertencias";
         }
-        enableUploadButton();
+        datasetCanUpload = true;
+        updateStartButtonState();
         return;
       }
 
