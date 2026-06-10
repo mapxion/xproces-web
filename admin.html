@@ -518,7 +518,16 @@
   </style>
 </head>
 <body>
-  <div class="app">
+  <div id="adminAuthGate" style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;">
+    <div style="width:min(420px,92vw);background:#fff;border:1px solid #dde5df;border-radius:22px;box-shadow:0 10px 30px rgba(24,33,29,.08);padding:24px;text-align:center;">
+      <h1 style="margin:0 0 8px;font-size:26px;">Xproces Admin</h1>
+      <p style="margin:0 0 16px;color:#6f7d75;">Introduce la contraseña de administrador.</p>
+      <input id="adminAuthInput" type="password" placeholder="Contraseña" style="width:100%;height:46px;border:1px solid #dde5df;border-radius:14px;padding:0 12px;font-size:15px;">
+      <button id="adminAuthBtn" type="button" style="width:100%;height:46px;margin-top:12px;border:0;border-radius:14px;background:#b8ff1a;color:#18210e;font-weight:800;cursor:pointer;">Entrar</button>
+      <div id="adminAuthError" style="display:none;margin-top:12px;color:#d45555;font-weight:800;">Contraseña incorrecta</div>
+    </div>
+  </div>
+  <div class="app" id="adminApp" style="display:none;">
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-x">X</span>proces Admin</h1>
@@ -527,6 +536,7 @@
 
       <div class="top-actions">
         <button class="btn btn-secondary" id="autoRefreshBtn" type="button">Auto: ON</button>
+        <button class="btn btn-secondary" id="logoutBtn" type="button">Cerrar sesión</button>
         <button class="btn btn-primary" id="refreshBtn" type="button">Actualizar</button>
       </div>
     </div>
@@ -754,19 +764,12 @@
     const ADMIN_TOKEN_KEY = "xproces_admin_token";
 
     let ADMIN_TOKEN = sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
-    if (!ADMIN_TOKEN) {
-      ADMIN_TOKEN = window.prompt("Contraseña de administrador") || "";
-      if (ADMIN_TOKEN) sessionStorage.setItem(ADMIN_TOKEN_KEY, ADMIN_TOKEN);
-    }
 
-    if (!ADMIN_TOKEN) {
-      document.body.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;font-size:28px;font-weight:800;color:#9b3737;">
-          Acceso denegado
-        </div>
-      `;
-      throw new Error("admin_token_missing");
-    }
+    const adminAuthGate = document.getElementById("adminAuthGate");
+    const adminApp = document.getElementById("adminApp");
+    const adminAuthInput = document.getElementById("adminAuthInput");
+    const adminAuthBtn = document.getElementById("adminAuthBtn");
+    const adminAuthError = document.getElementById("adminAuthError");
 
     const nativeFetch = window.fetch.bind(window);
     window.fetch = (url, options = {}) => {
@@ -778,9 +781,60 @@
       if (!protectedAdminCall) return nativeFetch(url, options);
 
       const headers = new Headers(options.headers || {});
-      headers.set("x-admin-token", ADMIN_TOKEN);
+      headers.set("x-admin-token", ADMIN_TOKEN || "");
       return nativeFetch(url, { ...options, headers });
     };
+
+    async function verifyAdminToken(token) {
+      const response = await nativeFetch(`${API_BASE}/admin/jobs`, {
+        headers: { "x-admin-token": token || "" }
+      });
+      if (!response.ok) return false;
+      const data = await response.json().catch(() => null);
+      return !!data && Array.isArray(data.jobs);
+    }
+
+    function showAdminDenied(message = "Contraseña incorrecta") {
+      adminApp.style.display = "none";
+      adminAuthGate.style.display = "flex";
+      adminAuthError.textContent = message;
+      adminAuthError.style.display = "block";
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      ADMIN_TOKEN = "";
+      if (adminAuthInput) adminAuthInput.value = "";
+    }
+
+    async function unlockAdmin(token) {
+      ADMIN_TOKEN = token || "";
+      const ok = await verifyAdminToken(ADMIN_TOKEN);
+      if (!ok) {
+        showAdminDenied("Contraseña incorrecta");
+        return false;
+      }
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, ADMIN_TOKEN);
+      adminAuthGate.style.display = "none";
+      adminApp.style.display = "grid";
+      adminAuthError.style.display = "none";
+      await loadJobs();
+      startAutoRefresh();
+      return true;
+    }
+
+    adminAuthBtn.addEventListener("click", async () => {
+      adminAuthBtn.disabled = true;
+      adminAuthBtn.textContent = "Comprobando...";
+      try {
+        await unlockAdmin(adminAuthInput.value);
+      } finally {
+        adminAuthBtn.disabled = false;
+        adminAuthBtn.textContent = "Entrar";
+      }
+    });
+
+    adminAuthInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") adminAuthBtn.click();
+    });
+
     const REFRESH_MS = 5000;
 
     let jobsCache = [];
@@ -802,6 +856,7 @@
     });
 
     const refreshBtn = document.getElementById("refreshBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
     const autoRefreshBtn = document.getElementById("autoRefreshBtn");
 
     const searchInput = document.getElementById("searchInput");
@@ -1212,6 +1267,10 @@ function translateStage(stage) {
         refreshBtn.textContent = "Actualizando...";
 
         const response = await fetch(`${API_BASE}/admin/jobs`);
+        if (response.status === 401 || response.status === 403) {
+          showAdminDenied("Sesión no válida. Introduce de nuevo la contraseña.");
+          return;
+        }
         if (!response.ok) {
           throw new Error(`Error ${response.status}`);
         }
@@ -1246,6 +1305,16 @@ function translateStage(stage) {
       }
     }
 
+    logoutBtn.addEventListener("click", () => {
+      stopAutoRefresh();
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      ADMIN_TOKEN = "";
+      adminApp.style.display = "none";
+      adminAuthGate.style.display = "flex";
+      adminAuthError.style.display = "none";
+      if (adminAuthInput) adminAuthInput.value = "";
+    });
+
     refreshBtn.addEventListener("click", loadJobs);
 
     autoRefreshBtn.addEventListener("click", () => {
@@ -1259,8 +1328,9 @@ function translateStage(stage) {
     projectTypeFilter.addEventListener("change", renderTable);
     sortFilter.addEventListener("change", renderTable);
 
-    loadJobs();
-    startAutoRefresh();
+    if (ADMIN_TOKEN) {
+      unlockAdmin(ADMIN_TOKEN);
+    }
   </script>
 </body>
 </html>
