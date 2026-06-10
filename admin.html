@@ -751,6 +751,36 @@
 
   <script>
     const API_BASE = "https://api.xproces.com";
+    const ADMIN_TOKEN_KEY = "xproces_admin_token";
+
+    let ADMIN_TOKEN = sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+    if (!ADMIN_TOKEN) {
+      ADMIN_TOKEN = window.prompt("Contraseña de administrador") || "";
+      if (ADMIN_TOKEN) sessionStorage.setItem(ADMIN_TOKEN_KEY, ADMIN_TOKEN);
+    }
+
+    if (!ADMIN_TOKEN) {
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;font-size:28px;font-weight:800;color:#9b3737;">
+          Acceso denegado
+        </div>
+      `;
+      throw new Error("admin_token_missing");
+    }
+
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (url, options = {}) => {
+      const target = String(url || "");
+      const protectedAdminCall =
+        target.startsWith(`${API_BASE}/admin`) ||
+        /\/jobs\/[^/]+\/(cancel|priority)$/.test(target);
+
+      if (!protectedAdminCall) return nativeFetch(url, options);
+
+      const headers = new Headers(options.headers || {});
+      headers.set("x-admin-token", ADMIN_TOKEN);
+      return nativeFetch(url, { ...options, headers });
+    };
     const REFRESH_MS = 5000;
 
     let jobsCache = [];
