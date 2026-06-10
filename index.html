@@ -3950,7 +3950,13 @@ if (map) {
         uploadValid.style.color = "var(--ok)";
         uploadValid.textContent = "Dataset válido para fotogrametría";
       }
-      enableUploadButton();
+
+      // Xproces: el botón de iniciar procesado ya no depende solo de que
+      // el dataset sea válido. También depende del tipo de proyecto, calidad
+      // y entregables seleccionados. Marcamos el dataset como apto y dejamos
+      // que updateStartButtonState() decida si puede activarse.
+      datasetCanUpload = true;
+      updateStartButtonState();
     }
 
     async function updateUI() {
