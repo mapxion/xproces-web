@@ -165,7 +165,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr;
       gap: 12px;
     }
 
@@ -218,7 +218,7 @@
     }
 
     .table-wrap table {
-      min-width: 1600px;
+      min-width: 1750px;
     }
 
     table {
@@ -280,7 +280,7 @@
       white-space: nowrap;
     }
     .table-wrap table {
-      min-width: 1600px;
+      min-width: 1750px;
     }
     .badge-created,
     .badge-receiving {
@@ -430,6 +430,91 @@
         grid-template-columns: 1fr;
       }
     }
+
+
+    /* XPROCES ADMIN V2: métricas negocio, workers y TAMS */
+    .stats-grid.business-stats {
+      margin-top: 12px;
+    }
+
+    .stat-value.small {
+      font-size: 22px;
+    }
+
+    .admin-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .worker-grid,
+    .tams-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .worker-card,
+    .tams-card {
+      background: #fbfcfb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .worker-top,
+    .tams-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .worker-name,
+    .tams-name {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .worker-meta,
+    .tams-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .badge-info {
+      background: rgba(45, 127, 249, 0.08);
+      color: var(--info);
+      border-color: rgba(45, 127, 249, 0.18);
+    }
+
+    .badge-warning {
+      background: rgba(212, 154, 17, 0.08);
+      color: var(--warning);
+      border-color: rgba(212, 154, 17, 0.18);
+    }
+
+    .badge-ok {
+      background: rgba(34, 163, 74, 0.08);
+      color: var(--ok);
+      border-color: rgba(34, 163, 74, 0.18);
+    }
+
+    .admin-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1000px) {
+      .admin-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -475,6 +560,70 @@
             <div class="stat-value" id="statPhotos">0</div>
           </div>
         </div>
+
+        <div class="stats-grid business-stats">
+          <div class="stat-card">
+            <div class="stat-label">Usuarios</div>
+            <div class="stat-value small" id="statUsers">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">TAMS</div>
+            <div class="stat-value small" id="statTams">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fotogrametría</div>
+            <div class="stat-value small" id="statPhotogrammetry">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">3D</div>
+            <div class="stat-value small" id="statModel3d">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Ingresos mes</div>
+            <div class="stat-value small" id="statRevenueMonth">0 €</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Ingresos total</div>
+            <div class="stat-value small" id="statRevenueTotal">0 €</div>
+          </div>
+        </div>
+        <div class="admin-note">Las métricas de usuarios y espacio se rellenarán automáticamente cuando el backend devuelva esos datos. El resto se calcula desde los trabajos actuales.</div>
+      </div>
+    </div>
+
+    <div class="admin-columns">
+      <div class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">Estado de workers</h2>
+          <div class="worker-grid" id="workersGrid">
+            <div class="worker-card">
+              <div class="worker-top">
+                <div class="worker-name">RealityScan</div>
+                <span class="badge badge-info" id="workerRealityStatus">Pendiente</span>
+              </div>
+              <div class="worker-meta" id="workerRealityMeta">Esperando trabajos de fotogrametría o 3D.</div>
+            </div>
+            <div class="worker-card">
+              <div class="worker-top">
+                <div class="worker-name">TAMS Sync</div>
+                <span class="badge badge-info" id="workerTamsStatus">Pendiente</span>
+              </div>
+              <div class="worker-meta" id="workerTamsMeta">Control de proyectos TAMS pendientes de descarga al PC.</div>
+            </div>
+          </div>
+          <div class="admin-note">Más adelante podremos mostrar aquí el último contacto real del worker si el PC envía un heartbeat al VPS.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">TAMS pendientes</h2>
+          <div class="tams-grid" id="tamsPendingGrid">
+            <div class="tams-card">
+              <div class="tams-meta">Cargando proyectos TAMS...</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -498,6 +647,16 @@
               <option value="done">Done</option>
               <option value="failed">Failed</option>
               <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="projectTypeFilter">Tipo</label>
+            <select id="projectTypeFilter">
+              <option value="">Todos</option>
+              <option value="tams">TAMS</option>
+              <option value="photogrammetry">Fotogrametría</option>
+              <option value="3d">3D</option>
             </select>
           </div>
 
@@ -537,6 +696,7 @@
             <option value="project_name">Proyecto</option>
             <option value="client_name">Cliente</option>
             <option value="status">Estado</option>
+            <option value="project_type">Tipo</option>
             <option value="progress">Progreso</option>
             <option value="photos_count">Fotos</option>
             <option value="price">Precio</option>
@@ -554,12 +714,12 @@
         <div class="table-wrap" id="tableWrap">
         <table id="jobsTable">
             <thead>
-              <<thead>
               <tr>
                 <th onclick="setSort('id')">ID</th>
                 <th onclick="setSort('client_email')">Email</th>
                 <th onclick="setSort('project_name')">Proyecto</th>
                 <th onclick="setSort('client_name')">Cliente</th>
+                <th onclick="setSort('project_type')">Tipo</th>
                 <th onclick="setSort('status')">Estado</th>
                 <th onclick="setSort('stage')">Stage</th>
                 <th onclick="setSort('progress')">Progreso</th>
@@ -576,7 +736,7 @@
             </thead>
             <tbody id="jobsTableBody">
               <tr>
-                <td colspan="16" class="muted">Cargando trabajos...</td>
+                <td colspan="17" class="muted">Cargando trabajos...</td>
               </tr>
             </tbody>
           </table>
@@ -617,6 +777,7 @@
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
     const stageFilter = document.getElementById("stageFilter");
+    const projectTypeFilter = document.getElementById("projectTypeFilter");
     const sortFilter = document.getElementById("sortFilter");
 
     const jobsTableBody = document.getElementById("jobsTableBody");
@@ -631,6 +792,17 @@
     const statDone = document.getElementById("statDone");
     const statFailed = document.getElementById("statFailed");
     const statPhotos = document.getElementById("statPhotos");
+    const statUsers = document.getElementById("statUsers");
+    const statTams = document.getElementById("statTams");
+    const statPhotogrammetry = document.getElementById("statPhotogrammetry");
+    const statModel3d = document.getElementById("statModel3d");
+    const statRevenueMonth = document.getElementById("statRevenueMonth");
+    const statRevenueTotal = document.getElementById("statRevenueTotal");
+    const tamsPendingGrid = document.getElementById("tamsPendingGrid");
+    const workerRealityStatus = document.getElementById("workerRealityStatus");
+    const workerRealityMeta = document.getElementById("workerRealityMeta");
+    const workerTamsStatus = document.getElementById("workerTamsStatus");
+    const workerTamsMeta = document.getElementById("workerTamsMeta");
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -648,6 +820,48 @@
       return d.toLocaleString("es-ES");
     }
 
+
+
+    function getProjectType(job) {
+      const raw = String(
+        job.project_type ||
+        job.projectType ||
+        job.type ||
+        job.job_type ||
+        job.category ||
+        ""
+      ).toLowerCase();
+
+      if (["tams", "telecom", "tower"].includes(raw)) return "tams";
+      if (["fotogrametria", "photogrammetry", "photo", "survey", "topography"].includes(raw)) return "photogrammetry";
+      if (["3d", "model3d", "model_3d", "modeling", "modelo3d"].includes(raw)) return "3d";
+
+      const outputs = Array.isArray(job.outputs) ? job.outputs.join(" ").toLowerCase() : String(job.outputs || "").toLowerCase();
+      if (outputs.includes("obj") || outputs.includes("glb") || outputs.includes("fbx")) return "3d";
+      if (outputs.includes("las") || outputs.includes("ortho") || outputs.includes("dsm") || outputs.includes("dtm")) return "photogrammetry";
+      return "unknown";
+    }
+
+    function translateProjectType(value) {
+      const type = String(value || "").toLowerCase();
+      if (type === "tams") return "TAMS";
+      if (type === "photogrammetry") return "Fotogrametría";
+      if (type === "3d") return "3D";
+      return "—";
+    }
+
+    function formatMoney(value) {
+      const amount = Number(value || 0);
+      return `${amount.toLocaleString("es-ES", { maximumFractionDigits: 2 })} €`;
+    }
+
+    function isSameMonth(dateValue, reference = new Date()) {
+      if (!dateValue) return false;
+      const d = new Date(dateValue);
+      if (Number.isNaN(d.getTime())) return false;
+      return d.getFullYear() === reference.getFullYear() && d.getMonth() === reference.getMonth();
+    }
+
     function statusBadgeClass(status) {
       const s = String(status || "").toLowerCase();
       if (s === "queued") return "badge badge-queued";
@@ -656,6 +870,9 @@
       if (s === "failed") return "badge badge-failed";
       if (s === "cancelled") return "badge badge-cancelled";
       if (s === "receiving") return "badge badge-receiving";
+      if (s === "tams_pending_download") return "badge badge-warning";
+      if (s === "tams_downloading") return "badge badge-info";
+      if (s === "tams_downloaded") return "badge badge-ok";
       return "badge badge-created";
     }
     function translateStatus(status) {
@@ -668,6 +885,9 @@
   if (s === "done") return "Completado";
   if (s === "failed") return "Error";
   if (s === "cancelled") return "Cancelado";
+  if (s === "tams_pending_download") return "TAMS pendiente descarga";
+  if (s === "tams_downloading") return "TAMS descargando";
+  if (s === "tams_downloaded") return "TAMS descargado";
 
   return status || "—";
 }
@@ -688,6 +908,7 @@ function translateStage(stage) {
       const q = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
       const stage = stageFilter.value;
+      const projectType = projectTypeFilter.value;
       const sort = sortFilter.value;
 
       let rows = [...jobsCache];
@@ -701,7 +922,10 @@ function translateStage(stage) {
             job.message,
             job.error,
             job.photos_count,
-            job.price
+            job.price,
+            getProjectType(job),
+            job.project_type,
+            job.projectType
           ].join(" ").toLowerCase();
 
           return bag.includes(q);
@@ -714,6 +938,10 @@ function translateStage(stage) {
 
       if (stage) {
         rows = rows.filter((job) => String(job.stage || "") === stage);
+      }
+
+      if (projectType) {
+        rows = rows.filter((job) => getProjectType(job) === projectType);
       }
 
       rows.sort((a, b) => {
@@ -743,11 +971,74 @@ function translateStage(stage) {
       statTotal.textContent = rows.length;
       statQueued.textContent = rows.filter(j => j.status === "queued").length;
       statRunning.textContent = rows.filter(j => j.status === "running").length;
-      statDone.textContent = rows.filter(j => j.status === "done").length;
+      statDone.textContent = rows.filter(j => j.status === "done" || j.status === "tams_downloaded").length;
       statFailed.textContent = rows.filter(j => j.status === "failed").length;
 
       const totalPhotos = rows.reduce((acc, j) => acc + Number(j.photos_count || 0), 0);
-      statPhotos.textContent = totalPhotos;
+      statPhotos.textContent = totalPhotos.toLocaleString("es-ES");
+
+      statTams.textContent = rows.filter(j => getProjectType(j) === "tams").length;
+      statPhotogrammetry.textContent = rows.filter(j => getProjectType(j) === "photogrammetry").length;
+      statModel3d.textContent = rows.filter(j => getProjectType(j) === "3d").length;
+
+      const revenueRows = rows.filter(j => ["done", "tams_downloaded"].includes(String(j.status || "").toLowerCase()));
+      const revenueTotal = revenueRows.reduce((acc, j) => acc + Number(j.price || 0), 0);
+      const revenueMonth = revenueRows
+        .filter(j => isSameMonth(j.finished_at || j.created_at))
+        .reduce((acc, j) => acc + Number(j.price || 0), 0);
+
+      statRevenueTotal.textContent = formatMoney(revenueTotal);
+      statRevenueMonth.textContent = formatMoney(revenueMonth);
+
+      renderTamsPending(rows);
+      renderWorkerSummary(rows);
+    }
+
+    function renderTamsPending(rows) {
+      const pending = rows
+        .filter(j => getProjectType(j) === "tams")
+        .filter(j => ["created", "receiving", "tams_pending_download", "tams_downloading"].includes(String(j.status || "").toLowerCase()))
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        .slice(0, 6);
+
+      if (!pending.length) {
+        tamsPendingGrid.innerHTML = `
+          <div class="tams-card">
+            <div class="tams-meta">No hay proyectos TAMS pendientes de descarga.</div>
+          </div>
+        `;
+        return;
+      }
+
+      tamsPendingGrid.innerHTML = pending.map((job) => `
+        <div class="tams-card">
+          <div class="tams-top">
+            <div class="tams-name">${escapeHtml(job.project_name || job.id || "Proyecto TAMS")}</div>
+            <span class="${statusBadgeClass(job.status)}">${escapeHtml(translateStatus(job.status))}</span>
+          </div>
+          <div class="tams-meta">
+            ${escapeHtml(job.client_email || "Sin email")} · ${escapeHtml(job.photos_count || 0)} fotos<br>
+            Creado: ${formatDate(job.created_at)}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderWorkerSummary(rows) {
+      const runningReality = rows.filter(j => getProjectType(j) !== "tams" && ["queued", "running"].includes(String(j.status || "").toLowerCase())).length;
+      const pendingTams = rows.filter(j => getProjectType(j) === "tams" && ["created", "receiving", "tams_pending_download", "tams_downloading"].includes(String(j.status || "").toLowerCase())).length;
+
+      workerRealityStatus.textContent = runningReality ? "Activo" : "En espera";
+      workerRealityStatus.className = runningReality ? "badge badge-ok" : "badge badge-info";
+      workerRealityMeta.textContent = runningReality
+        ? `${runningReality} trabajo(s) de Fotogrametría/3D en cola o proceso.`
+        : "Sin trabajos RealityScan pendientes ahora mismo.";
+
+      workerTamsStatus.textContent = pendingTams ? "Pendiente" : "En espera";
+      workerTamsStatus.className = pendingTams ? "badge badge-warning" : "badge badge-info";
+      workerTamsMeta.textContent = pendingTams
+        ? `${pendingTams} proyecto(s) TAMS pendientes de descarga al PC.`
+        : "Sin proyectos TAMS pendientes de descarga.";
     }
 
     function setSort(field) {
@@ -784,7 +1075,7 @@ function translateStage(stage) {
       if (!rows.length) {
         jobsTableBody.innerHTML = `
           <tr>
-            <td colspan="16" class="muted">No hay trabajos para mostrar.</td>
+            <td colspan="17" class="muted">No hay trabajos para mostrar.</td>
           </tr>
         `;
         return;
@@ -792,7 +1083,7 @@ function translateStage(stage) {
 
       jobsTableBody.innerHTML = rows.map((job) => {
         const progress = Math.max(0, Math.min(100, Number(job.progress || 0)));
-        const canDownload = String(job.status || "") === "done";
+        const canDownload = ["done", "tams_downloaded"].includes(String(job.status || "").toLowerCase());
 
         return `
           <tr>
@@ -800,6 +1091,7 @@ function translateStage(stage) {
             <td>${escapeHtml(job.client_email || "—")}</td>
             <td>${escapeHtml(job.project_name || "—")}</td>
             <td>${escapeHtml(job.client_name || "—")}</td>
+            <td><span class="badge badge-info">${escapeHtml(translateProjectType(getProjectType(job)))}</span></td>
             <td><span class="${statusBadgeClass(job.status)}">${escapeHtml(translateStatus(job.status))}</span></td>
             <td>${escapeHtml(translateStage(job.stage))}</td>
             <td>
@@ -826,13 +1118,13 @@ function translateStage(stage) {
             </td>
            <td style="display:flex; gap:6px;">
             ${
-              ["created", "receiving", "queued"].includes(String(job.status || "").toLowerCase())
+              ["created", "receiving", "queued", "tams_pending_download"].includes(String(job.status || "").toLowerCase())
                 ? `<button class="small-btn" onclick="prioritizeJob('${job.id}')">⬆ Prioridad</button>`
                 : ""
             }
 
             ${
-              ["created", "receiving", "queued", "running"].includes(String(job.status || "").toLowerCase())
+              ["created", "receiving", "queued", "running", "tams_pending_download", "tams_downloading"].includes(String(job.status || "").toLowerCase())
                 ? `<button class="small-btn-danger" onclick="cancelJob('${job.id}')">Cancelar</button>`
                 : "—"
             }
@@ -901,7 +1193,7 @@ function translateStage(stage) {
         console.error(error);
         jobsTableBody.innerHTML = `
           <tr>
-            <td colspan="13" class="error-text">No se pudieron cargar los trabajos.</td>
+            <td colspan="17" class="error-text">No se pudieron cargar los trabajos.</td>
           </tr>
         `;
       } finally {
@@ -934,6 +1226,7 @@ function translateStage(stage) {
     searchInput.addEventListener("input", renderTable);
     statusFilter.addEventListener("change", renderTable);
     stageFilter.addEventListener("change", renderTable);
+    projectTypeFilter.addEventListener("change", renderTable);
     sortFilter.addEventListener("change", renderTable);
 
     loadJobs();
