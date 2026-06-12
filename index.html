@@ -3620,8 +3620,8 @@ if (statusNow === "done" || statusNow === "completed") {
             total_bytes: totalBytes,
             project_type: getSelectedProjectType(),
             quality_mode: getSelectedQualityMode(),
-            outputs_requested: getSelectedOutputs(),
-            tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected()
+            outputs_requested: getSelectedProjectType() === "tams" ? ["tams_package"] : getSelectedOutputs(),
+            tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
           })
         });
 
