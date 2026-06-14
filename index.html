@@ -1903,6 +1903,101 @@
       margin-top: 18px;
     }
 
+
+    /* XPROCES SEO: bloque informativo + capturas */
+    .xproces-seo-section {
+      margin-top: 16px;
+    }
+
+    .xproces-seo-section h2 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .xproces-seo-section h3 {
+      margin: 18px 0 10px;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .xproces-seo-section p {
+      margin: 0 0 12px;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .xproces-seo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .xproces-seo-card {
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: none;
+    }
+
+    .xproces-seo-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      background: #ffffff;
+    }
+
+    .xproces-seo-card h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .xproces-seo-card p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .xproces-seo-lists {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .xproces-seo-list-box {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .xproces-seo-list-box ul {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    @media (max-width: 760px) {
+      .xproces-seo-grid,
+      .xproces-seo-lists {
+        grid-template-columns: 1fr;
+      }
+
+      .xproces-seo-section h2 {
+        font-size: 22px;
+      }
+    }
+
+
   </style>
 
   <!-- Google tag (gtag.js) -->
@@ -5841,32 +5936,6 @@ window.addEventListener("load", () => {
   initMapWorldView();
 });
   </script>
-  <div class="panel" style="margin-top:16px;">
-  <div class="panel-inner">
-
-    <h2>Procesado fotogramétrico profesional para ingeniería, topografía y telecomunicaciones</h2>
-
-    <p>
-      Xproces es una plataforma profesional de procesado fotogramétrico diseñada para transformar fotografías capturadas con drones en productos técnicos de alta calidad. Nuestro sistema permite generar nubes de puntos LAS, ortofotos georreferenciadas, modelos digitales de superficie (DSM), modelos digitales del terreno (DTM), curvas de nivel y modelos 3D texturizados a partir de imágenes obtenidas en campo.
-    </p>
-
-    <p>
-      La plataforma está orientada a empresas de ingeniería, topografía, telecomunicaciones, energías renovables, construcción e inspección técnica que necesitan obtener resultados precisos sin invertir tiempo en configuraciones complejas o procesos manuales. Los proyectos son analizados automáticamente para estimar tiempos de procesado, calidad de los datos y productos de salida recomendados.
-    </p>
-
-    <p>
-      Xproces es compatible con vuelos realizados mediante drones DJI y otras plataformas profesionales de captura aérea. El sistema permite procesar inspecciones de torres de telecomunicaciones, emplazamientos técnicos, infraestructuras lineales, terrenos, canteras, plantas solares y proyectos de ingeniería civil.
-    </p>
-
-    <p>
-      Entre los productos generados se incluyen nubes de puntos en formato LAS, ortofotos de alta resolución, modelos DSM y DTM, curvas de nivel, mallas 3D texturizadas y modelos en formatos OBJ, GLB y FBX. Cada proyecto puede configurarse según el nivel de calidad requerido, equilibrando precisión, tiempo de procesado y coste.
-    </p>
-
-    <p>
-      Nuestro objetivo es simplificar el acceso a la fotogrametría profesional y ofrecer resultados fiables para análisis técnicos, documentación, gemelos digitales, mediciones, cálculo de volúmenes e inspecciones remotas.
-    </p>
-
-  </div>
-</div>
+  
 </body>
 </html>
