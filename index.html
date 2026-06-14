@@ -5881,7 +5881,7 @@ setTimeout(async () => {
       cache: "no-store"
     });
 
-    const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
     const jobs = Array.isArray(data.jobs) ? data.jobs : [];
     const savedJob = jobs.find((job) => String(job.id || "") === String(savedJobId));
 
@@ -5897,6 +5897,7 @@ window.addEventListener("load", () => {
   initMapWorldView();
 });
 
+</script>
 
 </body>
 </html>
