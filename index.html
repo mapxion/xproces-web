@@ -1933,7 +1933,7 @@
 
     <div class="layout" id="mainLayout">
       <div class="left-stack">
-      <div class="panel" id="landingPanel" style="margin-bottom:16px;">
+      <div class="panel" style="margin-bottom:16px;">
   <div class="panel-inner" style="padding:26px;">
 
     <div style="text-align:center;max-width:900px;margin:0 auto 22px;">
@@ -1950,51 +1950,29 @@
       </p>
     </div>
 
-   <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px;">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px;">
 
-  <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:12px;">
-    <img src="/pantalla_subir_fotos.jpg"
-         alt="Subida de fotografías para procesado fotogramétrico"
-         style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;">
+      <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:10px;">
+        <img src="/pantalla_subir_fotos.jpg" alt="Subida de fotografías de dron para procesado fotogramétrico en Xproces" style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:8px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">1. Subida</h3>
+      </div>
 
-    <h3 style="margin:0 0 8px;color:var(--text);font-size:16px;">
-      1. Subida de fotografías
-    </h3>
+      <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:10px;">
+        <img src="/pantalla_datos.jpg" alt="Análisis automático de datos fotogramétricos y GPS en Xproces" style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:8px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">2. Análisis</h3>
+      </div>
 
-    <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.45;">
-      Cargue las fotografías capturadas con dron. Xproces analiza automáticamente los datos EXIF, GPS y las características del proyecto.
-    </p>
-  </div>
+      <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:10px;">
+        <img src="/pantalla_inicio_procesado.jpg" alt="Cálculo de tiempo y coste de procesado fotogramétrico en Xproces" style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:8px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">3. Coste</h3>
+      </div>
 
-  <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:12px;">
-    <img src="/pantalla_inicio_procesado.jpg"
-         alt="Cálculo de tiempo y coste del proyecto"
-         style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;">
+      <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:10px;">
+        <img src="/pantallaprocesado.jpg" alt="Procesado fotogramétrico para generar nube de puntos LAS ortofoto DSM DTM y modelos 3D" style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:8px;">
+        <h3 style="margin:0;font-size:14px;color:var(--text);">4. Procesado</h3>
+      </div>
 
-    <h3 style="margin:0 0 8px;color:var(--text);font-size:16px;">
-      2. Tiempo y coste estimado
-    </h3>
-
-    <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.45;">
-      Antes de iniciar el procesado, la plataforma calcula automáticamente el tiempo estimado y el coste del proyecto.
-    </p>
-  </div>
-
-  <div style="background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:18px;padding:12px;">
-    <img src="/pantallaprocesado.jpg"
-         alt="Procesado fotogramétrico profesional"
-         style="width:100%;display:block;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;">
-
-    <h3 style="margin:0 0 8px;color:var(--text);font-size:16px;">
-      3. Procesado fotogramétrico
-    </h3>
-
-    <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.45;">
-      Generación automática de nubes LAS, ortofotos, DSM, DTM, curvas de nivel y modelos tridimensionales.
-    </p>
-  </div>
-
-</div>
+    </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px;">
       <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">LAS</span>
@@ -3324,20 +3302,6 @@ if (statusNow === "done" || statusNow === "completed") {
     function clearStoredUser() {
       localStorage.removeItem("xproces_user");
     }
-    
-    function updateLandingVisibility() {
-  const landing = document.getElementById("landingPanel");
-
-  if (!landing) return;
-
-  const user = getStoredUser();
-
-  if (user && user.email) {
-    landing.style.display = "none";
-  } else {
-    landing.style.display = "";
-  }
-}
 
     function openAuthModal(mode = "login") {
       authMode = mode;
@@ -3378,10 +3342,7 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function renderTopbarUser() {
-
-  updateLandingVisibility();
-
-  const user = getStoredUser();
+      const user = getStoredUser();
 
       if (!user || !user.email) {
         topbarActions.innerHTML = `
@@ -4732,18 +4693,10 @@ if (map) {
     }
 
     drop.addEventListener("click", (e) => {
-  const interactive = e.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
-  if (interactive) return;
-
-  const user = getStoredUser();
-
-  if (!user || !user.email) {
-    alert("Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías.");
-    return;
-  }
-
-  fileInput.click();
-});
+      const interactive = e.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
+      if (interactive) return;
+      fileInput.click();
+    });
 
     drop.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -4754,23 +4707,11 @@ if (map) {
       drop.classList.remove("dragover");
     });
 
-    drop.addEventListener("drop", async (event) => {
-
-  const user = getStoredUser();
-
-  if (!user || !user.email) {
-
-    alert(
-      "Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías."
-    );
-
-    return;
-  }
-
-  event.preventDefault();
-  drop.classList.remove("dragover");
-
-  const droppedFiles = Array.from(event.dataTransfer.files || []);
+    drop.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      drop.classList.remove("dragover");
+      await setFiles(e.dataTransfer.files);
+    });
 
     fileInput.addEventListener("change", async (e) => {
       await setFiles(e.target.files);
