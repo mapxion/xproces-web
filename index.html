@@ -3478,10 +3478,15 @@ if (statusNow === "done" || statusNow === "completed") {
       processDownloadBtn.href = "#";
     }
 
-    function showDownloadButton(jobId) {
-      processDownloadBtn.href = `${API_BASE}/jobs/${jobId}/download`;
-      processDownloadWrap.style.display = "block";
-    }
+    function showDownloadButton(job) {
+  if (!job || !job.id || job.status !== "completed") {
+    hideDownloadButton();
+    return;
+  }
+
+  processDownloadBtn.href = `${API_BASE}/jobs/${job.id}/download`;
+  processDownloadWrap.style.display = "block";
+}
 
     function isTamsJob(job) {
       const xp = job?.exif_summary?._xproces || {};
@@ -5750,7 +5755,7 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
             } else {
               const doneLogText = logText || await getJobLog(job.id);
               jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
-              showDownloadButton(job.id);
+              showDownloadButton(job);
             }
 
             return;
