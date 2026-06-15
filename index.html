@@ -4731,22 +4731,22 @@ if (map) {
       await updateUI();
     }
 
-    drop.addEventListener("click", (e) => {
-  const interactive = e.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
-  if (interactive) return;
+    drop.addEventListener("click", (event) => {
+      const interactive = event.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
+      if (interactive) return;
 
-  const user = getStoredUser();
+      const user = getStoredUser();
 
-  if (!user || !user.email) {
-    alert("Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías.");
-    return;
-  }
+      if (!user || !user.email) {
+        alert("Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías.");
+        return;
+      }
 
-  fileInput.click();
-});
+      fileInput.click();
+    });
 
-    drop.addEventListener("dragover", (e) => {
-      e.preventDefault();
+    drop.addEventListener("dragover", (event) => {
+      event.preventDefault();
       drop.classList.add("dragover");
     });
 
@@ -4755,22 +4755,19 @@ if (map) {
     });
 
     drop.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      drop.classList.remove("dragover");
 
-  const user = getStoredUser();
+      const user = getStoredUser();
 
-  if (!user || !user.email) {
+      if (!user || !user.email) {
+        alert("Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías.");
+        return;
+      }
 
-    alert(
-      "Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías."
-    );
-
-    return;
-  }
-
-  event.preventDefault();
-  drop.classList.remove("dragover");
-
-  const droppedFiles = Array.from(event.dataTransfer.files || []);
+      const droppedFiles = Array.from(event.dataTransfer.files || []);
+      await setFiles(droppedFiles);
+    });
 
     fileInput.addEventListener("change", async (e) => {
       await setFiles(e.target.files);
