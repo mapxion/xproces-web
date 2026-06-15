@@ -1653,6 +1653,35 @@
       border-color: rgba(122, 171, 57, 0.25);
     }
 
+    .job-card-status-badge.receiving {
+      background: rgba(122, 171, 57, 0.10);
+      color: var(--accent);
+      border-color: rgba(122, 171, 57, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .job-card-status-badge.progress,
+    .job-card-status-badge.receiving {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .job-card-status-badge.progress::after,
+    .job-card-status-badge.receiving::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+      animation: xprocesPulse 1.2s linear infinite;
+    }
+
+    @keyframes xprocesPulse {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+
 
     .job-card-id {
       font-size: 12px;
@@ -3072,8 +3101,8 @@ function getSelectedQualityMode() {
       }
 
       if (status === "queued") return { key: "queued", label: "En cola", className: "progress", canDownload: false };
-      if (status === "receiving") return { key: "receiving", label: "Recibiendo fotos", className: "progress", canDownload: false };
-      if (status === "created") return { key: "created", label: "Creado", className: "progress", canDownload: false };
+      if (status === "receiving") return { key: "receiving", label: "Recibiendo fotos", className: "receiving", canDownload: false };
+      if (status === "created") return { key: "created", label: "Creado", className: "receiving", canDownload: false };
       if (status === "running" || status === "processing" || stage) return { key: "running", label: "Procesando", className: "progress", canDownload: false };
 
       return { key: "unknown", label: status || "Sin estado", className: "", canDownload: false };
