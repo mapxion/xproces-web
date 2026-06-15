@@ -1654,12 +1654,19 @@
     }
 
     .job-card-status-badge.receiving {
-      background: rgba(122, 171, 57, 0.10);
-      color: var(--accent);
-      border-color: rgba(122, 171, 57, 0.25);
-      position: relative;
-      overflow: hidden;
-    }
+  background: #7aab39;
+  color: #ffffff;
+  border-color: #7aab39;
+  position: relative;
+  overflow: hidden;
+  animation: receivingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes receivingPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 
     .job-card-status-badge.progress,
     .job-card-status-badge.receiving {
