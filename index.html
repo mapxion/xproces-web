@@ -1933,7 +1933,7 @@
 
     <div class="layout" id="mainLayout">
       <div class="left-stack">
-      <div class="panel" style="margin-bottom:16px;">
+      <div class="panel" id="landingPanel" style="margin-bottom:16px;">
   <div class="panel-inner" style="padding:26px;">
 
     <div style="text-align:center;max-width:900px;margin:0 auto 22px;">
@@ -3324,6 +3324,20 @@ if (statusNow === "done" || statusNow === "completed") {
     function clearStoredUser() {
       localStorage.removeItem("xproces_user");
     }
+    
+    function updateLandingVisibility() {
+  const landing = document.getElementById("landingPanel");
+
+  if (!landing) return;
+
+  const user = getStoredUser();
+
+  if (user && user.email) {
+    landing.style.display = "none";
+  } else {
+    landing.style.display = "";
+  }
+}
 
     function openAuthModal(mode = "login") {
       authMode = mode;
@@ -3364,7 +3378,10 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function renderTopbarUser() {
-      const user = getStoredUser();
+
+  updateLandingVisibility();
+
+  const user = getStoredUser();
 
       if (!user || !user.email) {
         topbarActions.innerHTML = `
@@ -4715,10 +4732,18 @@ if (map) {
     }
 
     drop.addEventListener("click", (e) => {
-      const interactive = e.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
-      if (interactive) return;
-      fileInput.click();
-    });
+  const interactive = e.target.closest("button, input, select, a, .quality-mode-wrap, .actions");
+  if (interactive) return;
+
+  const user = getStoredUser();
+
+  if (!user || !user.email) {
+    alert("Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías.");
+    return;
+  }
+
+  fileInput.click();
+});
 
     drop.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -4729,11 +4754,23 @@ if (map) {
       drop.classList.remove("dragover");
     });
 
-    drop.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      drop.classList.remove("dragover");
-      await setFiles(e.dataTransfer.files);
-    });
+    drop.addEventListener("drop", async (event) => {
+
+  const user = getStoredUser();
+
+  if (!user || !user.email) {
+
+    alert(
+      "Acceso denegado.\n\nDebe registrarse o utilizar un código de invitado para subir fotografías."
+    );
+
+    return;
+  }
+
+  event.preventDefault();
+  drop.classList.remove("dragover");
+
+  const droppedFiles = Array.from(event.dataTransfer.files || []);
 
     fileInput.addEventListener("change", async (e) => {
       await setFiles(e.target.files);
