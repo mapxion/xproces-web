@@ -5271,8 +5271,25 @@ if (map) {
       });
 
       const statusValue = String(job?.status || "").toLowerCase();
-      const failed = statusValue === "failed" || statusValue === "cancelled";
-      if (failed && !warningLines.length) {
+
+      // Si el log del worker confirma PROCESO OK o Trabajo procesado correctamente,
+      // el resumen debe mostrarse como correcto aunque el backend conserve un
+      // status failed antiguo por la validación previa de archivos.
+      const logSaysOk = /PROCESO OK|Trabajo procesado correctamente/i.test(String(logText || ""));
+      const allRequestedGenerated = requestedKeys.length
+        ? requestedKeys.every((key) => generatedKeys.includes(key))
+        : generatedKeys.length > 0;
+
+      const processReallyOk = logSaysOk || allRequestedGenerated;
+      const failed = !processReallyOk && (statusValue === "failed" || statusValue === "cancelled");
+
+      if (processReallyOk) {
+        for (let i = warningLines.length - 1; i >= 0; i--) {
+          if (/El procesado no se completó correctamente/i.test(warningLines[i])) {
+            warningLines.splice(i, 1);
+          }
+        }
+      } else if (failed && !warningLines.length) {
         warningLines.push("El procesado no se completó correctamente.");
       }
 
