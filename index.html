@@ -3040,6 +3040,49 @@ function getSelectedQualityMode() {
       return String(stage || "").trim() || "Sin fase";
     }
 
+    function normalizeJobStatus(job) {
+      const status = String(job?.status || "").toLowerCase();
+      const stage = String(job?.stage || job?.phase || "").toLowerCase();
+      const message = String(job?.message || "").toLowerCase();
+      const error = String(job?.error || "").trim();
+
+      const successStatuses = ["done", "completed", "complete", "finished", "success", "processed"];
+      const failedStatuses = ["failed", "error", "cancelled", "canceled"];
+
+      const hasSuccessText =
+        message.includes("completado") ||
+        message.includes("completada") ||
+        message.includes("procesado correctamente") ||
+        message.includes("trabajo procesado correctamente");
+
+      const hasFailureText =
+        message.includes("fallido") ||
+        message.includes("failed") ||
+        message.includes("error") ||
+        message.includes("cancelado") ||
+        message.includes("cancelled") ||
+        message.includes("canceled");
+
+      if (successStatuses.includes(status) || successStatuses.includes(stage) || hasSuccessText) {
+        return { key: "completed", label: "Completado", className: "ok", canDownload: true };
+      }
+
+      if (failedStatuses.includes(status) || failedStatuses.includes(stage) || error || hasFailureText) {
+        return { key: "failed", label: status === "cancelled" || status === "canceled" ? "Cancelado" : "Fallido", className: "error", canDownload: false };
+      }
+
+      if (status === "queued") return { key: "queued", label: "En cola", className: "progress", canDownload: false };
+      if (status === "receiving") return { key: "receiving", label: "Recibiendo fotos", className: "progress", canDownload: false };
+      if (status === "created") return { key: "created", label: "Creado", className: "progress", canDownload: false };
+      if (status === "running" || status === "processing" || stage) return { key: "running", label: "Procesando", className: "progress", canDownload: false };
+
+      return { key: "unknown", label: status || "Sin estado", className: "", canDownload: false };
+    }
+
+    function isJobFinished(job) {
+      return normalizeJobStatus(job).canDownload === true;
+    }
+
     function formatJobListPrice(price) {
       const num = Number(price);
       if (!Number.isFinite(num) || num <= 0) return "—";
@@ -3161,6 +3204,8 @@ function getSelectedQualityMode() {
     async function openJobFromHistory(job) {
       if (!job || !job.id) return;
 
+      hideDownloadButton();
+
       const fullJob = (await fetchFullJob(job)) || job;
       job = { ...job, ...fullJob };
 
@@ -3190,18 +3235,20 @@ function getSelectedQualityMode() {
         jobStatusEl.textContent = "";
       }
 
-      const statusNow = String(job.status || "").toLowerCase();
+      const uiStatusNow = normalizeJobStatus(job);
 
-if (statusNow === "done" || statusNow === "completed") {
+if (uiStatusNow.canDownload) {
   getJobLog(job.id)
     .then((logText) => {
       jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
-      showDownloadButton(job.id);
+      showDownloadButton(job);
     })
     .catch(() => {
       jobStatusEl.innerHTML = renderProcessSummary(job, "");
-      showDownloadButton(job.id);
+      showDownloadButton(job);
     });
+} else {
+  hideDownloadButton();
 }
       
       if (progressWrap) progressWrap.style.display = "block";
@@ -3210,17 +3257,16 @@ if (statusNow === "done" || statusNow === "completed") {
         progressFill.classList.remove("error");
         progressFill.style.background = "";
         progressFill.style.width = `${pct}%`;
-        progressFill.classList.toggle("error", ["failed", "cancelled"].includes(String(job.status || "").toLowerCase()));
+        progressFill.classList.toggle("error", normalizeJobStatus(job).className === "error");
       }
       if (progressPercent) {
         progressPercent.textContent = `${Math.max(0, Math.min(100, Number(job.progress || 0)))}%`;
       }
       if (progressLabel) {
-        const s = String(job.status || "").toLowerCase();
-        if (s === "failed") progressLabel.textContent = "Fallido";
-        else if (s === "cancelled") progressLabel.textContent = "Cancelado";
-        else if (s === "completed" || s === "done") progressLabel.textContent = "Procesado completado";
-        else if (s === "queued") progressLabel.textContent = "En cola";
+        const uiStatus = normalizeJobStatus(job);
+        if (uiStatus.key === "failed") progressLabel.textContent = uiStatus.label;
+        else if (uiStatus.key === "completed") progressLabel.textContent = "Procesado completado";
+        else if (uiStatus.key === "queued") progressLabel.textContent = "En cola";
         else progressLabel.textContent = "Procesando";
       }
 
@@ -3281,15 +3327,12 @@ if (statusNow === "done" || statusNow === "completed") {
             card.classList.add("active");
           }
 
-          const statusLabel = formatJobListStatus(job.status);
+          const uiStatus = normalizeJobStatus(job);
+          const statusLabel = uiStatus.label;
           const stageLabel = formatJobListStage(job.stage);
           const progressValue = Math.max(0, Math.min(100, Number(job.progress || 0)));
-          const statusLower = String(job.status || "").toLowerCase();
-          const canDownload = ["done", "completed"].includes(statusLower);
-          const statusBadgeClass =
-            ["done", "completed"].includes(statusLower) ? "ok" :
-            ["failed", "cancelled"].includes(statusLower) ? "error" :
-            ["queued", "running", "receiving", "created"].includes(statusLower) ? "progress" : "";
+          const canDownload = uiStatus.canDownload;
+          const statusBadgeClass = uiStatus.className;
 
           card.innerHTML = `
             <div class="job-card-top">
@@ -3479,14 +3522,14 @@ if (statusNow === "done" || statusNow === "completed") {
     }
 
     function showDownloadButton(job) {
-  if (!job || !job.id || job.status !== "completed") {
-    hideDownloadButton();
-    return;
-  }
+      if (!job || !job.id || !isJobFinished(job)) {
+        hideDownloadButton();
+        return;
+      }
 
-  processDownloadBtn.href = `${API_BASE}/jobs/${job.id}/download`;
-  processDownloadWrap.style.display = "block";
-}
+      processDownloadBtn.href = `${API_BASE}/jobs/${job.id}/download`;
+      processDownloadWrap.style.display = "block";
+    }
 
     function isTamsJob(job) {
       const xp = job?.exif_summary?._xproces || {};
@@ -5360,13 +5403,13 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
       const status = String(job?.status ?? "").toLowerCase();
       const stage = String(job?.stage ?? "");
       const message = String(job?.message ?? "").trim();
+      const uiStatus = normalizeJobStatus(job);
       const lines = [];
 
-      if (status === "failed") lines.push("Estado: Fallido");
-      else if (status === "cancelled") lines.push("Estado: Cancelado");
-      else if (status === "completed") lines.push("Estado: Completado");
-      else if (status === "queued") lines.push("Estado: En cola");
-      else if (status === "running") lines.push("Estado: Procesando");
+      if (uiStatus.key === "failed") lines.push(`Estado: ${uiStatus.label}`);
+      else if (uiStatus.key === "completed") lines.push("Estado: Completado");
+      else if (uiStatus.key === "queued") lines.push("Estado: En cola");
+      else if (uiStatus.key === "running") lines.push("Estado: Procesando");
       else if (status) lines.push(`Estado: ${translateStatus(status)}`);
 
       if (stage) lines.push(`Fase: ${stage}`);
@@ -5683,13 +5726,13 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
             progressFill.classList.remove("error");
             progressFill.style.background = "";
             progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-            progressFill.classList.toggle("error", ["failed", "cancelled"].includes(status));
+            progressFill.classList.toggle("error", normalizeJobStatus(job).className === "error");
           }
           if (progressLabel) {
-            if (status === "failed") progressLabel.textContent = "Fallido";
-            else if (status === "cancelled") progressLabel.textContent = "Cancelado";
-            else if (status === "completed" || status === "done") progressLabel.textContent = "Procesado completado";
-            else if (status === "queued") progressLabel.textContent = "En cola";
+            const uiStatus = normalizeJobStatus(job);
+            if (uiStatus.key === "failed") progressLabel.textContent = uiStatus.label;
+            else if (uiStatus.key === "completed") progressLabel.textContent = "Procesado completado";
+            else if (uiStatus.key === "queued") progressLabel.textContent = "En cola";
             else progressLabel.textContent = "Procesando";
           }
           if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
@@ -5741,7 +5784,7 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
-          if (status === "done" || status === "completed") {
+          if (normalizeJobStatus(job).canDownload) {
             stopPolling();
 
             if (progressFill) progressFill.style.width = "100%";
@@ -5801,7 +5844,7 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
               return;
             }
 
-            showDownloadButton(job.id);
+            hideDownloadButton();
           }
         } catch (error) {
           console.error("Polling error:", error);
