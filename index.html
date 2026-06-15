@@ -5049,11 +5049,20 @@ if (map) {
           info.params = line.replace("Parámetros:", "").trim();
           continue;
         }
-        if (line.startsWith("Cámaras alineadas:")) {
-          info.alignedCameras = line.replace("Cámaras alineadas:", "").trim();
-          info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
-          continue;
-        }
+        if (/^C[áa]maras alineadas:/i.test(line)) {
+  info.alignedCameras = line.replace(/^C[áa]maras alineadas:/i, "").trim();
+  info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
+  continue;
+}
+
+if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
+  const m = line.match(/:\s*(\d+)/);
+  if (m && !info.alignedCameras) {
+    info.alignedCameras = `${m[1]} con GPS / pendiente de alineación`;
+    info.latestDetail = `Cámaras con referencia: ${m[1]}`;
+  }
+  continue;
+}
         if (/Point cloud creada con/i.test(line)) {
           const m = line.match(/Point cloud creada con\s+([\d.]+)/i);
           info.pointCount = m ? m[1] : line.replace(/.*Point cloud creada con\s*/i, "").trim();
