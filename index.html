@@ -3060,60 +3060,45 @@ function getSelectedQualityMode() {
       }
     }
 
-    function formatJobListStatus(status) {
-      const value = String(status || "").toLowerCase();
-      if (value === "queued") return "En cola";
-      if (value === "running") return "Procesando";
-      if (value === "done" || value === "completed") return "Completado";
-      if (value === "failed") return "Fallido";
-      if (value === "cancelled") return "Cancelado";
-      if (value === "created") return "Creado";
-      if (value === "receiving") return "Recibiendo fotos";
-      return value || "Sin estado";
-    }
+   function normalizeJobStatus(job) {
+  const status = String(job?.status || "").toLowerCase();
+  const stage = String(job?.stage || job?.phase || "").toLowerCase();
+  const error = String(job?.error || "").trim();
 
-    function formatJobListStage(stage) {
-      return String(stage || "").trim() || "Sin fase";
-    }
+  const successStatuses = ["done", "completed", "complete", "finished", "success", "processed"];
+  const failedStatuses = ["failed", "error", "cancelled", "canceled"];
 
-    function normalizeJobStatus(job) {
-      const status = String(job?.status || "").toLowerCase();
-      const stage = String(job?.stage || job?.phase || "").toLowerCase();
-      const message = String(job?.message || "").toLowerCase();
-      const error = String(job?.error || "").trim();
+  if (successStatuses.includes(status) || successStatuses.includes(stage)) {
+    return { key: "completed", label: "Completado", className: "ok", canDownload: true };
+  }
 
-      const successStatuses = ["done", "completed", "complete", "finished", "success", "processed"];
-      const failedStatuses = ["failed", "error", "cancelled", "canceled"];
+  if (failedStatuses.includes(status) || failedStatuses.includes(stage) || error) {
+    return {
+      key: "failed",
+      label: status === "cancelled" || status === "canceled" ? "Cancelado" : "Fallido",
+      className: "error",
+      canDownload: false
+    };
+  }
 
-      const hasSuccessText =
-        message.includes("completado") ||
-        message.includes("completada") ||
-        message.includes("procesado correctamente") ||
-        message.includes("trabajo procesado correctamente");
+  if (status === "queued") {
+    return { key: "queued", label: "En cola", className: "progress", canDownload: false };
+  }
 
-      const hasFailureText =
-        message.includes("fallido") ||
-        message.includes("failed") ||
-        message.includes("error") ||
-        message.includes("cancelado") ||
-        message.includes("cancelled") ||
-        message.includes("canceled");
+  if (status === "receiving") {
+    return { key: "receiving", label: "Recibiendo fotos", className: "receiving", canDownload: false };
+  }
 
-      if (successStatuses.includes(status) || successStatuses.includes(stage) || hasSuccessText) {
-        return { key: "completed", label: "Completado", className: "ok", canDownload: true };
-      }
+  if (status === "created") {
+    return { key: "created", label: "Creado", className: "receiving", canDownload: false };
+  }
 
-      if (failedStatuses.includes(status) || failedStatuses.includes(stage) || error || hasFailureText) {
-        return { key: "failed", label: status === "cancelled" || status === "canceled" ? "Cancelado" : "Fallido", className: "error", canDownload: false };
-      }
+  if (status === "running" || status === "processing" || stage) {
+    return { key: "running", label: "Procesando", className: "progress", canDownload: false };
+  }
 
-      if (status === "queued") return { key: "queued", label: "En cola", className: "progress", canDownload: false };
-      if (status === "receiving") return { key: "receiving", label: "Recibiendo fotos", className: "receiving", canDownload: false };
-      if (status === "created") return { key: "created", label: "Creado", className: "receiving", canDownload: false };
-      if (status === "running" || status === "processing" || stage) return { key: "running", label: "Procesando", className: "progress", canDownload: false };
-
-      return { key: "unknown", label: status || "Sin estado", className: "", canDownload: false };
-    }
+  return { key: "unknown", label: status || "Sin estado", className: "", canDownload: false };
+}
 
     function isJobFinished(job) {
       return normalizeJobStatus(job).canDownload === true;
