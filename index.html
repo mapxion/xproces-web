@@ -5030,8 +5030,13 @@ if (map) {
           info.photos = line.replace("Fotos encontradas:", "").trim();
           continue;
         }
-        if (line.startsWith("Salidas solicitadas:")) {
-          info.requestedOutputs = line.replace("Salidas solicitadas:", "").split(",").map((x) => x.trim()).filter(Boolean);
+        if (line.startsWith("Salidas solicitadas:") || line.startsWith("Salidas solicitadas finales:")) {
+          info.requestedOutputs = line
+            .replace("Salidas solicitadas finales:", "")
+            .replace("Salidas solicitadas:", "")
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean);
           continue;
         }
         if (line.startsWith("Aviso:")) {
@@ -5059,6 +5064,39 @@ if (map) {
           info.latestDetail = line.replace(/Tie points válidos tras alignment:/i, "Tie points válidos:").trim();
           continue;
         }
+        const exportOkMap = [
+          [/^LAS:\s*OK\b/i, "las"],
+          [/^LAZ:\s*OK\b/i, "laz"],
+          [/^E57:\s*OK\b/i, "e57"],
+          [/^PLY:\s*OK\b/i, "ply"],
+          [/^PTS:\s*OK\b/i, "pts"],
+          [/^DSM\/DEM TIFF:\s*OK\b/i, "dem_tif"],
+          [/^DEM TIFF:\s*OK\b/i, "dem_tif"],
+          [/^MDE TIFF:\s*OK\b/i, "dem_tif"],
+          [/^DTM TIFF:\s*OK\b/i, "dtm_tif"],
+          [/^Curvas DXF:\s*OK\b/i, "contours_dxf"],
+          [/^Ortomosaico TIFF:\s*OK\b/i, "orthomosaic_tif"],
+          [/^Ortomosaico JPG:\s*OK\b/i, "orthomosaic_jpg"],
+          [/^PDF report:\s*OK\b/i, "pdf_report"],
+          [/^OBJ:\s*OK\b/i, "mesh_obj"],
+          [/^FBX:\s*OK\b/i, "mesh_fbx"],
+          [/^STL:\s*OK\b/i, "mesh_stl"],
+          [/^DAE:\s*OK\b/i, "mesh_dae"],
+          [/^3DS:\s*OK\b/i, "mesh_3ds"],
+          [/^WRL:\s*OK\b/i, "mesh_wrl"],
+          [/^Malla PLY:\s*OK\b/i, "mesh_ply"],
+          [/^Modelo teselado 3TZ:\s*OK\b/i, "tiled_model"]
+        ];
+
+        const matchedExport = exportOkMap.find(([rx]) => rx.test(line));
+        if (matchedExport) {
+          info.generatedOutputs.push(matchedExport[1]);
+          info.currentStage = "export";
+          info.latestDetail = line;
+          info.latestLiveMessage = "Archivo generado correctamente";
+          continue;
+        }
+
         if (line.includes("No se pudieron exportar")) {
           info.warnings.push(line);
           info.latestDetail = line;
@@ -5160,7 +5198,21 @@ if (map) {
           "ply": "ply",
           "pts": "pts",
           "dem": "dem_tif",
+          "dem_tif": "dem_tif",
           "dem.tif": "dem_tif",
+          "dsm": "dem_tif",
+          "dsm_tif": "dem_tif",
+          "mde": "dem_tif",
+          "mde_tif": "dem_tif",
+          "dtm": "dtm_tif",
+          "dtm_tif": "dtm_tif",
+          "dtm.tif": "dtm_tif",
+          "mdt": "dtm_tif",
+          "curvas": "contours_dxf",
+          "contours": "contours_dxf",
+          "contours_dxf": "contours_dxf",
+          "contours.dxf": "contours_dxf",
+          "dxf": "contours_dxf",
           "orthomosaic": "orthomosaic_tif",
           "orthomosaic.tif": "orthomosaic_tif",
           "orthomosaic.jpg": "orthomosaic_jpg",
