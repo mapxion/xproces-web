@@ -5649,7 +5649,12 @@ if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const projectName = job?.project_name || job?.client_name || "Proyecto";
       const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: pendiente";
-      const detailText = parsed.pointCount ? `Puntos reconstruidos: ${parsed.pointCount}` : alignedText;
+      const detailText =
+  parsed.alignedCameras
+    ? `Cámaras alineadas: ${parsed.alignedCameras}`
+    : parsed.pointCount
+      ? `Puntos reconstruidos: ${parsed.pointCount}`
+      : alignedText;
       const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
 
       const phaseOrder = [
