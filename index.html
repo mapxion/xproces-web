@@ -5153,13 +5153,17 @@ if (map) {
           info.params = line.replace("Parámetros:", "").trim();
           continue;
         }
-        if (/^C[áa]maras alineadas:/i.test(line)) {
-  info.alignedCameras = line.replace(/^C[áa]maras alineadas:/i, "").trim();
+       if (/c[áa]maras alineadas:/i.test(line)) {
+  const m = line.match(/c[áa]maras alineadas:\s*(.*)$/i);
+  info.alignedCameras = m
+    ? m[1].trim()
+    : line.replace(/.*c[áa]maras alineadas:\s*/i, "").trim();
+
   info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
   continue;
 }
 
-if (/^C[áa]maras con localizaci[oó]n de referencia disponible/i.test(line)) {
+if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
   const m = line.match(/:\s*(\d+)/);
   if (m && !info.alignedCameras) {
     info.alignedCameras = `${m[1]} con GPS / pendiente de alineación`;
