@@ -1,6 +1,6 @@
-/* XProces Log Renderer v5 ASCII
-   Fuente principal: /jobs/:id/log.
-   Importante: no modifica index.html. Sustituir solo xproces-log-renderer.js.
+/* XProces Log Renderer v6 ASCII STRICT
+   Sustituir SOLO xproces-log-renderer.js.
+   Todo el texto mostrado por este renderer sale sin tildes ni caracteres especiales.
 */
 (function () {
   "use strict";
@@ -18,46 +18,36 @@
     return String(line || "").replace(/^\[[^\]]+\]\s*/, "").trim();
   }
 
-  function repairText(value) {
+  function normalizeAscii(value) {
     let t = String(value || "");
 
-    // Mojibake habitual UTF-8 leido como Windows-1252.
-    const replacements = [
-      ["Ã¡", "a"], ["Ã©", "e"], ["Ã­", "i"], ["Ã³", "o"], ["Ão", "u"],
-      ["Ã ", "A"], ["Ã‰", "E"], ["Ã ", "I"], ["Ã“", "O"], ["Ãš", "U"],
-      ["Ã±", "n"], ["Ã‘", "N"], ["Âo", "o"], ["Âa", "a"], ["Â-", "-"], ["Â", ""],
+    // Intento de arreglar mojibake comun.
+    const pairs = [
+      ["Ã¡", "a"], ["Ã©", "e"], ["Ã­", "i"], ["Ã³", "o"], ["Ãº", "u"],
+      ["Ã ", "A"], ["Ã‰", "E"], ["Ã“", "O"], ["Ãš", "U"],
+      ["Ã±", "n"], ["Ã‘", "N"], ["Âº", "o"], ["Âª", "a"], ["Â·", "-"], ["Â", ""],
 
-      // Cuando ya llega con caracter de sustitucion.
-      ["c maras", "camaras"], ["C maras", "Camaras"],
-      ["c mara", "camara"], ["C mara", "Camara"],
-      ["fotograf as", "fotografias"], ["Fotograf as", "Fotografias"],
-      ["fotograf a", "fotografia"], ["Fotograf a", "Fotografia"],
-      ["expl cito", "explicito"], ["Expl cito", "Explicito"],
-      ["par metros", "parametros"], ["Par metros", "Parametros"],
-      ["rotaci n", "rotacion"], ["Rotaci n", "Rotacion"],
-      ["localizaci n", "localizacion"], ["Localizaci n", "Localizacion"],
-      ["generaci n", "generacion"], ["Generaci n", "Generacion"],
-      ["clasificaci n", "clasificacion"], ["Clasificaci n", "Clasificacion"],
-      ["exportaci n", "exportacion"], ["Exportaci n", "Exportacion"],
-      ["compresi n", "compresion"], ["Compresi n", "Compresion"],
-      ["a ad", "anad"], ["A ad", "Anad"],
-      ["t cnic", "tecnic"], ["T cnic", "Tecnic"]
+      [" ", ""],
+      ["á", "a"], ["é", "e"], ["í", "i"], ["ó", "o"], ["ú", "u"],
+      ["Á", "A"], ["É", "E"], ["Í", "I"], ["Ó", "O"], ["Ú", "U"],
+      ["ñ", "n"], ["Ñ", "N"], ["ü", "u"], ["Ü", "U"],
+      ["·", "-"], ["º", "o"], ["ª", "a"]
     ];
-    for (const [a, b] of replacements) t = t.split(a).join(b);
+    for (const [a, b] of pairs) t = t.split(a).join(b);
+
+    // Limpieza final: quita diacriticos si quedara alguno.
+    t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     return t;
   }
 
-  function compactKey(text) {
-    return repairText(text)
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
+  function keyOf(value) {
+    return normalizeAscii(value).toLowerCase().replace(/[^a-z0-9]/g, "");
   }
 
-  function prettyMessage(text) {
-    const original = repairText(text).replace(/Metashape/gi, "Xproces").trim();
-    const key = compactKey(original);
+  function prettyMessage(value) {
+    const raw = normalizeAscii(value).replace(/Metashape/gi, "Xproces").trim();
+    const key = keyOf(raw);
 
     const known = [
       ["preparandoproyecto", "Preparando proyecto"],
@@ -82,13 +72,10 @@
     const hit = known.find(([k]) => key.includes(k));
     if (hit) return hit[1];
 
-    // Inserta espacios en algunas frases compactadas si llegan sin espacios.
-    let t = original
-      .replace(/([a-zaeioun])([A-ZAEIOUN])/g, "$1 $2")
+    return raw
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
       .replace(/\s+/g, " ")
       .trim();
-
-    return t;
   }
 
   function firstLogDate(text) {
@@ -145,7 +132,8 @@
       tiled_model: "Modelo teselado",
       resultado_zip: "ZIP final"
     };
-    return map[String(value || "").trim().toLowerCase()] || prettyMessage(value);
+    const key = normalizeAscii(value).trim().toLowerCase();
+    return map[key] || prettyMessage(value);
   }
 
   function normalizeOutputList(value) {
@@ -188,11 +176,11 @@
 
     const rawLines = String(text || "").split(/\r?\n/).map(stripPrefix).filter(Boolean);
 
-    for (const raw of rawLines) {
-      const fixedRaw = repairText(raw).trim();
+    for (const rawLine of rawLines) {
+      const fixedRaw = normalizeAscii(rawLine).trim();
       if (!fixedRaw) continue;
 
-      // PROGRESO: se parsea ANTES de embellecer el texto para no perder XPROCES_PROGRESS.
+      // Leer XPROCES_PROGRESS antes de embellecer.
       if (/^XPROCES_PROGRESS\|/i.test(fixedRaw)) {
         const parts = fixedRaw.split("|");
         const p = Number(parts[1]);
@@ -235,7 +223,7 @@
         continue;
       }
 
-      const aligned = line.match(/C[aa]maras alineadas:\s*(.*)$/i) || line.match(/Camaras alineadas:\s*(.*)$/i);
+      const aligned = line.match(/Camaras alineadas:\s*(.*)$/i);
       if (aligned) {
         info.alignedCameras = aligned[1].trim();
         info.lastImportantOk = `Camaras alineadas: ${info.alignedCameras}`;
@@ -296,7 +284,7 @@
   function render(job, logText, eta) {
     const parsed = parseLog(logText || "");
     const progress = parsed.progress != null ? parsed.progress : Math.max(0, Math.min(100, Number(job?.progress || 0)));
-    const title = parsed.progressMessage || job?.message || "Procesando proyecto";
+    const title = parsed.progressMessage || prettyMessage(job?.message || "Procesando proyecto");
 
     const start = firstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
     const elapsed = start && !Number.isNaN(start.getTime()) ? Math.floor((Date.now() - start.getTime()) / 1000) : Number(job?.total_seconds || 0);
@@ -333,11 +321,11 @@
           <div>
             <div class="xproces-live-eyebrow">
               <span class="xproces-live-chip">${esc(statusChip(job, parsed))}</span>
-              <span class="xproces-live-chip">${esc(quality)}</span>
-              <span class="xproces-live-chip">${esc(photos)}</span>
+              <span class="xproces-live-chip">${esc(normalizeAscii(quality))}</span>
+              <span class="xproces-live-chip">${esc(normalizeAscii(photos))}</span>
             </div>
-            <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(title)}</h2>
-            <div class="xproces-live-subtitle">${esc(projectName)} - Leyendo progreso desde el log real</div>
+            <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(normalizeAscii(title))}</h2>
+            <div class="xproces-live-subtitle">${esc(normalizeAscii(projectName))} - Leyendo progreso desde el log real</div>
           </div>
           <div class="xproces-live-percent">${esc(String(Math.round(progress)))}%</div>
         </div>
@@ -359,11 +347,11 @@
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">Entrega</div>
-            <div class="xproces-live-metric-value">${esc(outputs)}</div>
+            <div class="xproces-live-metric-value">${esc(normalizeAscii(outputs))}</div>
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">Control de calidad</div>
-            <div class="xproces-live-metric-value">${esc(detail)}</div>
+            <div class="xproces-live-metric-value">${esc(normalizeAscii(detail))}</div>
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">ID del trabajo</div>
@@ -376,7 +364,7 @@
             <div class="process-summary-section">
               <div class="process-summary-section-title">Ultimos procesos del log</div>
               <div class="process-summary-list">
-                ${lastSteps.map((x) => `<div>${esc(x)}</div>`).join("")}
+                ${lastSteps.map((x) => `<div>${esc(normalizeAscii(x))}</div>`).join("")}
               </div>
             </div>
           </div>
