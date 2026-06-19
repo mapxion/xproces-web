@@ -1,6 +1,6 @@
-/* XProces Log Renderer
-   Fuente principal: metashape-python-log.txt vía /jobs/:id/log.
-   El index solo llama a window.XProcesLogRenderer.render(job, logText, eta).
+/* XProces Log Renderer v4
+   Fuente principal: /jobs/:id/log.
+   Importante: no modifica index.html. Sustituir solo xproces-log-renderer.js.
 */
 (function () {
   "use strict";
@@ -16,6 +16,79 @@
 
   function stripPrefix(line) {
     return String(line || "").replace(/^\[[^\]]+\]\s*/, "").trim();
+  }
+
+  function repairText(value) {
+    let t = String(value || "");
+
+    // Mojibake habitual UTF-8 leído como Windows-1252.
+    const replacements = [
+      ["Ã¡", "á"], ["Ã©", "é"], ["Ã­", "í"], ["Ã³", "ó"], ["Ãº", "ú"],
+      ["Ã ", "Á"], ["Ã‰", "É"], ["Ã ", "Í"], ["Ã“", "Ó"], ["Ãš", "Ú"],
+      ["Ã±", "ñ"], ["Ã‘", "Ñ"], ["Âº", "º"], ["Âª", "ª"], ["Â·", "·"], ["Â", ""],
+
+      // Cuando ya llega con carácter de sustitución.
+      ["c maras", "cámaras"], ["C maras", "Cámaras"],
+      ["c mara", "cámara"], ["C mara", "Cámara"],
+      ["fotograf as", "fotografías"], ["Fotograf as", "Fotografías"],
+      ["fotograf a", "fotografía"], ["Fotograf a", "Fotografía"],
+      ["expl cito", "explícito"], ["Expl cito", "Explícito"],
+      ["par metros", "parámetros"], ["Par metros", "Parámetros"],
+      ["rotaci n", "rotación"], ["Rotaci n", "Rotación"],
+      ["localizaci n", "localización"], ["Localizaci n", "Localización"],
+      ["generaci n", "generación"], ["Generaci n", "Generación"],
+      ["clasificaci n", "clasificación"], ["Clasificaci n", "Clasificación"],
+      ["exportaci n", "exportación"], ["Exportaci n", "Exportación"],
+      ["compresi n", "compresión"], ["Compresi n", "Compresión"],
+      ["a ad", "añad"], ["A ad", "Añad"],
+      ["t cnic", "técnic"], ["T cnic", "Técnic"]
+    ];
+    for (const [a, b] of replacements) t = t.split(a).join(b);
+
+    return t;
+  }
+
+  function compactKey(text) {
+    return repairText(text)
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function prettyMessage(text) {
+    const original = repairText(text).replace(/Metashape/gi, "Xproces").trim();
+    const key = compactKey(original);
+
+    const known = [
+      ["preparandoproyecto", "Preparando proyecto"],
+      ["importandofotografias", "Importando fotografías"],
+      ["detectandopuntosclavealta", "Detectando puntos clave (Alta)"],
+      ["alineandocamaras", "Alineando cámaras"],
+      ["generandomapasdeprofundidadalta", "Generando mapas de profundidad (Alta)"],
+      ["generandonubedepuntoscomoxprocesgui", "Generando nube de puntos como Xproces GUI"],
+      ["generandomodelo3dcomobatchmanualxproces", "Generando modelo 3D como Batch manual Xproces"],
+      ["generandotexturacomoxprocesguiexplicito", "Generando textura como Xproces GUI explícito"],
+      ["generandomodelodeteselascomoxprocesgui", "Generando modelo de teselas como Xproces GUI"],
+      ["generandomdecomoxprocesgui", "Generando MDE como Xproces GUI"],
+      ["generandoortomosaicocomoxprocesgui", "Generando ortomosaico como Xproces GUI"],
+      ["generandodtmdesdeclaseground", "Generando DTM desde clase Ground"],
+      ["generandocurvasdeniveldxf", "Generando curvas de nivel DXF"],
+      ["exportandoarchivosfinales", "Exportando archivos finales"],
+      ["generandoinformefinaldelproyecto", "Generando informe final del proyecto"],
+      ["comprimiendoresultados", "Comprimiendo resultados"],
+      ["trabajoprocesadocorrectamente", "Trabajo procesado correctamente"]
+    ];
+
+    const hit = known.find(([k]) => key.includes(k));
+    if (hit) return hit[1];
+
+    // Inserta espacios en algunas frases compactadas si llegan sin espacios.
+    let t = original
+      .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, "$1 $2")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return t;
   }
 
   function firstLogDate(text) {
@@ -64,83 +137,36 @@
       dem_tif: "DSM/DEM TIFF",
       dtm_tif: "DTM TIFF",
       contours_dxf: "Curvas DXF",
+      contours_shp: "Curvas SHP",
       pdf_report: "Informe PDF",
       mesh_obj: "OBJ",
       mesh_fbx: "FBX",
       mesh_glb: "GLB",
-      tiled_model: "Modelo teselado"
+      tiled_model: "Modelo teselado",
+      resultado_zip: "ZIP final"
     };
-    return map[String(value || "").trim().toLowerCase()] || String(value || "").trim();
+    return map[String(value || "").trim().toLowerCase()] || prettyMessage(value);
   }
 
-  function fixEncodingArtifacts(text) {
-    // Reparaciones visibles cuando el log llega con charset incorrecto
-    // y el navegador muestra el carácter de sustitución  .
-    return String(text || "")
-      .replace(/c maras/gi, "cámaras")
-      .replace(/c mara/gi, "cámara")
-      .replace(/fotograf as/gi, "fotografías")
-      .replace(/fotograf a/gi, "fotografía")
-      .replace(/expl cito/gi, "explícito")
-      .replace(/t cnic/gi, "técnic")
-      .replace(/par metros/gi, "parámetros")
-      .replace(/rotaci n/gi, "rotación")
-      .replace(/localizaci n/gi, "localización")
-      .replace(/generaci n/gi, "generación")
-      .replace(/clasificaci n/gi, "clasificación")
-      .replace(/exportaci n/gi, "exportación")
-      .replace(/compresi n/gi, "compresión")
-      .replace(/dise /gi, "diseñ")
-      .replace(/a ad/gi, "añad")
-      .replace(/ /g, "");
+  function normalizeOutputList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map(String).filter(Boolean);
+    if (typeof value === "object") return Object.entries(value).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    return String(value).split(/[;,]/).map(x => x.trim()).filter(Boolean);
   }
 
-  function prettifyProcessText(text) {
-    let t = fixEncodingArtifacts(text).replace(/Metashape/gi, "Xproces").trim();
-
-    // Si alguna versión anterior compactó el texto, lo reconstruimos con frases conocidas del log.
-    const compact = t.toLowerCase().replace(/\s+/g, "");
-    const known = [
-      ["preparandoproyecto", "Preparando proyecto"],
-      ["importandofotografias", "Importando fotografías"],
-      ["importandofotografías", "Importando fotografías"],
-      ["detectandopuntosclavealta", "Detectando puntos clave (Alta)"],
-      ["alineandocamaras", "Alineando cámaras"],
-      ["alineandocámaras", "Alineando cámaras"],
-      ["generandomapasdeprofundidadalta", "Generando mapas de profundidad (Alta)"],
-      ["generandonubedepuntoscomoxprocesgui", "Generando nube de puntos como Xproces GUI"],
-      ["generandomodelo3dcomobatchmanualxproces", "Generando modelo 3D como Batch manual Xproces"],
-      ["generandotexturacomoxprocesguiexplicito", "Generando textura como Xproces GUI explícito"],
-      ["generandotexturacomoxprocesguiexplícito", "Generando textura como Xproces GUI explícito"],
-      ["generandomodelodeteselascomoxprocesgui", "Generando modelo de teselas como Xproces GUI"],
-      ["generandomdecomoxprocesgui", "Generando MDE como Xproces GUI"],
-      ["generandoortomosaicocomoxprocesgui", "Generando ortomosaico como Xproces GUI"],
-      ["generandodtmdesdeclaseground", "Generando DTM desde clase Ground"],
-      ["generandocurvasdeniveldxf", "Generando curvas de nivel DXF"],
-      ["exportandoarchivosfinales", "Exportando archivos finales"],
-      ["generandoinformefinaldelproyecto", "Generando informe final del proyecto"],
-      ["comprimiendoresultados", "Comprimiendo resultados"],
-      ["trabajoprocesadocorrectamente", "Trabajo procesado correctamente"]
-    ];
-    const hit = known.find(([k]) => compact.includes(k));
-    if (hit) return hit[1];
-
-    return t.replace(/\s+/g, " ");
+  function outputListFromJob(job) {
+    const candidates = [job?.outputs, job?.requested_outputs, job?.outputs_requested, job?.output_files, job?.delivery, job?.deliverables];
+    for (const c of candidates) {
+      const list = normalizeOutputList(c);
+      if (list.length) return list;
+    }
+    return [];
   }
 
-  function cleanStep(text) {
-    return prettifyProcessText(text);
-  }
-
-  function isImportantOkLine(line) {
-    // Solo mensajes útiles para el usuario en Control de calidad.
-    // No usamos "buildModel completado" ni detalles internos similares.
-    if (/^PROCESO OK\b/i.test(line)) return true;
-    if (/C[áa]maras alineadas:/i.test(line) || /Camaras alineadas:/i.test(line)) return true;
-    if (/PUNTOS NUBE:/i.test(line)) return true;
-    if (/^(LAS|LAZ|E57|PLY|PTS):\s*OK\b/i.test(line)) return true;
-    if (/^(DSM\/DEM TIFF|DEM TIFF|MDE TIFF|DTM TIFF|Curvas DXF|Ortomosaico TIFF|Ortomosaico JPG|PDF report|OBJ|FBX|GLB|ZIP final):\s*OK\b/i.test(line)) return true;
-    return false;
+  function parseOutputList(line) {
+    return line.replace(/^Salidas solicitadas(?: finales)?:\s*/i, "")
+      .split(",").map(x => x.trim()).filter(Boolean);
   }
 
   function parseLog(text) {
@@ -154,17 +180,35 @@
       generatedOutputs: [],
       alignedCameras: "",
       pointCount: "",
-      lastOk: "",
-      lastUsefulLine: "Procesando proyecto",
+      lastImportantOk: "",
+      fallbackCompletedStep: "",
       processLines: [],
       warnings: []
     };
 
-    const lines = String(text || "").split(/\r?\n/).map(stripPrefix).filter(Boolean);
+    const rawLines = String(text || "").split(/\r?\n/).map(stripPrefix).filter(Boolean);
 
-    for (const lineRaw of lines) {
-      const line = cleanStep(lineRaw);
-      if (!line) continue;
+    for (const raw of rawLines) {
+      const fixedRaw = repairText(raw).trim();
+      if (!fixedRaw) continue;
+
+      // PROGRESO: se parsea ANTES de embellecer el texto para no perder XPROCES_PROGRESS.
+      if (/^XPROCES_PROGRESS\|/i.test(fixedRaw)) {
+        const parts = fixedRaw.split("|");
+        const p = Number(parts[1]);
+        const msg = prettyMessage(parts.slice(2).join("|") || "Procesando proyecto");
+        if (Number.isFinite(p)) info.progress = Math.max(0, Math.min(100, p));
+        info.progressMessage = msg;
+        info.processLines.push(msg);
+        info.fallbackCompletedStep = msg;
+        if (p >= 100 || /correctamente|completado/i.test(msg)) {
+          info.status = "completed";
+          info.lastImportantOk = msg;
+        }
+        continue;
+      }
+
+      const line = prettyMessage(fixedRaw);
 
       if (/^Fotos encontradas:/i.test(line)) {
         info.photos = line.replace(/^Fotos encontradas:\s*/i, "").trim();
@@ -182,8 +226,7 @@
       }
 
       if (/^Salidas solicitadas:/i.test(line) || /^Salidas solicitadas finales:/i.test(line)) {
-        info.requestedOutputs = line.replace(/^Salidas solicitadas(?: finales)?:\s*/i, "")
-          .split(",").map(x => x.trim()).filter(Boolean);
+        info.requestedOutputs = parseOutputList(line);
         continue;
       }
 
@@ -192,32 +235,17 @@
         continue;
       }
 
-      if (/^XPROCES_PROGRESS\|/i.test(line)) {
-        const parts = line.split("|");
-        const p = Number(parts[1]);
-        const msg = cleanStep(parts.slice(2).join("|") || "Procesando proyecto");
-        if (Number.isFinite(p)) info.progress = Math.max(0, Math.min(100, p));
-        info.progressMessage = msg;
-        info.lastUsefulLine = msg;
-        info.processLines.push(msg);
-        if (p >= 100 || /correctamente|completado/i.test(msg)) {
-          info.status = "completed";
-          info.lastOk = msg;
-        }
-        continue;
-      }
-
       const aligned = line.match(/C[áa]maras alineadas:\s*(.*)$/i) || line.match(/Camaras alineadas:\s*(.*)$/i);
       if (aligned) {
         info.alignedCameras = aligned[1].trim();
-        info.lastOk = `Cámaras alineadas: ${info.alignedCameras}`;
+        info.lastImportantOk = `Cámaras alineadas: ${info.alignedCameras}`;
         continue;
       }
 
       const points = line.match(/PUNTOS NUBE:\s*(.*)$/i);
       if (points) {
         info.pointCount = points[1].trim();
-        info.lastOk = `Puntos nube: ${info.pointCount}`;
+        info.lastImportantOk = `Puntos nube: ${info.pointCount}`;
         continue;
       }
 
@@ -233,7 +261,7 @@
       const foundExport = exportMap.find(([rx]) => rx.test(line));
       if (foundExport) {
         if (!info.generatedOutputs.includes(foundExport[1])) info.generatedOutputs.push(foundExport[1]);
-        info.lastOk = line;
+        info.lastImportantOk = line;
         continue;
       }
 
@@ -241,19 +269,14 @@
         info.status = "completed";
         info.progress = 100;
         info.progressMessage = "Trabajo procesado correctamente";
-        info.lastUsefulLine = "Trabajo procesado correctamente";
-        info.lastOk = "PROCESO OK";
+        info.lastImportantOk = "PROCESO OK";
         continue;
       }
 
       if (/PROCESO ERROR|Traceback|Error:/i.test(line)) {
         info.status = "failed";
-        info.lastOk = line;
+        info.lastImportantOk = line;
         continue;
-      }
-
-      if (isImportantOkLine(line)) {
-        info.lastOk = line;
       }
     }
 
@@ -270,36 +293,10 @@
     return "Procesando";
   }
 
-
-  function normalizeOutputList(value) {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.map(String).filter(Boolean);
-    if (typeof value === "object") {
-      return Object.entries(value).filter(([, v]) => Boolean(v)).map(([k]) => k);
-    }
-    return String(value).split(/[;,]/).map(x => x.trim()).filter(Boolean);
-  }
-
-  function outputListFromJob(job) {
-    const candidates = [
-      job?.outputs,
-      job?.requested_outputs,
-      job?.outputs_requested,
-      job?.output_files,
-      job?.delivery,
-      job?.deliverables
-    ];
-    for (const c of candidates) {
-      const list = normalizeOutputList(c);
-      if (list.length) return list;
-    }
-    return [];
-  }
-
   function render(job, logText, eta) {
     const parsed = parseLog(logText || "");
     const progress = parsed.progress != null ? parsed.progress : Math.max(0, Math.min(100, Number(job?.progress || 0)));
-    const title = parsed.progressMessage || parsed.lastUsefulLine || job?.message || "Procesando proyecto";
+    const title = parsed.progressMessage || job?.message || "Procesando proyecto";
 
     const start = firstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
     const elapsed = start && !Number.isNaN(start.getTime()) ? Math.floor((Date.now() - start.getTime()) / 1000) : Number(job?.total_seconds || 0);
@@ -314,20 +311,21 @@
     const jobOutputs = outputListFromJob(job);
     const outputSource = parsed.requestedOutputs.length ? parsed.requestedOutputs : jobOutputs;
     const outputs = outputSource.length ? outputSource.map(outputLabel).filter(Boolean).join(" · ") : "Según solicitud";
+
     const photos = parsed.photos ? `${parsed.photos} fotos` : (job?.photos_count ? `${job.photos_count} fotos` : "Fotos en proceso");
     const quality = parsed.quality || job?.quality || job?.quality_mode || "Calidad seleccionada";
     const projectName = job?.project_name || job?.client_name || "Proyecto";
-    const previousStep = parsed.processLines.length > 1 ? parsed.processLines[parsed.processLines.length - 2] : "";
-    const detail = parsed.lastOk
-      || (parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "")
-      || (parsed.pointCount ? `Puntos nube: ${parsed.pointCount}` : "")
-      || (previousStep ? `Último proceso superado: ${previousStep}` : "Pendiente");
+
+    const detail =
+      parsed.lastImportantOk ||
+      (parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "") ||
+      (parsed.pointCount ? `Puntos nube: ${parsed.pointCount}` : "") ||
+      (parsed.fallbackCompletedStep ? `Último proceso leído: ${parsed.fallbackCompletedStep}` : "Pendiente");
 
     const done = parsed.status === "completed" || progress >= 100;
     const remainingText = done ? "Finalizado" : formatRemaining(remaining);
     const finishText = done ? "Finalizado" : finishClock(remaining);
-
-    const lastSteps = parsed.processLines.slice(-10);
+    const lastSteps = parsed.processLines.slice(-8);
 
     return `
       <div class="xproces-live-card">
@@ -338,7 +336,7 @@
               <span class="xproces-live-chip">${esc(quality)}</span>
               <span class="xproces-live-chip">${esc(photos)}</span>
             </div>
-            <h2 class="xproces-live-title">${esc(title)}</h2>
+            <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(title)}</h2>
             <div class="xproces-live-subtitle">${esc(projectName)} · Leyendo progreso desde el log real</div>
           </div>
           <div class="xproces-live-percent">${esc(String(Math.round(progress)))}%</div>
