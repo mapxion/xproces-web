@@ -77,27 +77,59 @@
     // Reparaciones visibles cuando el log llega con charset incorrecto
     // y el navegador muestra el carácter de sustitución  .
     return String(text || "")
-      .replace(/c maras/gi, "camaras")
-      .replace(/c mara/gi, "camara")
-      .replace(/fotograf as/gi, "fotografias")
-      .replace(/fotograf a/gi, "fotografia")
-      .replace(/expl cito/gi, "explicito")
-      .replace(/t cnic/gi, "tecnic")
-      .replace(/par metros/gi, "parametros")
-      .replace(/rotaci n/gi, "rotacion")
-      .replace(/localizaci n/gi, "localizacion")
-      .replace(/generaci n/gi, "generacion")
-      .replace(/clasificaci n/gi, "clasificacion")
-      .replace(/exportaci n/gi, "exportacion")
-      .replace(/compresi n/gi, "compresion")
+      .replace(/c maras/gi, "cámaras")
+      .replace(/c mara/gi, "cámara")
+      .replace(/fotograf as/gi, "fotografías")
+      .replace(/fotograf a/gi, "fotografía")
+      .replace(/expl cito/gi, "explícito")
+      .replace(/t cnic/gi, "técnic")
+      .replace(/par metros/gi, "parámetros")
+      .replace(/rotaci n/gi, "rotación")
+      .replace(/localizaci n/gi, "localización")
+      .replace(/generaci n/gi, "generación")
+      .replace(/clasificaci n/gi, "clasificación")
+      .replace(/exportaci n/gi, "exportación")
+      .replace(/compresi n/gi, "compresión")
+      .replace(/dise /gi, "diseñ")
+      .replace(/a ad/gi, "añad")
       .replace(/ /g, "");
   }
 
+  function prettifyProcessText(text) {
+    let t = fixEncodingArtifacts(text).replace(/Metashape/gi, "Xproces").trim();
+
+    // Si alguna versión anterior compactó el texto, lo reconstruimos con frases conocidas del log.
+    const compact = t.toLowerCase().replace(/\s+/g, "");
+    const known = [
+      ["preparandoproyecto", "Preparando proyecto"],
+      ["importandofotografias", "Importando fotografías"],
+      ["importandofotografías", "Importando fotografías"],
+      ["detectandopuntosclavealta", "Detectando puntos clave (Alta)"],
+      ["alineandocamaras", "Alineando cámaras"],
+      ["alineandocámaras", "Alineando cámaras"],
+      ["generandomapasdeprofundidadalta", "Generando mapas de profundidad (Alta)"],
+      ["generandonubedepuntoscomoxprocesgui", "Generando nube de puntos como Xproces GUI"],
+      ["generandomodelo3dcomobatchmanualxproces", "Generando modelo 3D como Batch manual Xproces"],
+      ["generandotexturacomoxprocesguiexplicito", "Generando textura como Xproces GUI explícito"],
+      ["generandotexturacomoxprocesguiexplícito", "Generando textura como Xproces GUI explícito"],
+      ["generandomodelodeteselascomoxprocesgui", "Generando modelo de teselas como Xproces GUI"],
+      ["generandomdecomoxprocesgui", "Generando MDE como Xproces GUI"],
+      ["generandoortomosaicocomoxprocesgui", "Generando ortomosaico como Xproces GUI"],
+      ["generandodtmdesdeclaseground", "Generando DTM desde clase Ground"],
+      ["generandocurvasdeniveldxf", "Generando curvas de nivel DXF"],
+      ["exportandoarchivosfinales", "Exportando archivos finales"],
+      ["generandoinformefinaldelproyecto", "Generando informe final del proyecto"],
+      ["comprimiendoresultados", "Comprimiendo resultados"],
+      ["trabajoprocesadocorrectamente", "Trabajo procesado correctamente"]
+    ];
+    const hit = known.find(([k]) => compact.includes(k));
+    if (hit) return hit[1];
+
+    return t.replace(/\s+/g, " ");
+  }
+
   function cleanStep(text) {
-    return fixEncodingArtifacts(text)
-      .replace(/Metashape/gi, "Xproces")
-      .replace(/\s+/g, " ")
-      .trim();
+    return prettifyProcessText(text);
   }
 
   function isImportantOkLine(line) {
@@ -122,7 +154,7 @@
       generatedOutputs: [],
       alignedCameras: "",
       pointCount: "",
-      lastOk: "Pendiente",
+      lastOk: "",
       lastUsefulLine: "Procesando proyecto",
       processLines: [],
       warnings: []
@@ -238,6 +270,32 @@
     return "Procesando";
   }
 
+
+  function normalizeOutputList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map(String).filter(Boolean);
+    if (typeof value === "object") {
+      return Object.entries(value).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    }
+    return String(value).split(/[;,]/).map(x => x.trim()).filter(Boolean);
+  }
+
+  function outputListFromJob(job) {
+    const candidates = [
+      job?.outputs,
+      job?.requested_outputs,
+      job?.outputs_requested,
+      job?.output_files,
+      job?.delivery,
+      job?.deliverables
+    ];
+    for (const c of candidates) {
+      const list = normalizeOutputList(c);
+      if (list.length) return list;
+    }
+    return [];
+  }
+
   function render(job, logText, eta) {
     const parsed = parseLog(logText || "");
     const progress = parsed.progress != null ? parsed.progress : Math.max(0, Math.min(100, Number(job?.progress || 0)));
@@ -253,11 +311,17 @@
       remaining = Math.max(0, Number(eta.total_estimated_seconds) - elapsed);
     }
 
-    const outputs = parsed.requestedOutputs.length ? parsed.requestedOutputs.map(outputLabel).join(" · ") : "Según solicitud";
+    const jobOutputs = outputListFromJob(job);
+    const outputSource = parsed.requestedOutputs.length ? parsed.requestedOutputs : jobOutputs;
+    const outputs = outputSource.length ? outputSource.map(outputLabel).filter(Boolean).join(" · ") : "Según solicitud";
     const photos = parsed.photos ? `${parsed.photos} fotos` : (job?.photos_count ? `${job.photos_count} fotos` : "Fotos en proceso");
     const quality = parsed.quality || job?.quality || job?.quality_mode || "Calidad seleccionada";
     const projectName = job?.project_name || job?.client_name || "Proyecto";
-    const detail = parsed.lastOk || (parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Pendiente");
+    const previousStep = parsed.processLines.length > 1 ? parsed.processLines[parsed.processLines.length - 2] : "";
+    const detail = parsed.lastOk
+      || (parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "")
+      || (parsed.pointCount ? `Puntos nube: ${parsed.pointCount}` : "")
+      || (previousStep ? `Último proceso superado: ${previousStep}` : "Pendiente");
 
     const done = parsed.status === "completed" || progress >= 100;
     const remainingText = done ? "Finalizado" : formatRemaining(remaining);
