@@ -1,7 +1,4 @@
-/* XProces Log Renderer v5 ASCII
-   Fuente principal: /jobs/:id/log.
-   Importante: no modifica index.html. Sustituir solo xproces-log-renderer.js.
-*/
+/* XProces Log Renderer limpio v9 - procesos cortos sin tildes */
 (function () {
   "use strict";
 
@@ -21,31 +18,49 @@
   function repairText(value) {
     let t = String(value || "");
 
-    // Mojibake habitual UTF-8 leido como Windows-1252.
+    // 1) Reparar mojibake habitual si el log llega mal codificado.
     const replacements = [
-      ["Ã¡", "a"], ["Ã©", "e"], ["Ã­", "i"], ["Ã³", "o"], ["Ão", "u"],
-      ["Ã ", "A"], ["Ã‰", "E"], ["Ã ", "I"], ["Ã“", "O"], ["Ãš", "U"],
-      ["Ã±", "n"], ["Ã‘", "N"], ["Âo", "o"], ["Âa", "a"], ["Â-", "-"], ["Â", ""],
-
-      // Cuando ya llega con caracter de sustitucion.
-      ["c maras", "camaras"], ["C maras", "Camaras"],
-      ["c mara", "camara"], ["C mara", "Camara"],
-      ["fotograf as", "fotografias"], ["Fotograf as", "Fotografias"],
-      ["fotograf a", "fotografia"], ["Fotograf a", "Fotografia"],
-      ["expl cito", "explicito"], ["Expl cito", "Explicito"],
-      ["par metros", "parametros"], ["Par metros", "Parametros"],
-      ["rotaci n", "rotacion"], ["Rotaci n", "Rotacion"],
-      ["localizaci n", "localizacion"], ["Localizaci n", "Localizacion"],
-      ["generaci n", "generacion"], ["Generaci n", "Generacion"],
-      ["clasificaci n", "clasificacion"], ["Clasificaci n", "Clasificacion"],
-      ["exportaci n", "exportacion"], ["Exportaci n", "Exportacion"],
-      ["compresi n", "compresion"], ["Compresi n", "Compresion"],
-      ["a ad", "anad"], ["A ad", "Anad"],
-      ["t cnic", "tecnic"], ["T cnic", "Tecnic"]
+      ["Ã¡", "a"], ["Ã©", "e"], ["Ã­", "i"], ["Ã³", "o"], ["Ãº", "u"],
+      ["\u00c3\u0081", "A"], ["\u00c3\u0089", "E"], ["\u00c3\u008d", "I"], ["\u00c3\u0093", "O"], ["\u00c3\u009a", "U"],
+      ["Ã±", "n"], ["Ã‘", "N"],
+      ["Â·", " - "], ["Âº", "o"], ["Âª", "a"], ["Â", ""]
     ];
     for (const [a, b] of replacements) t = t.split(a).join(b);
 
-    return t;
+    // 2) Si ya aparece el caracter roto, corregir palabras conocidas antes de borrarlo.
+    t = t
+      .replace(/fotograf.as/gi, "fotografias")
+      .replace(/fotograf.a/gi, "fotografia")
+      .replace(/c.maras/gi, "camaras")
+      .replace(/c.mara/gi, "camara")
+      .replace(/expl.cito/gi, "explicito")
+      .replace(/par.metros/gi, "parametros")
+      .replace(/rotaci.n/gi, "rotacion")
+      .replace(/localizaci.n/gi, "localizacion")
+      .replace(/generaci.n/gi, "generacion")
+      .replace(/clasificaci.n/gi, "clasificacion")
+      .replace(/exportaci.n/gi, "exportacion")
+      .replace(/compresi.n/gi, "compresion")
+      .replace(/t.cnic/gi, "tecnic")
+      .replace(/a.ad/gi, "anad");
+
+    // 3) Quitar tildes reales y cualquier caracter de sustitucion restante.
+    try {
+      t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    } catch (_) {}
+
+    t = t
+      .replace(/[\u00e1\u00e0\u00e4\u00e2]/gi, "a")
+      .replace(/[\u00e9\u00e8\u00eb\u00ea]/gi, "e")
+      .replace(/[\u00ed\u00ec\u00ef\u00ee]/gi, "i")
+      .replace(/[\u00f3\u00f2\u00f6\u00f4]/gi, "o")
+      .replace(/[\u00fa\u00f9\u00fc\u00fb]/gi, "u")
+      .replace(/\u00f1/gi, "n")
+      .replace(/[ºª]/g, "")
+      .replace(/·/g, " - ")
+      .replace(/\ufffd/g, "");
+
+    return t.replace(/\s+/g, " ").trim();
   }
 
   function compactKey(text) {
@@ -59,36 +74,35 @@
     const original = repairText(text).replace(/Metashape/gi, "Xproces").trim();
     const key = compactKey(original);
 
+    // Textos limpios para cliente final: sin tildes, sin GUI, sin Batch manual, sin detalles internos.
     const known = [
-      ["preparandoproyecto", "Preparando proyecto"],
-      ["importandofotografias", "Importando fotografias"],
-      ["detectandopuntosclavealta", "Detectando puntos clave"],
-      ["alineandocamaras", "Alineando camaras"],
-      ["generandomapasdeprofundidadalta", "Generando mapas de profundidad"],
-      ["generandonubedepuntoscomoxprocesgui", "Generando nube de puntos"],
-      ["generandomodelo3dcomobatchmanualxproces", "Generando modelo 3D"],
-      ["generandotexturacomoxprocesguiexplicito", "Generando textura"],
-      ["generandomodelodeteselascomoxprocesgui", "Generando modelo de teselas como Xproces GUI"],
-      ["generandomdecomoxprocesgui", "Generando MDE como Xproces GUI"],
-      ["generandoortomosaicocomoxprocesgui", "Generando ortomosaico como Xproces GUI"],
-      ["generandodtmdesdeclaseground", "Generando DTM desde clase Ground"],
-      ["generandocurvasdeniveldxf", "Generando curvas de nivel DXF"],
-      ["exportandoarchivosfinales", "Exportando archivos finales"],
-      ["generandoinformefinaldelproyecto", "Generando informe final del proyecto"],
-      ["comprimiendoresultados", "Comprimiendo resultados"],
-      ["trabajoprocesadocorrectamente", "Trabajo procesado correctamente"]
+      [["preparandoproyecto"], "Preparando proyecto"],
+      [["importandofotografias", "importandofotografas"], "Importando fotografias"],
+      [["detectandopuntosclave"], "Detectando puntos clave"],
+      [["alineandocamaras", "alineandocmaras"], "Alineando camaras"],
+      [["generandomapasdeprofundidad"], "Generando mapas de profundidad"],
+      [["generandonubedepuntos"], "Generando nube de puntos"],
+      [["generandomodelo3d"], "Generando modelo 3D"],
+      [["generandotextura"], "Generando textura"],
+      [["generandomodelodeteselas"], "Generando modelo de teselas"],
+      [["generandomde"], "Generando MDE"],
+      [["generandoortomosaico"], "Generando ortomosaico"],
+      [["generandodtm"], "Generando DTM"],
+      [["generandocurvasdenivel"], "Generando curvas de nivel"],
+      [["exportandoarchivosfinales", "exportandoresultados"], "Exportando resultados"],
+      [["generandoinformefinaldelproyecto", "generandoinforme"], "Generando informe"],
+      [["comprimiendoresultados"], "Comprimiendo resultados"],
+      [["trabajoprocesadocorrectamente"], "Trabajo procesado correctamente"]
     ];
 
-    const hit = known.find(([k]) => key.includes(k));
-    if (hit) return hit[1];
+    for (const [keys, label] of known) {
+      if (keys.some((k) => key.includes(k))) return label;
+    }
 
-    // Inserta espacios en algunas frases compactadas si llegan sin espacios.
-    let t = original
-      .replace(/([a-zaeioun])([A-ZAEIOUN])/g, "$1 $2")
+    return original
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
       .replace(/\s+/g, " ")
       .trim();
-
-    return t;
   }
 
   function firstLogDate(text) {
@@ -333,11 +347,11 @@
           <div>
             <div class="xproces-live-eyebrow">
               <span class="xproces-live-chip">${esc(statusChip(job, parsed))}</span>
-              <span class="xproces-live-chip">${esc(quality)}</span>
-              <span class="xproces-live-chip">${esc(photos)}</span>
+              <span class="xproces-live-chip">${esc(repairText(quality))}</span>
+              <span class="xproces-live-chip">${esc(repairText(photos))}</span>
             </div>
-            <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(title)}</h2>
-            <div class="xproces-live-subtitle">${esc(projectName)} - Leyendo progreso desde el log real</div>
+            <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(repairText(title))}</h2>
+            <div class="xproces-live-subtitle">${esc(repairText(projectName))} - Leyendo progreso desde el log real</div>
           </div>
           <div class="xproces-live-percent">${esc(String(Math.round(progress)))}%</div>
         </div>
@@ -359,11 +373,11 @@
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">Entrega</div>
-            <div class="xproces-live-metric-value">${esc(outputs)}</div>
+            <div class="xproces-live-metric-value">${esc(repairText(outputs))}</div>
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">Control de calidad</div>
-            <div class="xproces-live-metric-value">${esc(detail)}</div>
+            <div class="xproces-live-metric-value">${esc(repairText(detail))}</div>
           </div>
           <div class="xproces-live-metric">
             <div class="xproces-live-metric-label">ID del trabajo</div>
@@ -376,7 +390,7 @@
             <div class="process-summary-section">
               <div class="process-summary-section-title">Ultimos procesos del log</div>
               <div class="process-summary-list">
-                ${lastSteps.map((x) => `<div>${esc(x)}</div>`).join("")}
+                ${lastSteps.map((x) => `<div>${esc(repairText(x))}</div>`).join("")}
               </div>
             </div>
           </div>
