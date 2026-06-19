@@ -3441,10 +3441,17 @@ if (uiStatusNow.canDownload) {
 
           card.addEventListener("click", async (event) => {
             if (event.target.closest("a")) return;
-            selectedHistoryJobId = job.id || "";
+
+            selectedHistoryJobId = String(job.id || "");
             saveSelectedHistoryJobId(selectedHistoryJobId);
+
+            // Marcar la tarjeta al instante. No esperamos a recargar logs ni trabajos.
+            jobsList.querySelectorAll(".job-card").forEach((el) => {
+              el.classList.remove("active");
+            });
+            card.classList.add("active");
+
             await openJobFromHistory(job);
-            await renderStoredJobs();
           });
 
           fragment.appendChild(card);
