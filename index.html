@@ -3321,69 +3321,113 @@ if (uiStatusNow.canDownload) {
         jobsPanel.classList.add("jobs-panel-hidden");
         jobsList.replaceChildren();
         jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "Inicie sesión para ver sus trabajos.";
+        jobsEmpty.textContent = "Inicie sesion para ver sus trabajos.";
         return;
       }
 
       jobsPanel.classList.remove("jobs-panel-hidden");
 
-      const hasExistingCards = jobsList.children.length > 0;
-      if (!hasExistingCards) {
-        jobsEmpty.style.display = "block";
-        jobsEmpty.textContent = "Cargando trabajos...";
-      }
-
       try {
-        const response = await fetch(`${API_BASE}/jobs/mine?user_id=${encodeURIComponent(String(user.id))}`, {
-          headers: {
-            "x-user-id": String(user.id)
-          },
-          cache: "no-store"
+        const token = getAuthToken();
+        const url = new URL(`${API_BASE}/jobs`);
+        url.searchParams.set("user_id", user.id);
+
+        const headers = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await fetch(url.toString(), {
+          cache: "no-store",
+          headers
         });
 
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok || !data.ok) {
-          throw new Error(data.message || data.error || "No se pudieron cargar los trabajos");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
+        const data = await response.json();
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
 
         if (!jobs.length) {
           jobsList.replaceChildren();
           jobsEmpty.style.display = "block";
-          jobsEmpty.textContent = "Todavía no hay trabajos en esta cuenta.";
+          jobsEmpty.textContent = "Todavia no hay trabajos en esta cuenta.";
           return;
         }
 
+        const cardsData = await Promise.all(jobs.map(async (job) => {
+          let parsed = null;
+
+          // La lista de "Tus trabajos" debe usar la misma fuente que el panel principal:
+          // el log real. Si no hay log o falla el parser, se usa el job como respaldo.
+          try {
+            if (job?.id && typeof getJobLog === "function" && window.XProcesLogRenderer?.parseLog) {
+              const logText = await getJobLog(job.id);
+              if (logText) parsed = window.XProcesLogRenderer.parseLog(logText);
+            }
+          } catch (_) {
+            parsed = null;
+          }
+
+          const uiStatus = normalizeJobStatus(job);
+
+          const parsedStatus = String(parsed?.status || "").toLowerCase();
+          const progressValue = Math.max(0, Math.min(100, Number(
+            parsed?.progress != null ? parsed.progress : (job.progress || 0)
+          )));
+
+          const completedByLog = parsedStatus === "completed" || progressValue >= 100;
+          const failedByLog = parsedStatus === "failed";
+
+          const statusLabel = failedByLog
+            ? "Fallido"
+            : completedByLog
+              ? "Completado"
+              : uiStatus.label;
+
+          const statusBadgeClass = failedByLog
+            ? "error"
+            : completedByLog
+              ? "ok"
+              : uiStatus.className;
+
+          const stageLabel = parsed?.progressMessage
+            ? parsed.progressMessage
+            : formatJobListStage(job.stage);
+
+          const canDownload = completedByLog || uiStatus.canDownload;
+
+          return {
+            job,
+            statusLabel,
+            statusBadgeClass,
+            stageLabel,
+            progressValue,
+            canDownload
+          };
+        }));
+
         const fragment = document.createDocumentFragment();
 
-        jobs.forEach((job) => {
+        cardsData.forEach((item) => {
+          const job = item.job;
           const card = document.createElement("div");
           card.className = "job-card";
           if (selectedHistoryJobId && job.id === selectedHistoryJobId) {
             card.classList.add("active");
           }
 
-          const uiStatus = normalizeJobStatus(job);
-          const statusLabel = uiStatus.label;
-          const stageLabel = formatJobListStage(job.stage);
-          const progressValue = Math.max(0, Math.min(100, Number(job.progress || 0)));
-          const canDownload = uiStatus.canDownload;
-          const statusBadgeClass = uiStatus.className;
-
           card.innerHTML = `
             <div class="job-card-top">
-              <div class="job-card-title">${job.project_name || "Proyecto sin nombre"}</div>
-              <div class="job-card-status-badge ${statusBadgeClass}">${statusLabel}</div>
+              <div class="job-card-title">${escapeHtml(job.project_name || "Proyecto sin nombre")}</div>
+              <div class="job-card-status-badge ${escapeHtml(item.statusBadgeClass)}">${escapeHtml(item.statusLabel)}</div>
             </div>
-            <div class="job-card-id">Job ID: ${job.id || "—"}</div>
-            <div class="job-card-meta">Estado: ${statusLabel}</div>
-            <div class="job-card-meta">Fase: ${stageLabel}</div>
-            <div class="job-card-meta">Progreso: ${progressValue}%</div>
-            <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
-            <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
-            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
+            <div class="job-card-id">Job ID: ${escapeHtml(job.id || "—")}</div>
+            <div class="job-card-meta">Estado: ${escapeHtml(item.statusLabel)}</div>
+            <div class="job-card-meta">Fase: ${escapeHtml(item.stageLabel)}</div>
+            <div class="job-card-meta">Progreso: ${escapeHtml(String(Math.round(item.progressValue)))}%</div>
+            <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
+            <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
+            ${item.canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
 
           card.addEventListener("click", async (event) => {
