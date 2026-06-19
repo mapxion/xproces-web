@@ -1,4 +1,4 @@
-/* XProces Log Renderer v4
+/* XProces Log Renderer v5 ASCII
    Fuente principal: /jobs/:id/log.
    Importante: no modifica index.html. Sustituir solo xproces-log-renderer.js.
 */
@@ -21,27 +21,27 @@
   function repairText(value) {
     let t = String(value || "");
 
-    // Mojibake habitual UTF-8 leído como Windows-1252.
+    // Mojibake habitual UTF-8 leido como Windows-1252.
     const replacements = [
-      ["Ã¡", "á"], ["Ã©", "é"], ["Ã­", "í"], ["Ã³", "ó"], ["Ãº", "ú"],
-      ["Ã ", "Á"], ["Ã‰", "É"], ["Ã ", "Í"], ["Ã“", "Ó"], ["Ãš", "Ú"],
-      ["Ã±", "ñ"], ["Ã‘", "Ñ"], ["Âº", "º"], ["Âª", "ª"], ["Â·", "·"], ["Â", ""],
+      ["Ã¡", "a"], ["Ã©", "e"], ["Ã­", "i"], ["Ã³", "o"], ["Ão", "u"],
+      ["Ã ", "A"], ["Ã‰", "E"], ["Ã ", "I"], ["Ã“", "O"], ["Ãš", "U"],
+      ["Ã±", "n"], ["Ã‘", "N"], ["Âo", "o"], ["Âa", "a"], ["Â-", "-"], ["Â", ""],
 
-      // Cuando ya llega con carácter de sustitución.
-      ["c maras", "cámaras"], ["C maras", "Cámaras"],
-      ["c mara", "cámara"], ["C mara", "Cámara"],
-      ["fotograf as", "fotografías"], ["Fotograf as", "Fotografías"],
-      ["fotograf a", "fotografía"], ["Fotograf a", "Fotografía"],
-      ["expl cito", "explícito"], ["Expl cito", "Explícito"],
-      ["par metros", "parámetros"], ["Par metros", "Parámetros"],
-      ["rotaci n", "rotación"], ["Rotaci n", "Rotación"],
-      ["localizaci n", "localización"], ["Localizaci n", "Localización"],
-      ["generaci n", "generación"], ["Generaci n", "Generación"],
-      ["clasificaci n", "clasificación"], ["Clasificaci n", "Clasificación"],
-      ["exportaci n", "exportación"], ["Exportaci n", "Exportación"],
-      ["compresi n", "compresión"], ["Compresi n", "Compresión"],
-      ["a ad", "añad"], ["A ad", "Añad"],
-      ["t cnic", "técnic"], ["T cnic", "Técnic"]
+      // Cuando ya llega con caracter de sustitucion.
+      ["c maras", "camaras"], ["C maras", "Camaras"],
+      ["c mara", "camara"], ["C mara", "Camara"],
+      ["fotograf as", "fotografias"], ["Fotograf as", "Fotografias"],
+      ["fotograf a", "fotografia"], ["Fotograf a", "Fotografia"],
+      ["expl cito", "explicito"], ["Expl cito", "Explicito"],
+      ["par metros", "parametros"], ["Par metros", "Parametros"],
+      ["rotaci n", "rotacion"], ["Rotaci n", "Rotacion"],
+      ["localizaci n", "localizacion"], ["Localizaci n", "Localizacion"],
+      ["generaci n", "generacion"], ["Generaci n", "Generacion"],
+      ["clasificaci n", "clasificacion"], ["Clasificaci n", "Clasificacion"],
+      ["exportaci n", "exportacion"], ["Exportaci n", "Exportacion"],
+      ["compresi n", "compresion"], ["Compresi n", "Compresion"],
+      ["a ad", "anad"], ["A ad", "Anad"],
+      ["t cnic", "tecnic"], ["T cnic", "Tecnic"]
     ];
     for (const [a, b] of replacements) t = t.split(a).join(b);
 
@@ -61,13 +61,13 @@
 
     const known = [
       ["preparandoproyecto", "Preparando proyecto"],
-      ["importandofotografias", "Importando fotografías"],
+      ["importandofotografias", "Importando fotografias"],
       ["detectandopuntosclavealta", "Detectando puntos clave (Alta)"],
-      ["alineandocamaras", "Alineando cámaras"],
+      ["alineandocamaras", "Alineando camaras"],
       ["generandomapasdeprofundidadalta", "Generando mapas de profundidad (Alta)"],
       ["generandonubedepuntoscomoxprocesgui", "Generando nube de puntos como Xproces GUI"],
       ["generandomodelo3dcomobatchmanualxproces", "Generando modelo 3D como Batch manual Xproces"],
-      ["generandotexturacomoxprocesguiexplicito", "Generando textura como Xproces GUI explícito"],
+      ["generandotexturacomoxprocesguiexplicito", "Generando textura como Xproces GUI explicito"],
       ["generandomodelodeteselascomoxprocesgui", "Generando modelo de teselas como Xproces GUI"],
       ["generandomdecomoxprocesgui", "Generando MDE como Xproces GUI"],
       ["generandoortomosaicocomoxprocesgui", "Generando ortomosaico como Xproces GUI"],
@@ -84,7 +84,7 @@
 
     // Inserta espacios en algunas frases compactadas si llegan sin espacios.
     let t = original
-      .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, "$1 $2")
+      .replace(/([a-zaeioun])([A-ZAEIOUN])/g, "$1 $2")
       .replace(/\s+/g, " ")
       .trim();
 
@@ -235,10 +235,10 @@
         continue;
       }
 
-      const aligned = line.match(/C[áa]maras alineadas:\s*(.*)$/i) || line.match(/Camaras alineadas:\s*(.*)$/i);
+      const aligned = line.match(/C[aa]maras alineadas:\s*(.*)$/i) || line.match(/Camaras alineadas:\s*(.*)$/i);
       if (aligned) {
         info.alignedCameras = aligned[1].trim();
-        info.lastImportantOk = `Cámaras alineadas: ${info.alignedCameras}`;
+        info.lastImportantOk = `Camaras alineadas: ${info.alignedCameras}`;
         continue;
       }
 
@@ -310,7 +310,7 @@
 
     const jobOutputs = outputListFromJob(job);
     const outputSource = parsed.requestedOutputs.length ? parsed.requestedOutputs : jobOutputs;
-    const outputs = outputSource.length ? outputSource.map(outputLabel).filter(Boolean).join(" · ") : "Según solicitud";
+    const outputs = outputSource.length ? outputSource.map(outputLabel).filter(Boolean).join(" - ") : "Segun solicitud";
 
     const photos = parsed.photos ? `${parsed.photos} fotos` : (job?.photos_count ? `${job.photos_count} fotos` : "Fotos en proceso");
     const quality = parsed.quality || job?.quality || job?.quality_mode || "Calidad seleccionada";
@@ -318,9 +318,9 @@
 
     const detail =
       parsed.lastImportantOk ||
-      (parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "") ||
+      (parsed.alignedCameras ? `Camaras alineadas: ${parsed.alignedCameras}` : "") ||
       (parsed.pointCount ? `Puntos nube: ${parsed.pointCount}` : "") ||
-      (parsed.fallbackCompletedStep ? `Último proceso leído: ${parsed.fallbackCompletedStep}` : "Pendiente");
+      (parsed.fallbackCompletedStep ? `Ultimo proceso leido: ${parsed.fallbackCompletedStep}` : "Pendiente");
 
     const done = parsed.status === "completed" || progress >= 100;
     const remainingText = done ? "Finalizado" : formatRemaining(remaining);
@@ -337,7 +337,7 @@
               <span class="xproces-live-chip">${esc(photos)}</span>
             </div>
             <h2 class="xproces-live-title" style="word-break:normal;overflow-wrap:anywhere;">${esc(title)}</h2>
-            <div class="xproces-live-subtitle">${esc(projectName)} · Leyendo progreso desde el log real</div>
+            <div class="xproces-live-subtitle">${esc(projectName)} - Leyendo progreso desde el log real</div>
           </div>
           <div class="xproces-live-percent">${esc(String(Math.round(progress)))}%</div>
         </div>
@@ -354,7 +354,7 @@
             <div class="xproces-live-metric-value">${esc(remainingText)}</div>
           </div>
           <div class="xproces-live-metric">
-            <div class="xproces-live-metric-label">Finalización estimada</div>
+            <div class="xproces-live-metric-label">Finalizacion estimada</div>
             <div class="xproces-live-metric-value">${esc(finishText)}</div>
           </div>
           <div class="xproces-live-metric">
@@ -374,7 +374,7 @@
         ${lastSteps.length ? `
           <div class="process-live-list">
             <div class="process-summary-section">
-              <div class="process-summary-section-title">Últimos procesos del log</div>
+              <div class="process-summary-section-title">Ultimos procesos del log</div>
               <div class="process-summary-list">
                 ${lastSteps.map((x) => `<div>${esc(x)}</div>`).join("")}
               </div>
