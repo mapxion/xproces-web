@@ -3244,13 +3244,11 @@ function getSelectedQualityMode() {
 
       hideDownloadButton();
 
-      const originalHistoryJobId = String(job.id || "");
       const fullJob = (await fetchFullJob(job)) || job;
       job = { ...job, ...fullJob };
-      if (!job.id && originalHistoryJobId) job.id = originalHistoryJobId;
 
       pendingProjectName = job.project_name || "";
-      selectedHistoryJobId = originalHistoryJobId || String(job.id || "");
+      selectedHistoryJobId = job.id || "";
       saveSelectedHistoryJobId(selectedHistoryJobId);
       renderProcessSelectionChips(getSelectionSummaryItemsForJob(job));
       if (uploadPanel) uploadPanel.style.display = "none";
@@ -3315,6 +3313,56 @@ if (uiStatusNow.canDownload) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    async function getStoredJobLogView(job) {
+      // No debe romper la lista: si el log falla, se usa el job tal como viene del backend.
+      const fallback = {
+        jobView: job,
+        stageLabel: formatJobListStage(job.stage),
+        progressValue: Math.max(0, Math.min(100, Number(job.progress || 0)))
+      };
+
+      if (!job || !job.id || typeof getJobLog !== "function" || !window.XProcesLogRenderer || typeof window.XProcesLogRenderer.parseLog !== "function") {
+        return fallback;
+      }
+
+      try {
+        const logText = await getJobLog(job.id);
+        if (!logText) return fallback;
+
+        const parsed = window.XProcesLogRenderer.parseLog(logText);
+        if (!parsed) return fallback;
+
+        const progressValue = parsed.progress != null
+          ? Math.max(0, Math.min(100, Number(parsed.progress || 0)))
+          : fallback.progressValue;
+
+        const stageLabel = parsed.progressMessage
+          || parsed.lastImportantOk
+          || parsed.lastOk
+          || parsed.fallbackCompletedStep
+          || fallback.stageLabel;
+
+        const jobView = { ...job, progress: progressValue };
+
+        if (parsed.status === "completed" || progressValue >= 100 || /PROCESO OK|Trabajo procesado correctamente/i.test(logText)) {
+          jobView.status = "completed";
+          jobView.stage = "final";
+          jobView.progress = 100;
+        } else if (parsed.status === "failed") {
+          jobView.status = "failed";
+        }
+
+        return {
+          jobView,
+          stageLabel,
+          progressValue: Math.max(0, Math.min(100, Number(jobView.progress || progressValue || 0)))
+        };
+      } catch (error) {
+        console.warn("No se pudo leer el log para la tarjeta del trabajo", job?.id, error);
+        return fallback;
+      }
+    }
+
     async function renderStoredJobs() {
       if (!jobsPanel || !jobsList || !jobsEmpty) return;
 
@@ -3360,60 +3408,47 @@ if (uiStatusNow.canDownload) {
 
         const fragment = document.createDocumentFragment();
 
-        jobs.forEach((job) => {
+        for (const job of jobs) {
           const card = document.createElement("div");
           card.className = "job-card";
-          card.dataset.jobId = String(job.id || "");
-          const selectedKey = String(selectedHistoryJobId || "");
-          const jobKey = String(job.id || "");
-          if (selectedKey && jobKey === selectedKey) {
+          if (selectedHistoryJobId && job.id === selectedHistoryJobId) {
             card.classList.add("active");
           }
 
-          const uiStatus = normalizeJobStatus(job);
+          const logView = await getStoredJobLogView(job);
+          const jobView = logView.jobView || job;
+
+          const uiStatus = normalizeJobStatus(jobView);
           const statusLabel = uiStatus.label;
-          const stageLabel = formatJobListStage(job.stage);
-          const progressValue = Math.max(0, Math.min(100, Number(job.progress || 0)));
+          const stageLabel = logView.stageLabel || formatJobListStage(jobView.stage);
+          const progressValue = Math.max(0, Math.min(100, Number(logView.progressValue ?? jobView.progress ?? 0)));
           const canDownload = uiStatus.canDownload;
           const statusBadgeClass = uiStatus.className;
 
           card.innerHTML = `
             <div class="job-card-top">
-              <div class="job-card-title">${job.project_name || "Proyecto sin nombre"}</div>
-              <div class="job-card-status-badge ${statusBadgeClass}">${statusLabel}</div>
+              <div class="job-card-title">${escapeHtml(job.project_name || "Proyecto sin nombre")}</div>
+              <div class="job-card-status-badge ${escapeHtml(statusBadgeClass)}">${escapeHtml(statusLabel)}</div>
             </div>
-            <div class="job-card-id">Job ID: ${job.id || "—"}</div>
-            <div class="job-card-meta">Estado: ${statusLabel}</div>
-            <div class="job-card-meta">Fase: ${stageLabel}</div>
-            <div class="job-card-meta">Progreso: ${progressValue}%</div>
-            <div class="job-card-meta">Precio: ${formatJobListPrice(job.price)}</div>
-            <div class="job-card-meta">Creado: ${formatStoredJobDate(job.created_at)}</div>
-            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${job.id}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
+            <div class="job-card-id">Job ID: ${escapeHtml(job.id || "—")}</div>
+            <div class="job-card-meta">Estado: ${escapeHtml(statusLabel)}</div>
+            <div class="job-card-meta">Fase: ${escapeHtml(stageLabel)}</div>
+            <div class="job-card-meta">Progreso: ${escapeHtml(String(progressValue))}%</div>
+            <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
+            <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
+            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
           `;
 
           card.addEventListener("click", async (event) => {
             if (event.target.closest("a")) return;
-
-            const clickedJobId = String(job.id || "");
-            selectedHistoryJobId = clickedJobId;
-            saveSelectedHistoryJobId(clickedJobId);
-
-            // Marcar visualmente la tarjeta pulsada al instante, sin esperar a recargar la lista.
-            jobsList.querySelectorAll(".job-card").forEach((el) => {
-              el.classList.toggle("active", String(el.dataset.jobId || "") === clickedJobId);
-            });
-
+            selectedHistoryJobId = job.id || "";
+            saveSelectedHistoryJobId(selectedHistoryJobId);
             await openJobFromHistory(job);
-
-            // openJobFromHistory puede refrescar datos del job; mantenemos seleccionado el ID pulsado.
-            selectedHistoryJobId = clickedJobId;
-            saveSelectedHistoryJobId(clickedJobId);
-
             await renderStoredJobs();
           });
 
           fragment.appendChild(card);
-        });
+        }
 
         jobsList.replaceChildren(fragment);
         jobsEmpty.style.display = "none";
