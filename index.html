@@ -29,6 +29,7 @@
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="xproces-log-renderer.js"></script>
 
   <style>
     :root {
@@ -5153,20 +5154,17 @@ if (map) {
           info.params = line.replace("Parámetros:", "").trim();
           continue;
         }
-        // XPROCES FIX: detectar cámaras alineadas aunque el log venga con fecha,
-        // prefijo "Metashape stdout:" o sin tilde: "Camaras alineadas".
-        {
-          const sourceLine = String(rawLine || line || "");
-          const normalizedLine = sourceLine.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          const alignedMatch = normalizedLine.match(/camaras alineadas:\s*(.*)$/i);
-          if (alignedMatch) {
-            info.alignedCameras = String(alignedMatch[1] || "").trim();
-            info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
-            continue;
-          }
-        }
+       if (/c[áa]maras alineadas:/i.test(line)) {
+  const m = line.match(/c[áa]maras alineadas:\s*(.*)$/i);
+  info.alignedCameras = m
+    ? m[1].trim()
+    : line.replace(/.*c[áa]maras alineadas:\s*/i, "").trim();
 
-        if (/Cámaras con localizaci[oó]n de referencia disponible/i.test(line) || /Camaras con localizaci[oó]n de referencia disponible/i.test(line)) {
+  info.latestDetail = `Cámaras alineadas: ${info.alignedCameras}`;
+  continue;
+}
+
+if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
   const m = line.match(/:\s*(\d+)/);
   if (m && !info.alignedCameras) {
     info.alignedCameras = `${m[1]} con GPS / pendiente de alineación`;
@@ -5621,14 +5619,7 @@ if (map) {
     }
 
     function renderLiveProcessSummary(job, logText, eta) {
-      const parsed = parseProcessLog([
-        logText,
-        job?.message,
-        job?.stage,
-        job?.quality_control,
-        job?.qc,
-        job?.meta ? JSON.stringify(job.meta) : ""
-      ].filter(Boolean).join("\n"));
+      const parsed = parseProcessLog(logText || "");
       const statusValue = String(job?.status || "").toLowerCase();
       const rawProgress = Number(parsed?.latestProgressPercent ?? job?.progress ?? 0);
       const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
@@ -5662,13 +5653,13 @@ if (map) {
       const remainingText = remainingSeconds > 0 ? formatEtaText(remainingSeconds) : "Finalizando";
 
       const projectName = job?.project_name || job?.client_name || "Proyecto";
-      const alignmentAlreadyPassed = ["depth", "pointcloud", "export", "final"].includes(stage) || rawProgress >= 45;
-      const alignedText = parsed.alignedCameras
-        ? `Cámaras alineadas: ${parsed.alignedCameras}`
-        : alignmentAlreadyPassed
-          ? "Cámaras alineadas: alineación completada"
-          : "Cámaras alineadas: pendiente";
-      const detailText = alignedText;
+      const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: pendiente";
+      const detailText =
+  parsed.alignedCameras
+    ? `Cámaras alineadas: ${parsed.alignedCameras}`
+    : parsed.pointCount
+      ? `Puntos reconstruidos: ${parsed.pointCount}`
+      : alignedText;
       const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
 
       const phaseOrder = [
@@ -5835,7 +5826,9 @@ if (map) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.innerHTML = renderLiveProcessSummary(job, logText, eta);
+            jobStatusEl.innerHTML = window.XProcesLogRenderer
+              ? window.XProcesLogRenderer.render(job, logText, eta)
+              : renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -5853,7 +5846,9 @@ if (map) {
                 "Procesado completado correctamente.\nPreparando entrega del proyecto.";
             } else {
               const doneLogText = logText || await getJobLog(job.id);
-              jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
+              jobStatusEl.innerHTML = window.XProcesLogRenderer
+                ? window.XProcesLogRenderer.render(job, doneLogText, null)
+                : renderProcessSummary(job, doneLogText);
               showDownloadButton(job);
             }
 
@@ -5874,7 +5869,9 @@ if (map) {
             const failedLogText = logText || await getJobLog(job.id);
 
             if (failedLogText) {
-              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
+              jobStatusEl.innerHTML = window.XProcesLogRenderer
+                ? window.XProcesLogRenderer.render(job, failedLogText, null)
+                : renderProcessSummary(job, failedLogText);
             } else {
               const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
