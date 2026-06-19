@@ -73,20 +73,41 @@
     return map[String(value || "").trim().toLowerCase()] || String(value || "").trim();
   }
 
-  function cleanStep(text) {
+  function fixEncodingArtifacts(text) {
+    // Reparaciones visibles cuando el log llega con charset incorrecto
+    // y el navegador muestra el carácter de sustitución  .
     return String(text || "")
+      .replace(/c maras/gi, "camaras")
+      .replace(/c mara/gi, "camara")
+      .replace(/fotograf as/gi, "fotografias")
+      .replace(/fotograf a/gi, "fotografia")
+      .replace(/expl cito/gi, "explicito")
+      .replace(/t cnic/gi, "tecnic")
+      .replace(/par metros/gi, "parametros")
+      .replace(/rotaci n/gi, "rotacion")
+      .replace(/localizaci n/gi, "localizacion")
+      .replace(/generaci n/gi, "generacion")
+      .replace(/clasificaci n/gi, "clasificacion")
+      .replace(/exportaci n/gi, "exportacion")
+      .replace(/compresi n/gi, "compresion")
+      .replace(/ /g, "");
+  }
+
+  function cleanStep(text) {
+    return fixEncodingArtifacts(text)
       .replace(/Metashape/gi, "Xproces")
       .replace(/\s+/g, " ")
       .trim();
   }
 
-  function isOkLine(line) {
+  function isImportantOkLine(line) {
+    // Solo mensajes útiles para el usuario en Control de calidad.
+    // No usamos "buildModel completado" ni detalles internos similares.
     if (/^PROCESO OK\b/i.test(line)) return true;
-    if (/\bOK\b/i.test(line) && /(:|final|ZIP|TIFF|LAS|PDF|DXF|OBJ|FBX|GLB)/i.test(line)) return true;
-    if (/completad[oa]\b/i.test(line)) return true;
-    if (/Proyecto guardado:/i.test(line)) return true;
-    if (/C[áa]maras alineadas:/i.test(line)) return true;
+    if (/C[áa]maras alineadas:/i.test(line) || /Camaras alineadas:/i.test(line)) return true;
     if (/PUNTOS NUBE:/i.test(line)) return true;
+    if (/^(LAS|LAZ|E57|PLY|PTS):\s*OK\b/i.test(line)) return true;
+    if (/^(DSM\/DEM TIFF|DEM TIFF|MDE TIFF|DTM TIFF|Curvas DXF|Ortomosaico TIFF|Ortomosaico JPG|PDF report|OBJ|FBX|GLB|ZIP final):\s*OK\b/i.test(line)) return true;
     return false;
   }
 
@@ -154,7 +175,7 @@
         continue;
       }
 
-      const aligned = line.match(/C[áa]maras alineadas:\s*(.*)$/i);
+      const aligned = line.match(/C[áa]maras alineadas:\s*(.*)$/i) || line.match(/Camaras alineadas:\s*(.*)$/i);
       if (aligned) {
         info.alignedCameras = aligned[1].trim();
         info.lastOk = `Cámaras alineadas: ${info.alignedCameras}`;
@@ -199,7 +220,7 @@
         continue;
       }
 
-      if (isOkLine(line)) {
+      if (isImportantOkLine(line)) {
         info.lastOk = line;
       }
     }
@@ -242,7 +263,7 @@
     const remainingText = done ? "Finalizado" : formatRemaining(remaining);
     const finishText = done ? "Finalizado" : finishClock(remaining);
 
-    const lastSteps = parsed.processLines.slice(-6);
+    const lastSteps = parsed.processLines.slice(-10);
 
     return `
       <div class="xproces-live-card">
