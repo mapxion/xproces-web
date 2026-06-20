@@ -3313,13 +3313,14 @@ function getSelectedQualityMode() {
 if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   getJobLog(job.id)
     .then((logText) => {
+      const summaryHtml = renderProcessSummary(job, logText || "");
       if (uiStatusNow.canRecover) {
-        jobStatusEl.innerHTML = `
-          <div class="process-summary">
+        jobStatusEl.innerHTML = summaryHtml + `
+          <div class="process-summary" style="margin-top:12px;">
             <div class="process-summary-section" style="grid-column:1/-1;">
               <div class="process-summary-section-title">Descarga</div>
               <div class="process-summary-list">
-                <div class="muted">Este trabajo no está disponible para descarga directa.</div>
+                <div class="muted">No disponible para descarga directa.</div>
                 <div class="muted">Para recuperarlo, pulse “Solicitar recuperación”.</div>
               </div>
             </div>
@@ -3327,16 +3328,27 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         `;
         showRecoveryButton(job);
       } else {
-        jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
+        jobStatusEl.innerHTML = summaryHtml;
         showDownloadButton(job);
       }
     })
     .catch(() => {
+      const summaryHtml = renderProcessSummary(job, "");
       if (uiStatusNow.canRecover) {
-        jobStatusEl.innerHTML = "No disponible para descarga directa.";
+        jobStatusEl.innerHTML = summaryHtml + `
+          <div class="process-summary" style="margin-top:12px;">
+            <div class="process-summary-section" style="grid-column:1/-1;">
+              <div class="process-summary-section-title">Descarga</div>
+              <div class="process-summary-list">
+                <div class="muted">No disponible para descarga directa.</div>
+                <div class="muted">Para recuperarlo, pulse “Solicitar recuperación”.</div>
+              </div>
+            </div>
+          </div>
+        `;
         showRecoveryButton(job);
       } else {
-        jobStatusEl.innerHTML = renderProcessSummary(job, "");
+        jobStatusEl.innerHTML = summaryHtml;
         showDownloadButton(job);
       }
     });
@@ -6328,6 +6340,7 @@ window.addEventListener("load", () => {
       <div class="modal-note" style="margin-bottom:12px;">
         Si necesita una nueva copia, envíenos una solicitud. Se incluirán automáticamente el ID del trabajo, usuario y correo de contacto.
       </div>
+      <div id="recSuccessMsg" class="modal-note" style="display:none;margin-bottom:12px;color:var(--ok);font-weight:800;">Petición enviada correctamente. En breve le enviaremos al correo el enlace de descarga.</div>
       <div style="display:grid;gap:10px;">
         <input id="recJobId" placeholder="ID trabajo" style="padding:10px;border:1px solid var(--border);border-radius:12px;">
         <input id="recUser" placeholder="Usuario" style="padding:10px;border:1px solid var(--border);border-radius:12px;">
@@ -6337,7 +6350,7 @@ window.addEventListener("load", () => {
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" type="button" onclick="document.getElementById('recoveryBackdrop').style.display='none'">Cerrar</button>
-      <a id="recMailLink" class="btn btn-success" href="#">Enviar solicitud</a>
+      <button id="recSendBtn" class="btn btn-success" type="button">Enviar solicitud</button>
     </div>
   </div>
 </div>
@@ -6346,6 +6359,9 @@ window.addEventListener("load", () => {
 window.xprocesOpenRecovery = function(jobId, user, email) {
   var rb = document.getElementById("recoveryBackdrop");
   if (!rb) return;
+
+  var success = document.getElementById("recSuccessMsg");
+  if (success) success.style.display = "none";
 
   document.getElementById("recJobId").value = jobId || "";
   document.getElementById("recUser").value = user || "";
@@ -6356,29 +6372,47 @@ window.xprocesOpenRecovery = function(jobId, user, email) {
 
   rb.style.display = "flex";
 
-  function updateMail() {
-    var id = document.getElementById("recJobId").value;
-    var u = document.getElementById("recUser").value;
-    var e = document.getElementById("recEmail").value;
-    var m = document.getElementById("recMsg").value;
+  var sendBtn = document.getElementById("recSendBtn");
+  if (sendBtn) {
+    sendBtn.onclick = async function() {
+      var id = document.getElementById("recJobId").value;
+      var u = document.getElementById("recUser").value;
+      var e = document.getElementById("recEmail").value;
+      var m = document.getElementById("recMsg").value;
 
-    var subject = encodeURIComponent("Recuperación trabajo XProces - " + id);
-    var body = encodeURIComponent(
-      "ID trabajo: " + id +
-      "\nUsuario: " + u +
-      "\nCorreo: " + e +
-      "\n\nMensaje:\n" + m
-    );
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Enviando...";
 
-    document.getElementById("recMailLink").href =
-      "mailto:soportetams@intelsi.es?subject=" + subject + "&body=" + body;
+      try {
+        var response = await fetch(API_BASE + "/jobs/" + encodeURIComponent(id) + "/recovery-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user: u,
+            email: e,
+            message: m
+          })
+        });
+
+        var data = await response.json().catch(function(){ return {}; });
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || "No se pudo enviar la solicitud.");
+        }
+
+        if (success) {
+          success.textContent = "Petición enviada correctamente. En breve le enviaremos al correo el enlace de descarga.";
+          success.style.display = "block";
+        }
+
+        sendBtn.textContent = "Solicitud enviada";
+      } catch (error) {
+        alert("No se pudo enviar la solicitud. Contacte con soporte: soportetams@intelsi.es");
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Enviar solicitud";
+      }
+    };
   }
-
-  ["recJobId","recUser","recEmail","recMsg"].forEach(function(id) {
-    document.getElementById(id).oninput = updateMail;
-  });
-
-  updateMail();
 };
 
 document.addEventListener("click", async function(event) {
