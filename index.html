@@ -6225,5 +6225,78 @@ window.addEventListener("load", () => {
 
 </script>
 
+
+<div class="modal-backdrop" id="recoveryBackdrop" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Recuperación de trabajo</h2>
+      <div class="modal-subtitle">Este trabajo no está disponible para descarga directa.</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;gap:10px;">
+        <input id="recJobId" placeholder="ID trabajo" style="padding:10px;">
+        <input id="recUser" placeholder="Usuario" style="padding:10px;">
+        <input id="recEmail" placeholder="Correo" style="padding:10px;">
+        <textarea id="recMsg" placeholder="Explique qué necesita" style="min-height:120px;padding:10px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('recoveryBackdrop').style.display='none'">Cerrar</button>
+      <a id="recMailLink" class="btn btn-success" href="#">Enviar solicitud</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+ const btn=document.getElementById('processDownloadBtn');
+ if(!btn) return;
+
+ function openRecovery(jobId){
+   const rb=document.getElementById('recoveryBackdrop');
+   document.getElementById('recJobId').value=jobId||'';
+   rb.style.display='flex';
+
+   const send=()=>{
+      const id=document.getElementById('recJobId').value;
+      const user=document.getElementById('recUser').value;
+      const email=document.getElementById('recEmail').value;
+      const msg=document.getElementById('recMsg').value;
+      const subject=encodeURIComponent('Recuperación trabajo XProces - '+id);
+      const body=encodeURIComponent(
+        'ID trabajo: '+id+'\nUsuario: '+user+'\nCorreo: '+email+'\n\nMensaje:\n'+msg
+      );
+      document.getElementById('recMailLink').href='mailto:soportetams@intelsi.es?subject='+subject+'&body='+body;
+   };
+
+   ['recJobId','recUser','recEmail','recMsg'].forEach(id=>{
+      document.getElementById(id).addEventListener('input',send);
+   });
+   send();
+ }
+
+ btn.addEventListener('click', async function(e){
+   const href=this.href;
+   if(!href || href==='#') return;
+   e.preventDefault();
+   try{
+      const r=await fetch(href,{credentials:'include'});
+      const ct=r.headers.get('content-type')||'';
+      if(ct.includes('application/json')){
+         const j=await r.json();
+         if(j.error==='outputs_not_available'){
+            const m=href.match(/jobs\/([^/]+)\/download/i);
+            openRecovery(m?m[1]:'');
+            return;
+         }
+      }
+      window.location.href=href;
+   }catch(err){
+      console.error(err);
+   }
+ });
+})();
+</script>
+
 </body>
 </html>
