@@ -3314,6 +3314,22 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   getJobLog(job.id)
     .then((logText) => {
       const summaryHtml = renderProcessSummary(job, logText || "");
+
+      if (xprocesZipMissingForClient(logText)) {
+        jobStatusEl.innerHTML = summaryHtml + `
+          <div class="process-summary" style="margin-top:12px;">
+            <div class="process-summary-section" style="grid-column:1/-1;">
+              <div class="process-summary-section-title">Entrega</div>
+              <div class="process-summary-list">
+                <div class="warn">Fallido: no se ha generado el paquete final de descarga.</div>
+              </div>
+            </div>
+          </div>
+        `;
+        hideDownloadButton();
+        return;
+      }
+
       if (uiStatusNow.canRecover) {
         jobStatusEl.innerHTML = summaryHtml + `
           <div class="process-summary" style="margin-top:12px;">
@@ -3411,7 +3427,11 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
         const jobView = { ...job, progress: progressValue };
 
-        if (parsed.status === "completed" || progressValue >= 100 || /PROCESO OK|Trabajo procesado correctamente/i.test(logText)) {
+        if (xprocesZipMissingForClient(logText)) {
+          jobView.status = "failed";
+          jobView.stage = "delivery_failed";
+          jobView.progress = 100;
+        } else if (parsed.status === "completed" || progressValue >= 100 || /PROCESO OK|Trabajo procesado correctamente/i.test(logText)) {
           jobView.status = "completed";
           jobView.stage = "final";
           jobView.progress = 100;
@@ -5235,6 +5255,23 @@ if (map) {
       }
     }
 
+    function xprocesZipMissingForClient(logText) {
+      return /error zip final|zip final.*error|outputs_not_available|no space left on device|resultados quedan sin comprimir|no se pudo (crear|generar|comprimir).*zip/i.test(String(logText || ""));
+    }
+
+    async function xprocesShowZipMissingError() {
+      if (typeof showInfoModal === "function") {
+        await showInfoModal(
+          "Entrega no disponible",
+          "El procesado no se pudo entregar correctamente.",
+          "No se ha generado el paquete final de descarga. Para el cliente este trabajo se considera fallido.",
+          "error"
+        );
+      } else {
+        alert("El trabajo es fallido: no se ha generado el paquete final de descarga.");
+      }
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -6428,18 +6465,22 @@ document.addEventListener("click", async function(event) {
     if (contentType.indexOf("application/json") >= 0) {
       var data = await response.json().catch(function(){ return {}; });
       if (data && data.error === "outputs_not_available") {
-        var match = String(link.href).match(/\/jobs\/([^\/]+)\/download/i);
-        var user = null;
-        try { user = JSON.parse(localStorage.getItem("xproces_user") || "null"); } catch (_) {}
-        window.xprocesOpenRecovery(match ? decodeURIComponent(match[1]) : "", user?.name || user?.username || user?.email || "", user?.email || "");
+        if (typeof xprocesShowZipMissingError === "function") {
+          await xprocesShowZipMissingError();
+        } else {
+          alert("El trabajo es fallido: no se ha generado el paquete final de descarga.");
+        }
         return;
       }
     }
 
     window.location.href = link.href;
   } catch (error) {
-    var match = String(link.href).match(/\/jobs\/([^\/]+)\/download/i);
-    window.xprocesOpenRecovery(match ? decodeURIComponent(match[1]) : "", "", "");
+    if (typeof xprocesShowZipMissingError === "function") {
+      await xprocesShowZipMissingError();
+    } else {
+      alert("No se pudo descargar el paquete final.");
+    }
   }
 }, true);
 </script>
