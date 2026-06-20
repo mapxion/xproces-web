@@ -3105,8 +3105,23 @@ function getSelectedQualityMode() {
   const successStatuses = ["done", "completed", "complete", "finished", "success", "processed"];
   const failedStatuses = ["failed", "error", "cancelled", "canceled"];
 
+  if (
+    status === "downloaded" ||
+    stage === "downloaded" ||
+    job?.output_purged === true ||
+    job?.download_verified === true
+  ) {
+    return {
+      key: "downloaded",
+      label: "Completado",
+      className: "ok",
+      canDownload: false,
+      canRecover: true
+    };
+  }
+
   if (successStatuses.includes(status) || successStatuses.includes(stage)) {
-    return { key: "completed", label: "Completado", className: "ok", canDownload: true };
+    return { key: "completed", label: "Completado", className: "ok", canDownload: true, canRecover: false };
   }
 
   if (failedStatuses.includes(status) || failedStatuses.includes(stage) || error) {
@@ -3295,15 +3310,35 @@ function getSelectedQualityMode() {
 
       const uiStatusNow = normalizeJobStatus(job);
 
-if (uiStatusNow.canDownload) {
+if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   getJobLog(job.id)
     .then((logText) => {
-      jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
-      showDownloadButton(job);
+      if (uiStatusNow.canRecover) {
+        jobStatusEl.innerHTML = `
+          <div class="process-summary">
+            <div class="process-summary-section" style="grid-column:1/-1;">
+              <div class="process-summary-section-title">Descarga</div>
+              <div class="process-summary-list">
+                <div class="muted">Este trabajo no está disponible para descarga directa.</div>
+                <div class="muted">Para recuperarlo, pulse “Solicitar recuperación”.</div>
+              </div>
+            </div>
+          </div>
+        `;
+        showRecoveryButton(job);
+      } else {
+        jobStatusEl.innerHTML = renderProcessSummary(job, logText || "");
+        showDownloadButton(job);
+      }
     })
     .catch(() => {
-      jobStatusEl.innerHTML = renderProcessSummary(job, "");
-      showDownloadButton(job);
+      if (uiStatusNow.canRecover) {
+        jobStatusEl.innerHTML = "No disponible para descarga directa.";
+        showRecoveryButton(job);
+      } else {
+        jobStatusEl.innerHTML = renderProcessSummary(job, "");
+        showDownloadButton(job);
+      }
     });
 } else {
   hideDownloadButton();
@@ -3443,6 +3478,7 @@ if (uiStatusNow.canDownload) {
           const stageLabel = logView.stageLabel || formatJobListStage(jobView.stage);
           const progressValue = Math.max(0, Math.min(100, Number(logView.progressValue ?? jobView.progress ?? 0)));
           const canDownload = uiStatus.canDownload;
+          const canRecover = uiStatus.canRecover === true;
           const statusBadgeClass = uiStatus.className;
 
           card.innerHTML = `
@@ -3456,10 +3492,19 @@ if (uiStatusNow.canDownload) {
             <div class="job-card-meta">Progreso: ${escapeHtml(String(progressValue))}%</div>
             <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
             <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
-            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" target="_blank" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
+            ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn xproces-download-link" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
+            ${canRecover ? `<div class="job-card-meta" style="margin-top:8px;"><button class="process-download-btn xproces-recovery-card-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" style="min-height:36px; padding:8px 12px; font-size:13px;">Solicitar recuperación</button></div>` : ""}
           `;
 
           card.addEventListener("click", async (event) => {
+            const recoveryBtn = event.target.closest(".xproces-recovery-card-btn");
+            if (recoveryBtn) {
+              event.preventDefault();
+              event.stopPropagation();
+              openRecoveryModal(job);
+              return;
+            }
+
             if (event.target.closest("a")) return;
 
             selectedHistoryJobId = String(job.id || "");
@@ -3639,12 +3684,58 @@ if (uiStatusNow.canDownload) {
       processDownloadBtn.href = "#";
     }
 
+    function getCurrentRecoveryUser() {
+      const user = typeof getStoredUser === "function" ? getStoredUser() : null;
+      return {
+        name: user?.name || user?.username || user?.email || "",
+        email: user?.email || ""
+      };
+    }
+
+    function openRecoveryModal(job) {
+      const jobId = typeof job === "string" ? job : String(job?.id || "");
+      const userInfo = getCurrentRecoveryUser();
+
+      if (typeof window.xprocesOpenRecovery === "function") {
+        window.xprocesOpenRecovery(jobId, userInfo.name, userInfo.email);
+        return;
+      }
+
+      alert("No disponible para descarga directa. Contacte con soporte: soportetams@intelsi.es");
+    }
+
+    function showRecoveryButton(job) {
+      if (!processDownloadBtn || !processDownloadWrap || !job || !job.id) {
+        hideDownloadButton();
+        return;
+      }
+
+      processDownloadBtn.removeAttribute("target");
+      processDownloadBtn.href = "#";
+      processDownloadBtn.textContent = "Solicitar recuperación";
+      processDownloadBtn.onclick = function(event) {
+        event.preventDefault();
+        openRecoveryModal(job);
+      };
+      processDownloadWrap.style.display = "block";
+    }
+
     function showDownloadButton(job) {
+      const uiStatus = normalizeJobStatus(job);
+
+      if (uiStatus.canRecover) {
+        showRecoveryButton(job);
+        return;
+      }
+
       if (!job || !job.id || !isJobFinished(job)) {
         hideDownloadButton();
         return;
       }
 
+      processDownloadBtn.textContent = "Descargar resultados";
+      processDownloadBtn.setAttribute("target", "_blank");
+      processDownloadBtn.onclick = null;
       processDownloadBtn.href = `${API_BASE}/jobs/${job.id}/download`;
       processDownloadWrap.style.display = "block";
     }
@@ -6226,49 +6317,97 @@ window.addEventListener("load", () => {
 </script>
 
 
-<!-- XPROCES RECUPERACION MINIMO -->
+<!-- XPROCES RECUPERACION -->
 <div class="modal-backdrop" id="recoveryBackdrop" style="display:none;">
   <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title">Recuperacion de trabajo</h2>
-      <div class="modal-subtitle">Este trabajo no esta disponible para descarga directa.</div>
+      <h2 class="modal-title">Recuperación de trabajo</h2>
+      <div class="modal-subtitle">Este trabajo no está disponible para descarga directa.</div>
     </div>
     <div class="modal-body">
+      <div class="modal-note" style="margin-bottom:12px;">
+        Si necesita una nueva copia, envíenos una solicitud. Se incluirán automáticamente el ID del trabajo, usuario y correo de contacto.
+      </div>
       <div style="display:grid;gap:10px;">
-        <input id="recJobId" placeholder="ID trabajo" style="padding:10px;">
-        <input id="recUser" placeholder="Usuario" style="padding:10px;">
-        <input id="recEmail" placeholder="Correo" style="padding:10px;">
-        <textarea id="recMsg" placeholder="Mensaje" style="min-height:120px;padding:10px;"></textarea>
+        <input id="recJobId" placeholder="ID trabajo" style="padding:10px;border:1px solid var(--border);border-radius:12px;">
+        <input id="recUser" placeholder="Usuario" style="padding:10px;border:1px solid var(--border);border-radius:12px;">
+        <input id="recEmail" placeholder="Correo" style="padding:10px;border:1px solid var(--border);border-radius:12px;">
+        <textarea id="recMsg" placeholder="Mensaje" style="min-height:120px;padding:10px;border:1px solid var(--border);border-radius:12px;font-family:Arial,sans-serif;"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="document.getElementById('recoveryBackdrop').style.display='none'">Cerrar</button>
+      <button class="btn btn-secondary" type="button" onclick="document.getElementById('recoveryBackdrop').style.display='none'">Cerrar</button>
       <a id="recMailLink" class="btn btn-success" href="#">Enviar solicitud</a>
     </div>
   </div>
 </div>
 
 <script>
-window.xprocesOpenRecovery=function(jobId,user,email){
-  var rb=document.getElementById('recoveryBackdrop');
-  document.getElementById('recJobId').value=jobId||'';
-  document.getElementById('recUser').value=user||'';
-  document.getElementById('recEmail').value=email||'';
-  rb.style.display='flex';
-  function updateMail(){
-    var id=document.getElementById('recJobId').value;
-    var u=document.getElementById('recUser').value;
-    var e=document.getElementById('recEmail').value;
-    var m=document.getElementById('recMsg').value;
-    var subject=encodeURIComponent('Recuperacion trabajo XProces - '+id);
-    var body=encodeURIComponent('ID trabajo: '+id+'\nUsuario: '+u+'\nCorreo: '+e+'\n\nMensaje:\n'+m);
-    document.getElementById('recMailLink').href='mailto:soportetams@intelsi.es?subject='+subject+'&body='+body;
+window.xprocesOpenRecovery = function(jobId, user, email) {
+  var rb = document.getElementById("recoveryBackdrop");
+  if (!rb) return;
+
+  document.getElementById("recJobId").value = jobId || "";
+  document.getElementById("recUser").value = user || "";
+  document.getElementById("recEmail").value = email || "";
+  if (!document.getElementById("recMsg").value) {
+    document.getElementById("recMsg").value = "Hola,\n\nNecesito recuperar este trabajo para volver a descargar los resultados.\n";
   }
-  ['recJobId','recUser','recEmail','recMsg'].forEach(function(id){
-    document.getElementById(id).oninput=updateMail;
+
+  rb.style.display = "flex";
+
+  function updateMail() {
+    var id = document.getElementById("recJobId").value;
+    var u = document.getElementById("recUser").value;
+    var e = document.getElementById("recEmail").value;
+    var m = document.getElementById("recMsg").value;
+
+    var subject = encodeURIComponent("Recuperación trabajo XProces - " + id);
+    var body = encodeURIComponent(
+      "ID trabajo: " + id +
+      "\nUsuario: " + u +
+      "\nCorreo: " + e +
+      "\n\nMensaje:\n" + m
+    );
+
+    document.getElementById("recMailLink").href =
+      "mailto:soportetams@intelsi.es?subject=" + subject + "&body=" + body;
+  }
+
+  ["recJobId","recUser","recEmail","recMsg"].forEach(function(id) {
+    document.getElementById(id).oninput = updateMail;
   });
+
   updateMail();
 };
+
+document.addEventListener("click", async function(event) {
+  var link = event.target.closest("a.xproces-download-link");
+  if (!link) return;
+
+  event.preventDefault();
+
+  try {
+    var response = await fetch(link.href, { cache: "no-store" });
+    var contentType = response.headers.get("content-type") || "";
+
+    if (contentType.indexOf("application/json") >= 0) {
+      var data = await response.json().catch(function(){ return {}; });
+      if (data && data.error === "outputs_not_available") {
+        var match = String(link.href).match(/\/jobs\/([^\/]+)\/download/i);
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem("xproces_user") || "null"); } catch (_) {}
+        window.xprocesOpenRecovery(match ? decodeURIComponent(match[1]) : "", user?.name || user?.username || user?.email || "", user?.email || "");
+        return;
+      }
+    }
+
+    window.location.href = link.href;
+  } catch (error) {
+    var match = String(link.href).match(/\/jobs\/([^\/]+)\/download/i);
+    window.xprocesOpenRecovery(match ? decodeURIComponent(match[1]) : "", "", "");
+  }
+}, true);
 </script>
 
 </body>
