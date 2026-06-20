@@ -5607,19 +5607,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
     }
 
     function getClientProgressFromXprocesProgress(progress, message, qualityText) {
-      // El porcentaje ya viene calculado en el log:
-      // XPROCES_PROGRESS|porcentaje|mensaje
-      // No se remapea por texto, porque eso cambiaba el orden real del proceso.
       const p = Number(progress || 0);
       return Number.isFinite(p) ? Math.max(0, Math.min(100, Math.round(p))) : 0;
     }
 
     function getLiveProgressFromJobAndLog(job, parsed) {
-      // Fuente principal: ultimo XPROCES_PROGRESS valido del log.
       const fromLog = Number(parsed?.latestProgressPercent);
       if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, Math.round(fromLog)));
 
-      // Fallback: si no hay log, usar el progress del job sin remapear.
       const fromJob = Number(job?.progress ?? 0);
       return Number.isFinite(fromJob) ? Math.max(0, Math.min(100, Math.round(fromJob))) : 0;
     }
@@ -6170,9 +6165,8 @@ syncStoredUserToForm();
 
 setTimeout(async () => {
   try {
-    const savedJobId = getSavedSelectedHistoryJobId();
     const user = typeof getStoredUser === "function" ? getStoredUser() : null;
-    if (!savedJobId || !user || !user.id) return;
+    if (!user || !user.id) return;
 
     const response = await fetch(`${API_BASE}/jobs/mine?user_id=${encodeURIComponent(String(user.id))}`, {
       headers: {
@@ -6181,14 +6175,26 @@ setTimeout(async () => {
       cache: "no-store"
     });
 
-        const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
     const jobs = Array.isArray(data.jobs) ? data.jobs : [];
-    const savedJob = jobs.find((job) => String(job.id || "") === String(savedJobId));
 
-    if (savedJob) {
-      selectedHistoryJobId = savedJobId;
-      await openJobFromHistory(savedJob);
+    // Al recargar la pagina solo abrimos automaticamente un trabajo activo.
+    // Si no hay trabajo activo, no abrimos ningun historico antiguo.
+    const activeStatuses = new Set(["receiving", "queued", "running", "created"]);
+    const activeJob = jobs
+      .filter((job) => activeStatuses.has(String(job.status || "").toLowerCase()))
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
+
+    if (activeJob) {
+      selectedHistoryJobId = String(activeJob.id || "");
+      saveSelectedHistoryJobId(selectedHistoryJobId);
+      await openJobFromHistory(activeJob);
       await renderStoredJobs();
+    } else {
+      selectedHistoryJobId = "";
+      if (typeof clearSavedSelectedHistoryJobId === "function") {
+        clearSavedSelectedHistoryJobId();
+      }
     }
   } catch (_) {}
 }, 0);
