@@ -989,6 +989,77 @@ function translateStage(stage) {
 
   return stage || "—";
 }
+
+    async function getAdminJobLog(jobId) {
+      if (!jobId) return "";
+      try {
+        const response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}/log`, {
+          cache: "no-store"
+        });
+        if (!response.ok) return "";
+        return await response.text();
+      } catch (_) {
+        return "";
+      }
+    }
+
+    function adminLogSaysCompleted(logText) {
+      const text = String(logText || "").toLowerCase();
+      return (
+        text.includes("proceso ok") ||
+        text.includes("trabajo procesado correctamente") ||
+        text.includes("zip final: ok") ||
+        text.includes("pdf report: ok") ||
+        text.includes("xproces_progress|100")
+      );
+    }
+
+    function adminLogLastProgress(logText) {
+      const lines = String(logText || "").split(/\r?\n/);
+      let lastProgress = null;
+
+      for (const line of lines) {
+        const m = String(line || "").match(/XPROCES_PROGRESS\|(\d+(?:\.\d+)?)\|/i);
+        if (m) {
+          const n = Number(m[1]);
+          if (Number.isFinite(n)) lastProgress = Math.max(0, Math.min(100, n));
+        }
+      }
+
+      return lastProgress;
+    }
+
+    async function normalizeAdminJobsWithLogs(jobs) {
+      const list = Array.isArray(jobs) ? jobs : [];
+
+      // Solo corregimos trabajos que el backend/admin marca como fallidos o cancelados.
+      // Los trabajos que ya vienen bien no se tocan.
+      const candidates = list.filter((job) => {
+        const s = String(job.status || "").toLowerCase();
+        return ["failed", "cancelled"].includes(s);
+      });
+
+      await Promise.all(candidates.map(async (job) => {
+        const logText = await getAdminJobLog(job.id);
+        if (!logText) return;
+
+        const logProgress = adminLogLastProgress(logText);
+        if (Number.isFinite(logProgress) && logProgress > Number(job.progress || 0)) {
+          job.progress = logProgress;
+        }
+
+        if (adminLogSaysCompleted(logText)) {
+          job.status = "done";
+          job.progress = 100;
+          job.error = "";
+          job.message = "Trabajo procesado correctamente";
+          if (!job.finished_at) job.finished_at = job.updated_at || job.created_at;
+        }
+      }));
+
+      return list;
+    }
+
     function getFilteredJobs() {
       const q = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
@@ -1276,7 +1347,8 @@ function translateStage(stage) {
         }
 
         const data = await response.json();
-        jobsCache = Array.isArray(data.jobs) ? data.jobs : [];
+        const rawJobs = Array.isArray(data.jobs) ? data.jobs : [];
+        jobsCache = await normalizeAdminJobsWithLogs(rawJobs);
         renderTable();
       } catch (error) {
         console.error(error);
