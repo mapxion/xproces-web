@@ -1959,6 +1959,16 @@
       margin-top: 18px;
     }
 
+
+    .outputs-section-subnote {
+      margin: -4px 0 12px;
+      text-align: center;
+      color: var(--warning);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
   </style>
 
   <!-- Google tag (gtag.js) -->
@@ -2282,12 +2292,14 @@
                       </div>
 
                       <div class="outputs-section">
-                        <div class="outputs-section-title">Modelos 3D y mallas</div>
+                        <div class="outputs-section-title">Modelado 3D opcional</div>
+                        <div class="outputs-section-subnote">Estas opciones aumentan notablemente el tiempo de procesado y el precio.</div>
                         <div class="outputs-group">
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_obj">Malla OBJ</button><div class="output-tooltip"><strong>Malla OBJ</strong>Modelo 3D de superficie con textura, muy compatible con programas 3D.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="glb">GLB</button><div class="output-tooltip"><strong>GLB</strong>Modelo 3D en un solo archivo, ideal para web y visualización.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_fbx">FBX</button><div class="output-tooltip"><strong>FBX</strong>Formato muy usado en visualización, animación y programas 3D.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="textures">Texturas</button><div class="output-tooltip"><strong>Texturas</strong>Carpeta de imágenes de textura asociadas al modelo 3D.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="tiled_model">Modelo teselado</button><div class="output-tooltip"><strong>Modelo teselado</strong>Modelo 3D optimizado para visualización web/3D Tiles. Aumenta el tiempo y el coste.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_stl">STL</button><div class="output-tooltip"><strong>STL</strong>Formato clásico de malla, conocido por impresión 3D e ingeniería.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dae">DAE</button><div class="output-tooltip"><strong>DAE</strong>Formato Collada para intercambio entre distintos programas 3D.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_3ds">3DS</button><div class="output-tooltip"><strong>3DS</strong>Formato 3D clásico, útil sobre todo por compatibilidad antigua.</div></div>
@@ -2692,8 +2704,8 @@ function stripNullCharsDeep(value) {
 
     function applyVisibleOutputsForProjectType() {
       const allowedByType = {
-        fotogrametria: ["las", "orthomosaic_tif", "dem_tif", "dtm_tif", "contours_dxf", "pdf_report"],
-        "3d": ["mesh_obj", "glb", "mesh_fbx", "textures", "pdf_report"],
+        fotogrametria: ["las", "orthomosaic_tif", "dem_tif", "dtm_tif", "contours_dxf", "pdf_report", "mesh_obj", "glb", "mesh_fbx", "textures", "tiled_model"],
+        "3d": ["mesh_obj", "glb", "mesh_fbx", "textures", "tiled_model", "pdf_report"],
         tams: []
       };
 
@@ -2714,7 +2726,7 @@ function stripNullCharsDeep(value) {
 
       const note = document.getElementById("outputsModeNote");
       if (note && selectedProjectType === "fotogrametria") {
-        note.textContent = "Seleccione los entregables topográficos que quiere recibir.";
+        note.textContent = "Seleccione los entregables topográficos. Las opciones de modelado 3D son opcionales y aumentan tiempo y precio.";
       }
       if (note && selectedProjectType === "3d") {
         note.textContent = "Seleccione los entregables 3D que quiere recibir.";
@@ -2944,6 +2956,7 @@ function getSelectedQualityMode() {
         mesh_u3d: "Malla U3D",
         glb: "GLB",
         textures: "Texturas",
+        tiled_model: "Modelo teselado",
         orthomosaic_tif: "Ortofoto GeoTIFF",
         orthomosaic_jpg: "Ortomosaico JPG",
         dem_tif: "DSM TIFF",
@@ -5406,7 +5419,15 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           "3ds": "mesh_3ds",
           "wrl": "mesh_wrl",
           "mesh ply": "mesh_ply",
-          "malla ply": "mesh_ply"
+          "malla ply": "mesh_ply",
+          "textures": "textures",
+          "texturas": "textures",
+          "tiled": "tiled_model",
+          "tiles": "tiled_model",
+          "tiled_model": "tiled_model",
+          "modelo teselado": "tiled_model",
+          "3tz": "tiled_model",
+          "tiled_model.3tz": "tiled_model"
         };
         return aliases[raw] || raw;
       };
