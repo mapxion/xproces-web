@@ -5607,35 +5607,21 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
     }
 
     function getClientProgressFromXprocesProgress(progress, message, qualityText) {
+      // El porcentaje ya viene calculado en el log:
+      // XPROCES_PROGRESS|porcentaje|mensaje
+      // No se remapea por texto, porque eso cambiaba el orden real del proceso.
       const p = Number(progress || 0);
-      const msg = String(message || "").toLowerCase();
-      const q = String(qualityText || "").toLowerCase();
-      let mapped = p;
-
-      if (p >= 100 || msg.includes("correctamente")) mapped = 100;
-      else if (p >= 96 || msg.includes("informe")) mapped = 98;
-      else if (p >= 92 || msg.includes("export")) mapped = 94;
-      else if (p >= 86 || msg.includes("textura")) mapped = q.includes("max") || q.includes("máxima") ? 88 : 86;
-      else if (p >= 84 || msg.includes("modelo")) mapped = q.includes("max") || q.includes("máxima") ? 74 : 78;
-      else if (p >= 82 || msg.includes("dem")) mapped = q.includes("max") || q.includes("máxima") ? 70 : 72;
-      else if (p >= 78 || msg.includes("nube")) mapped = q.includes("max") || q.includes("máxima") ? 45 : 52;
-      else if (p >= 65 || msg.includes("profundidad")) mapped = q.includes("max") || q.includes("máxima") ? 18 : 25;
-      else if (p >= 50 || msg.includes("limpiando")) mapped = 8;
-      else if (p >= 45 || msg.includes("alineando")) mapped = 6;
-      else if (p >= 30 || msg.includes("detectando")) mapped = 3;
-      else if (p >= 15 || msg.includes("importando")) mapped = 2;
-      else if (p >= 10 || msg.includes("preparando")) mapped = 1;
-
-      return Math.max(0, Math.min(100, Math.round(mapped)));
+      return Number.isFinite(p) ? Math.max(0, Math.min(100, Math.round(p))) : 0;
     }
 
     function getLiveProgressFromJobAndLog(job, parsed) {
-      const qualityText = parsed?.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "");
+      // Fuente principal: ultimo XPROCES_PROGRESS valido del log.
       const fromLog = Number(parsed?.latestProgressPercent);
-      const message = parsed?.latestProgressMessage || job?.message || "";
-      if (Number.isFinite(fromLog)) return getClientProgressFromXprocesProgress(fromLog, message, qualityText);
+      if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, Math.round(fromLog)));
+
+      // Fallback: si no hay log, usar el progress del job sin remapear.
       const fromJob = Number(job?.progress ?? 0);
-      return Number.isFinite(fromJob) ? getClientProgressFromXprocesProgress(fromJob, message, qualityText) : 0;
+      return Number.isFinite(fromJob) ? Math.max(0, Math.min(100, Math.round(fromJob))) : 0;
     }
 
     function getFirstLogDate(logText) {
