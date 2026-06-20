@@ -3310,11 +3310,18 @@ function getSelectedQualityMode() {
 
       const uiStatusNow = normalizeJobStatus(job);
 
-if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   getJobLog(job.id)
     .then((logText) => {
-      const summaryHtml = renderProcessSummary(job, logText || "");
-      if (uiStatusNow.canRecover) {
+      const effectiveLogText = getEffectiveLogText(job, logText);
+      if (logSaysProcessOk(effectiveLogText)) {
+        job.status = "completed";
+        job.stage = "final";
+        job.error = "";
+        job.progress = 100;
+      }
+      const uiStatusFromLog = normalizeJobStatus(job);
+      const summaryHtml = renderProcessSummary(job, effectiveLogText);
+      if (uiStatusFromLog.canRecover) {
         jobStatusEl.innerHTML = summaryHtml + `
           <div class="process-summary" style="margin-top:12px;">
             <div class="process-summary-section" style="grid-column:1/-1;">
@@ -3327,14 +3334,25 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           </div>
         `;
         showRecoveryButton(job);
-      } else {
+      } else if (uiStatusFromLog.canDownload || logSaysProcessOk(effectiveLogText)) {
         jobStatusEl.innerHTML = summaryHtml;
         showDownloadButton(job);
+      } else {
+        jobStatusEl.innerHTML = summaryHtml;
+        hideDownloadButton();
       }
     })
     .catch(() => {
-      const summaryHtml = renderProcessSummary(job, "");
-      if (uiStatusNow.canRecover) {
+      const effectiveLogText = getArchivedJobLog(job);
+      if (logSaysProcessOk(effectiveLogText)) {
+        job.status = "completed";
+        job.stage = "final";
+        job.error = "";
+        job.progress = 100;
+      }
+      const uiStatusFromLog = normalizeJobStatus(job);
+      const summaryHtml = renderProcessSummary(job, effectiveLogText);
+      if (uiStatusFromLog.canRecover) {
         jobStatusEl.innerHTML = summaryHtml + `
           <div class="process-summary" style="margin-top:12px;">
             <div class="process-summary-section" style="grid-column:1/-1;">
@@ -3347,14 +3365,14 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           </div>
         `;
         showRecoveryButton(job);
-      } else {
+      } else if (uiStatusFromLog.canDownload || logSaysProcessOk(effectiveLogText)) {
         jobStatusEl.innerHTML = summaryHtml;
         showDownloadButton(job);
+      } else {
+        jobStatusEl.innerHTML = summaryHtml;
+        hideDownloadButton();
       }
     });
-} else {
-  hideDownloadButton();
-}
       
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
@@ -3381,41 +3399,41 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     }
 
     async function getStoredJobLogView(job) {
-      // No debe romper la lista: si el log falla, se usa el job tal como viene del backend.
       const fallback = {
         jobView: job,
         stageLabel: formatJobListStage(job.stage),
         progressValue: Math.max(0, Math.min(100, Number(job.progress || 0)))
       };
 
-      if (!job || !job.id || typeof getJobLog !== "function" || !window.XProcesLogRenderer || typeof window.XProcesLogRenderer.parseLog !== "function") {
+      if (!job || !job.id || typeof getJobLog !== "function") {
         return fallback;
       }
 
       try {
-        const logText = await getJobLog(job.id);
+        const liveLogText = await getJobLog(job.id);
+        const logText = getEffectiveLogText(job, liveLogText);
         if (!logText) return fallback;
 
-        const parsed = window.XProcesLogRenderer.parseLog(logText);
-        if (!parsed) return fallback;
-
-        const progressValue = parsed.progress != null
-          ? Math.max(0, Math.min(100, Number(parsed.progress || 0)))
+        const parsed = parseProcessLog(logText);
+        const progressValue = parsed.latestProgressPercent != null
+          ? Math.max(0, Math.min(100, Number(parsed.latestProgressPercent || 0)))
           : fallback.progressValue;
 
-        const stageLabel = parsed.progressMessage
-          || parsed.lastImportantOk
-          || parsed.lastOk
-          || parsed.fallbackCompletedStep
-          || fallback.stageLabel;
+        const cleanSteps = parsed.steps.map(cleanLiveStepText).filter(Boolean);
+        const stageLabel =
+          cleanSteps[cleanSteps.length - 1] ||
+          parsed.latestLiveMessage ||
+          parsed.latestDetail ||
+          fallback.stageLabel;
 
         const jobView = { ...job, progress: progressValue };
 
-        if (parsed.status === "completed" || progressValue >= 100 || /PROCESO OK|Trabajo procesado correctamente/i.test(logText)) {
+        if (logSaysProcessOk(logText)) {
           jobView.status = "completed";
           jobView.stage = "final";
+          jobView.error = "";
           jobView.progress = 100;
-        } else if (parsed.status === "failed") {
+        } else if (logSaysProcessFailed(logText)) {
           jobView.status = "failed";
         }
 
@@ -3746,9 +3764,42 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       }
 
       processDownloadBtn.textContent = "Descargar resultados";
-      processDownloadBtn.setAttribute("target", "_blank");
-      processDownloadBtn.onclick = null;
+      processDownloadBtn.removeAttribute("target");
       processDownloadBtn.href = `${API_BASE}/jobs/${job.id}/download`;
+      processDownloadBtn.onclick = async function(event) {
+        event.preventDefault();
+
+        if (processDownloadBtn.dataset.downloading === "1") return;
+        processDownloadBtn.dataset.downloading = "1";
+        processDownloadBtn.textContent = "Descargando...";
+        processDownloadBtn.style.pointerEvents = "none";
+
+        try {
+          const response = await fetch(processDownloadBtn.href, { cache: "no-store" });
+          const contentType = response.headers.get("content-type") || "";
+
+          if (contentType.includes("application/json")) {
+            const data = await response.json().catch(() => ({}));
+            if (data && data.error === "outputs_not_available") {
+              showRecoveryButton(job);
+              openRecoveryModal(job);
+              return;
+            }
+          }
+
+          window.location.href = processDownloadBtn.href;
+          setTimeout(() => {
+            processDownloadBtn.textContent = "Descarga iniciada";
+          }, 400);
+        } catch (_) {
+          openRecoveryModal(job);
+        } finally {
+          setTimeout(() => {
+            processDownloadBtn.dataset.downloading = "0";
+            processDownloadBtn.style.pointerEvents = "";
+          }, 3000);
+        }
+      };
       processDownloadWrap.style.display = "block";
     }
 
@@ -5235,6 +5286,46 @@ if (map) {
       }
     }
 
+    function getArchivedJobLog(job) {
+      if (!job) return "";
+      const candidates = [
+        job.archived_log,
+        job.archived_process_log,
+        job.process_log,
+        job.log_text,
+        job.log,
+        job.summary_log,
+        job.processing_log,
+        job.archived_summary?.log,
+        job.archived_summary?.log_text,
+        job.archived_summary?.process_log,
+        job.archived_summary?.raw_log
+      ];
+
+      for (const item of candidates) {
+        if (typeof item === "string" && item.trim()) return item;
+      }
+
+      return "";
+    }
+
+    function getEffectiveLogText(job, logText) {
+      const live = String(logText || "").trim();
+      if (live) return live;
+      return getArchivedJobLog(job);
+    }
+
+    function logSaysProcessOk(logText) {
+      return /PROCESO OK|Trabajo procesado correctamente|Procesado completado correctamente/i.test(String(logText || ""));
+    }
+
+    function logSaysProcessFailed(logText) {
+      const value = String(logText || "");
+      if (!value.trim()) return false;
+      if (logSaysProcessOk(value)) return false;
+      return /PROCESO ERROR|Traceback|Exception|ERROR FATAL|El procesado no se pudo completar|No se pudo completar/i.test(value);
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -5311,7 +5402,10 @@ if (map) {
           continue;
         }
         if (line.startsWith("Preset activo:") && !info.quality) {
-          info.quality = line.replace("Preset activo:", "").trim().replace(/Metashape/gi, "Xproces");
+          const presetText = line.replace("Preset activo:", "").trim().replace(/Metashape/gi, "Xproces");
+          if (!/XPROCES_GUI_REPORT|STRICT_NO_FALLBACKS|GUI_STEP_BY_STEP/i.test(presetText)) {
+            info.quality = presetText;
+          }
           continue;
         }
         if (line.startsWith("Fotos encontradas:")) {
@@ -5483,7 +5577,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
     }
 
     function renderProcessSummary(job, logText) {
-      const parsed = parseProcessLog(logText);
+      const effectiveLogText = getEffectiveLogText(job, logText);
+      const parsed = parseProcessLog(effectiveLogText);
 
       const normalizeOutputKey = (value) => {
         const raw = String(value || "").trim().toLowerCase();
@@ -5573,16 +5668,12 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const statusValue = String(job?.status || "").toLowerCase();
 
-      // Si el log del worker confirma PROCESO OK o Trabajo procesado correctamente,
-      // el resumen debe mostrarse como correcto aunque el backend conserve un
-      // status failed antiguo por la validación previa de archivos.
-      const logSaysOk = /PROCESO OK|Trabajo procesado correctamente/i.test(String(logText || ""));
-      const allRequestedGenerated = requestedKeys.length
+      // Fuente de verdad visual: log real o log archivado.
+      // No usamos stage/message antiguos para declarar fallo si el log dice OK.
+      const processReallyOk = logSaysProcessOk(effectiveLogText) || (requestedKeys.length
         ? requestedKeys.every((key) => generatedKeys.includes(key))
-        : generatedKeys.length > 0;
-
-      const processReallyOk = logSaysOk || allRequestedGenerated;
-      const failed = !processReallyOk && (statusValue === "failed" || statusValue === "cancelled");
+        : generatedKeys.length > 0);
+      const failed = logSaysProcessFailed(effectiveLogText) || (!effectiveLogText && (statusValue === "failed" || statusValue === "cancelled"));
 
       if (processReallyOk) {
         for (let i = warningLines.length - 1; i >= 0; i--) {
@@ -5783,10 +5874,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
     }
 
     function renderLiveProcessSummary(job, logText, eta) {
-      const parsed = parseProcessLog(logText || "");
-      const statusValue = String(job?.status || "").toLowerCase();
+      const effectiveLogText = getEffectiveLogText(job, logText);
+      const parsed = parseProcessLog(effectiveLogText || "");
+      const statusValue = logSaysProcessOk(effectiveLogText) ? "completed" : String(job?.status || "").toLowerCase();
       const rawProgress = Number(parsed?.latestProgressPercent ?? job?.progress ?? 0);
-      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
+      let qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
+      if (/XPROCES_GUI_REPORT|STRICT_NO_FALLBACKS|GUI_STEP_BY_STEP/i.test(String(qualityText))) {
+        qualityText = job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal";
+      }
       const photosText = parsed.photos ? `${parsed.photos} fotos` : `${job?.photos_count || ""} fotos`.trim() || "Fotos en proceso";
       const progress = Math.round(getLiveProgressFromJobAndLog(job, parsed));
       const outputText = parsed.requestedOutputs.length
@@ -5961,6 +6056,19 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           // XPROCES LIVE PROGRESS FIX:
           // El backend/worker puede quedarse en progress=0/45/50 mientras Metashape avanza.
           // La fuente real del avance es metashape-python-log.txt vía /jobs/:id/log.
+          const effectiveLogText = getEffectiveLogText(job, logText);
+          const effectiveLogOk = logSaysProcessOk(effectiveLogText);
+          const effectiveLogFailed = logSaysProcessFailed(effectiveLogText);
+
+          if (effectiveLogOk) {
+            job.status = "completed";
+            job.stage = "final";
+            job.error = "";
+            job.progress = 100;
+          } else if (effectiveLogFailed) {
+            job.status = "failed";
+          }
+
           if (window.__lastParsedProcessLog) {
             const parsed = window.__lastParsedProcessLog;
 
@@ -5983,16 +6091,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           updateProcessStages(job);
           renderStoredJobs();
 
-          if (status === "queued" || status === "running") {
+          if (String(job.status || "").toLowerCase() === "queued" || String(job.status || "").toLowerCase() === "running") {
             const eta = await getJobEta(job.id);
 
             if (eta && eta.ok) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.innerHTML = window.XProcesLogRenderer
-              ? window.XProcesLogRenderer.render(job, logText, eta)
-              : renderLiveProcessSummary(job, logText, eta);
+            jobStatusEl.innerHTML = renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -6010,16 +6116,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
                 "Procesado completado correctamente.\nPreparando entrega del proyecto.";
             } else {
               const doneLogText = logText || await getJobLog(job.id);
-              jobStatusEl.innerHTML = window.XProcesLogRenderer
-                ? window.XProcesLogRenderer.render(job, doneLogText, null)
-                : renderProcessSummary(job, doneLogText);
+              jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
               showDownloadButton(job);
             }
 
             return;
           }
 
-          if (status === "failed" || status === "cancelled") {
+          if (String(job.status || "").toLowerCase() === "failed" || String(job.status || "").toLowerCase() === "cancelled") {
             stopPolling();
 
             if (progressFill) {
@@ -6033,9 +6137,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             const failedLogText = logText || await getJobLog(job.id);
 
             if (failedLogText) {
-              jobStatusEl.innerHTML = window.XProcesLogRenderer
-                ? window.XProcesLogRenderer.render(job, failedLogText, null)
-                : renderProcessSummary(job, failedLogText);
+              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
             } else {
               const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
