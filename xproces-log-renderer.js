@@ -334,7 +334,8 @@
       parsed.lastImportantOk ||
       (parsed.alignedCameras ? `Camaras alineadas: ${parsed.alignedCameras}` : "") ||
       (parsed.pointCount ? `Puntos nube: ${parsed.pointCount}` : "") ||
-      (parsed.fallbackCompletedStep ? `Ultimo proceso leido: ${parsed.fallbackCompletedStep}` : "Pendiente");
+      (parsed.fallbackCompletedStep ? `Ultimo proceso leido: ${parsed.fallbackCompletedStep}` : "") ||
+      (String(job?.status || "").toLowerCase() === "done" || String(job?.status || "").toLowerCase() === "completed" ? "Control de calidad correcto" : "Procesando");
 
     const done = parsed.status === "completed" || progress >= 100;
     const remainingText = done ? "Finalizado" : formatRemaining(remaining);
@@ -401,3 +402,62 @@
 
   window.XProcesLogRenderer = { render, parseLog };
 })();
+
+
+    function cleanLiveStepText(item) {
+      let text = String(item || "")
+        .replace(/^\[[^\]]+\]\s*/g, "")
+        .replace(/^Metashape\s+(stdout|stderr):\s*/i, "")
+        .replace(/\s*\(\d+%\)\s*$/g, "")
+        .replace(/Metashape/gi, "Xproces")
+        .trim();
+
+      if (!text) return "";
+
+      // Ocultar nombres internos de presets/scripts
+      if (/XPROCES_GUI_REPORT|METASHAPE_GUI_REPORT|STRICT_NO_FALLBACKS|GUI_STEP_BY_STEP/i.test(text)) {
+        return "Configuración fotogramétrica aplicada";
+      }
+
+      // Estados limpios
+      if (/^PROCESO OK/i.test(text) || /^Trabajo procesado correctamente/i.test(text)) {
+        return "Trabajo procesado correctamente";
+      }
+
+      if (/Subiendo ZIP final|Subiendo resultado\.zip|Subiendo resultados/i.test(text)) {
+        return "Subiendo resultados al servidor";
+      }
+
+      if (/Comprimiendo resultados|INICIO ZIP final|ZIP añadiendo/i.test(text)) {
+        return "Preparando descarga final";
+      }
+
+      // Exportaciones limpias
+      if (/^DSM\/DEM TIFF:\s*OK/i.test(text) || /^DSM:?\s*OK/i.test(text)) return "DSM generado correctamente";
+      if (/^DTM TIFF:\s*OK/i.test(text) || /^DTM:?\s*OK/i.test(text)) return "DTM generado correctamente";
+      if (/^Ortomosaico TIFF:\s*OK/i.test(text) || /^Ortofoto/i.test(text)) return "Ortofoto generada correctamente";
+      if (/^LAS:\s*OK/i.test(text)) return "Nube LAS generada correctamente";
+      if (/^Curvas DXF:\s*OK/i.test(text)) return "Curvas de nivel generadas correctamente";
+      if (/^Curvas PRJ:\s*OK/i.test(text)) return "Archivo PRJ de curvas generado";
+      if (/^PDF report:\s*OK/i.test(text)) return "Informe PDF generado correctamente";
+      if (/^ZIP final:\s*OK/i.test(text)) return "Resultados preparados para descarga";
+
+      // Mensajes de inicio/export con rutas
+      text = text
+        .replace(/INICIO exportación DSM\/DEM TIFF:.*$/i, "Exportando DSM")
+        .replace(/INICIO exportación DTM TIFF:.*$/i, "Exportando DTM")
+        .replace(/INICIO exportación Ortomosaico TIFF:.*$/i, "Exportando ortofoto")
+        .replace(/INICIO exportación LAS:.*$/i, "Exportando nube LAS")
+        .replace(/INICIO exportación PDF report:.*$/i, "Generando informe PDF")
+        .replace(/INICIO exportación Curvas DXF.*$/i, "Exportando curvas de nivel");
+
+      // Quitar rutas Windows y flechas
+      text = text
+        .replace(/\s*->\s*[A-Z]:\\.*$/i, "")
+        .replace(/[A-Z]:\\[^\s]+/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+      return text;
+    }
+
