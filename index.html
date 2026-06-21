@@ -2940,7 +2940,9 @@ function getSelectedQualityMode() {
         outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
         preset_key: getSelectedPreset() || "",
         output_mode: getSelectedOutputMode() || "",
-        tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected()
+        tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
+        totalPhotos: Array.isArray(files) ? files.length : 0,
+        totalBytes: Number(totalSize || 0)
       };
     }
 
@@ -3431,13 +3433,11 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           jobView.status = "failed";
           jobView.stage = "delivery_failed";
           jobView.progress = 100;
-        } else if (parsed.status === "completed" || progressValue >= 100 || /PROCESO OK|Trabajo procesado correctamente/i.test(logText)) {
-          jobView.status = "completed";
-          jobView.stage = "final";
-          jobView.progress = 100;
         } else if (parsed.status === "failed") {
           jobView.status = "failed";
         }
+        // No convertir a completado solo por "PROCESO OK" del log local.
+        // El servidor debe marcar done únicamente cuando outputs.zip ya está subido y disponible.
 
         return {
           jobView,
@@ -5146,7 +5146,9 @@ if (map) {
   project_type: getSelectedProjectType(),
   quality_mode: getSelectedQualityMode(),
   outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
-  tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected()
+  tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
+  expected_photos_count: files.length,
+  expected_total_bytes: Number(totalSize || 0)
 })
       });
 
@@ -5180,9 +5182,20 @@ if (map) {
 
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            let data = {};
+            try { data = JSON.parse(xhr.responseText || "{}"); } catch (_) {}
+            if (data && data.ok === false) {
+              reject(new Error(data.message || data.error || `Error subiendo lote ${batchIndex + 1}`));
+              return;
+            }
+            resolve(data);
           } else {
-            reject(new Error(`Error subiendo lote ${batchIndex + 1}: ${xhr.status}`));
+            let msg = `Error subiendo lote ${batchIndex + 1}: ${xhr.status}`;
+            try {
+              const data = JSON.parse(xhr.responseText || "{}");
+              msg = data.message || data.error || msg;
+            } catch (_) {}
+            reject(new Error(msg));
           }
         };
 
@@ -5593,9 +5606,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         return aliases[raw] || raw;
       };
 
-      const qualityText =
+      let qualityText =
         parsed.quality ||
         (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
+
+      qualityText = cleanLiveStepText(qualityText);
+      if (!qualityText || /No disponible/i.test(qualityText)) {
+        qualityText = "Fotogrametría profesional";
+      }
 
       const photosText = parsed.photos || "No disponible";
 
@@ -5782,10 +5800,44 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
     
     function cleanLiveStepText(item) {
-      return String(item || "")
+      let text = String(item || "")
         .replace(/\s*\(\d+%\)\s*$/g, "")
         .replace(/Metashape/gi, "Xproces")
         .trim();
+
+      if (!text) return "";
+
+      if (/XPROCES_GUI_REPORT|STRICT_NO_FALLBACKS|STEP_BY_STEP/i.test(text)) {
+        return "Fotogrametría profesional";
+      }
+
+      if (/^PROCESO OK/i.test(text) || /^Trabajo procesado correctamente/i.test(text)) {
+        return "Proceso OK";
+      }
+
+      if (/Subiendo ZIP final/i.test(text)) {
+        return "Subiendo resultados al servidor";
+      }
+
+      if (/Comprimiendo con 7-Zip|Subiendo ZIP/i.test(text)) {
+        return "Preparando descarga final";
+      }
+
+      const cleanOk = (label) => {
+        return text.replace(/\s*\([^)]*\)\s*->\s*.*$/i, "").replace(/\s*->\s*.*$/i, "").trim() || label;
+      };
+
+      if (/^DSM\/DEM TIFF:\s*OK/i.test(text)) return "DSM/DEM generado correctamente";
+      if (/^DTM TIFF:\s*OK/i.test(text)) return "DTM generado correctamente";
+      if (/^Ortomosaico TIFF:\s*OK/i.test(text)) return "Ortomosaico generado correctamente";
+      if (/^LAS:\s*OK/i.test(text)) return "Nube LAS generada correctamente";
+      if (/^Curvas DXF:\s*OK/i.test(text)) return "Curvas de nivel generadas correctamente";
+      if (/^PDF report:\s*OK/i.test(text)) return "Informe PDF generado correctamente";
+      if (/^ZIP final:\s*OK/i.test(text)) return "ZIP final listo para descarga";
+
+      text = cleanOk(text);
+      text = text.replace(/[A-Z]:\\[^\s]+/g, "").replace(/\s{2,}/g, " ").trim();
+      return text;
     }
 
     function getClientProgressFromXprocesProgress(progress, message, qualityText) {
@@ -5877,12 +5929,11 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const projectName = job?.project_name || job?.client_name || "Proyecto";
       const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: pendiente";
-      const detailText =
-  parsed.alignedCameras
-    ? `Cámaras alineadas: ${parsed.alignedCameras}`
-    : parsed.pointCount
-      ? `Puntos reconstruidos: ${parsed.pointCount}`
-      : alignedText;
+      let detailText =
+        cleanLiveStepText(parsed.lastImportantOk || parsed.lastOk || parsed.latestLiveMessage || parsed.latestProgressMessage || "") ||
+        (parsed.pointCount ? `Puntos reconstruidos: ${parsed.pointCount}` : alignedText);
+
+      if (/C:\\|->/.test(detailText)) detailText = cleanLiveStepText(detailText);
       const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
 
       const phaseOrder = [
@@ -6319,9 +6370,18 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         }
 
         if (progressFill) progressFill.style.width = "100%";
-        if (progressLabel) progressLabel.textContent = "Subida completada";
+        if (progressLabel) progressLabel.textContent = "Verificando subida...";
         if (progressPercent) progressPercent.textContent = "100%";
-        jobStatusEl.textContent = "Subida completada. Enviando a procesado...";
+        jobStatusEl.textContent = `Verificando subida completa: ${files.length} fotos esperadas...`;
+
+        const uploadCheck = await completeUpload(jobId);
+        const realCount = uploadCheck.realCount || files.length;
+        if (realCount !== files.length) {
+          throw new Error(`Subida incompleta: esperadas ${files.length} fotos, recibidas ${realCount}. El procesado no se iniciará.`);
+        }
+
+        if (progressLabel) progressLabel.textContent = "Subida completada";
+        jobStatusEl.textContent = `Subida verificada: ${realCount}/${files.length} fotos. Enviando a procesado...`;
 
         await submitJob(jobId);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
@@ -6334,9 +6394,19 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        jobStatusEl.textContent = error.message || "Error durante la subida";
+        const msg = error.message || "Error durante la subida";
+        jobStatusEl.textContent = msg;
         if (progressFill) progressFill.classList.add("error");
-        if (progressLabel) progressLabel.textContent = "Fallido";
+        if (progressLabel) progressLabel.textContent = "Subida fallida";
+        if (progressPercent) progressPercent.textContent = "Error";
+        await showInfoModal(
+          "Subida incompleta",
+          "El procesado no se iniciará.",
+          msg.includes("Subida incompleta") ? msg : `${msg}
+
+Revise la conexión y vuelva a subir el proyecto completo.`,
+          "error"
+        );
       }
     }
 
