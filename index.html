@@ -5216,6 +5216,28 @@ if (map) {
       return response.json();
     }
 
+    async function completeUpload(jobId) {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/complete-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expected_photos_count: files.length,
+          expected_total_bytes: Number(totalSize || 0)
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.ok || !data.ready) {
+        const expected = data.expectedPhotos || files.length;
+        const received = data.realCount ?? data.uploadedPhotos ?? 0;
+        const message = data.message || `Subida incompleta: esperadas ${expected} fotos, recibidas ${received}. El procesado no se iniciará.`;
+        throw new Error(message);
+      }
+
+      return data;
+    }
+
     async function getJob(jobId) {
       const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
         cache: "no-store"
