@@ -6381,32 +6381,28 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         }
 
         if (progressLabel) progressLabel.textContent = "Subida completada";
-jobStatusEl.textContent = `Subida verificada: ${realCount}/${files.length} fotos. Enviando a procesado...`;
+        jobStatusEl.textContent = `Subida verificada: ${realCount}/${files.length} fotos. Enviando a procesado...`;
 
-try {
-  await submitJob(jobId);
-} catch (e) {
-  const msg = String(e?.message || "");
+        await submitJob(jobId);
+        if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+        if (datasetPanel) datasetPanel.style.display = "none";
 
-  if (
-    msg.includes("job_locked") ||
-    msg.includes("estado queued") ||
-    msg.includes("(409)")
-  ) {
-    console.log("Job ya en cola/procesando. Continuando seguimiento.", msg);
-  } else {
-    throw e;
-  }
-}
-
-if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
-if (datasetPanel) datasetPanel.style.display = "none";
-
-jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
-if (progressLabel) progressLabel.textContent = "En cola...";
-if (progressPercent) progressPercent.textContent = "0%";
-if (datasetPanel) datasetPanel.style.display = "none";
-startPolling(jobId);
+        jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
+        if (progressLabel) progressLabel.textContent = "En cola...";
+        if (progressPercent) progressPercent.textContent = "0%";
+        if (datasetPanel) datasetPanel.style.display = "none";
+        startPolling(jobId);
+      } catch (error) {
+        console.error(error);
+        const msg = error.message || "Error durante la subida";
+        jobStatusEl.textContent = msg;
+        if (progressFill) progressFill.classList.add("error");
+        if (progressLabel) progressLabel.textContent = "Subida fallida";
+        if (progressPercent) progressPercent.textContent = "Error";
+        await showInfoModal(
+          "Subida incompleta",
+          "El procesado no se iniciará.",
+          msg.includes("Subida incompleta") ? msg : `${msg}
 
 Revise la conexión y vuelva a subir el proyecto completo.`,
           "error"
