@@ -17,17 +17,17 @@
     panel.className = "xproces-live-viewport-panel";
     panel.innerHTML = `
       <div class="xproces-live-viewport-head">
-        <div class="xproces-live-viewport-title">Proceso en tiempo real</div>
+        <div class="xproces-live-viewport-title">Proceso</div>
         <div class="xproces-live-viewport-state" id="xprocesLiveViewportState">Esperando imagen</div>
       </div>
       <div class="xproces-live-viewport-frame">
-        <img id="xprocesLiveViewportImg" class="xproces-live-viewport-img" alt="Proceso real de Metashape">
+        <img id="xprocesLiveViewportImg" class="xproces-live-viewport-img" alt="Proceso">
         <div id="xprocesLiveViewportPlaceholder" class="xproces-live-viewport-placeholder">
-          Esperando captura del PC de procesado.<br>La imagen aparecerá cuando Metashape esté trabajando.
+          Esperando captura del PC de procesado.<br>La imagen aparecerá cuando inicie el proceso.
         </div>
       </div>
       <div class="xproces-live-viewport-note">
-        La vista se actualiza automáticamente. Solo se conserva la última imagen del proceso.
+        La vista se actualiza automáticamente.
       </div>
     `;
 
