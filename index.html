@@ -24,12 +24,9 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://xproces.com/og-image.jpg">
 
-  <!-- XPROCES PROGRESS PRO: live log via /jobs/:id/log -->
-
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="xproces-log-renderer.js"></script>
 <style>
     :root {
       --bg: #f4f6f3;
@@ -974,210 +971,19 @@
       margin-top: 14px;
     }
 
-    .xproces-live-card {
-      margin: 0;
-      padding: 24px;
-      border-radius: 24px;
-      border: 1px solid rgba(122,171,57,0.28);
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,252,249,0.95));
-      box-shadow: 0 14px 34px rgba(24,33,29,0.08);
-    }
-
-    .xproces-live-title {
-      margin-top: 16px;
-    }
-
-
-    .xproces-live-card {
-      display: grid;
-      gap: 14px;
-      padding: 18px;
-      border: 1px solid rgba(122, 171, 57, 0.30);
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,252,249,0.94));
-      box-shadow: 0 14px 34px rgba(24, 33, 29, 0.07);
-    }
-
-    .xproces-live-top {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .xproces-live-eyebrow {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .xproces-live-chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 26px;
-      padding: 0 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(122, 171, 57, 0.28);
-      background: rgba(122, 171, 57, 0.08);
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-
-    .xproces-live-title {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      color: var(--text);
-      font-weight: 900;
-    }
-
-    .xproces-live-subtitle {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .xproces-live-percent {
-      min-width: 116px;
-      text-align: right;
-      font-size: 48px;
-      line-height: 1;
-      color: var(--accent);
-      font-weight: 900;
-      letter-spacing: -0.05em;
-    }
-
-    .xproces-live-progress {
-      width: 100%;
-      height: 14px;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #edf1ed;
-    }
-
-    .xproces-live-progress > div {
-      height: 100%;
-      width: 0%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--accent-2), var(--accent));
-      transition: width 0.25s ease;
-    }
-
-    .xproces-live-metrics {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .xproces-live-metric {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.86);
-      border-radius: 16px;
-      padding: 12px;
-      min-height: 70px;
-    }
-
-    .xproces-live-metric-label {
-      font-size: 10px;
-      font-weight: 900;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
-    }
-
-    .xproces-live-metric-value {
-      font-size: 17px;
-      line-height: 1.25;
-      font-weight: 900;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    .xproces-live-phases {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .xproces-live-phase {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 34px;
-      padding: 7px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #fafcf9;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .xproces-live-phase::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      flex: 0 0 8px;
-      border-radius: 999px;
-      background: #c9d3cc;
-    }
-
-    .xproces-live-phase.done {
-      color: var(--ok);
-      border-color: rgba(34, 163, 74, 0.22);
-      background: rgba(34, 163, 74, 0.06);
-    }
-
-    .xproces-live-phase.done::before { background: var(--ok); }
-
-    .xproces-live-phase.active {
-      color: var(--text);
-      border-color: rgba(184, 255, 26, 0.75);
-      background: rgba(184, 255, 26, 0.14);
-    }
-
-    .xproces-live-phase.active::before { background: #95db00; }
-
-    @media (max-width: 900px) {
-      .xproces-live-top,
-      .xproces-live-metrics {
-        grid-template-columns: 1fr;
-      }
-      .xproces-live-percent {
-        text-align: left;
-      }
-      .xproces-live-phases {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .process-live-list {
+    .process-log-list {
       display: grid;
       gap: 12px;
       white-space: normal;
     }
 
-    .process-live-head {
+    .process-log-head {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
     }
 
-    .process-live-card {
+    .process-log-card {
       background: rgba(255,255,255,0.92);
       border: 1px solid var(--border);
       border-radius: 14px;
@@ -1185,7 +991,7 @@
       min-height: 78px;
     }
 
-    .process-live-card-label {
+    .process-log-card-label {
       font-size: 10px;
       color: var(--muted);
       text-transform: uppercase;
@@ -1194,7 +1000,7 @@
       font-weight: 800;
     }
 
-    .process-live-card-value {
+    .process-log-card-value {
       font-size: 15px;
       color: var(--text);
       font-weight: 800;
@@ -1202,19 +1008,19 @@
       word-break: break-word;
     }
 
-    .process-live-card-value.small {
+    .process-log-card-value.small {
       font-size: 13px;
       font-weight: 700;
       color: var(--muted);
     }
 
-    .process-live-checklist {
+    .process-log-checklist {
       display: grid;
       gap: 8px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .process-live-item {
+    .process-log-item {
       display: flex;
       align-items: flex-start;
       gap: 10px;
@@ -1226,19 +1032,19 @@
       min-height: 48px;
     }
 
-    .process-live-item.active {
+    .process-log-item.active {
       background: rgba(184, 255, 26, 0.12);
       border-color: rgba(122, 171, 57, 0.45);
       color: var(--text);
     }
 
-    .process-live-item.done {
+    .process-log-item.done {
       background: rgba(34, 163, 74, 0.06);
       border-color: rgba(34, 163, 74, 0.18);
       color: var(--text);
     }
 
-    .process-live-dot {
+    .process-log-dot {
       width: 10px;
       height: 10px;
       border-radius: 999px;
@@ -1247,21 +1053,21 @@
       margin-top: 4px;
     }
 
-    .process-live-item.active .process-live-dot {
+    .process-log-item.active .process-log-dot {
       background: #95db00;
     }
 
-    .process-live-item.done .process-live-dot {
+    .process-log-item.done .process-log-dot {
       background: var(--ok);
     }
 
-    .process-live-title {
+    .process-log-title {
       font-size: 13px;
       font-weight: 800;
       line-height: 1.35;
     }
 
-    .process-live-subtitle {
+    .process-log-subtitle {
       font-size: 12px;
       color: var(--muted);
       margin-top: 2px;
@@ -1269,8 +1075,8 @@
     }
 
     @media (max-width: 900px) {
-      .process-live-head,
-      .process-live-checklist {
+      .process-log-head,
+      .process-log-checklist {
         grid-template-columns: 1fr;
       }
     }
@@ -3405,7 +3211,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         progressValue: Math.max(0, Math.min(100, Number(job.progress || 0)))
       };
 
-      if (!job || !job.id || typeof getJobLog !== "function" || !window.XProcesLogRenderer || typeof window.XProcesLogRenderer.parseLog !== "function") {
+      if (!job || !job.id || typeof getJobLog !== "function") {
         return fallback;
       }
 
@@ -3413,17 +3219,16 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         const logText = await getJobLog(job.id);
         if (!logText) return fallback;
 
-        const parsed = window.XProcesLogRenderer.parseLog(logText);
+        const parsed = parseProcessLog(logText);
         if (!parsed) return fallback;
 
-        const progressValue = parsed.progress != null
-          ? Math.max(0, Math.min(100, Number(parsed.progress || 0)))
+        const progressValue = Number.isFinite(Number(parsed.latestProgressPercent))
+          ? Math.max(0, Math.min(100, Number(parsed.latestProgressPercent || 0)))
           : fallback.progressValue;
 
-        const stageLabel = parsed.progressMessage
-          || parsed.lastImportantOk
-          || parsed.lastOk
-          || parsed.fallbackCompletedStep
+        const stageLabel = parsed.latestProgressMessage
+          || parsed.latestDetail
+          || parsed.currentStage
           || fallback.stageLabel;
 
         const jobView = { ...job, progress: progressValue };
@@ -5363,7 +5168,7 @@ if (map) {
         warnings: [],
         latestProgressPercent: null,
         latestProgressMessage: "",
-        latestLiveMessage: "",
+        latestProcessMessage: "",
         currentStage: "",
         pointCount: "",
         latestDetail: ""
@@ -5465,7 +5270,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           info.generatedOutputs.push(matchedExport[1]);
           info.currentStage = "export";
           info.latestDetail = line;
-          info.latestLiveMessage = "Archivo generado correctamente";
+          info.latestProcessMessage = "Archivo generado correctamente";
           continue;
         }
 
@@ -5488,7 +5293,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             info.steps.push(msg);
             info.latestProgressPercent = Number.isFinite(percent) ? percent : info.latestProgressPercent;
             info.latestProgressMessage = msg;
-            info.latestLiveMessage = msg;
+            info.latestProcessMessage = msg;
             const stage = inferStageFromText(msg);
             if (stage) info.currentStage = stage;
           }
@@ -5497,43 +5302,43 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (/^matchPhotos completado/i.test(line)) {
           info.currentStage = "matching";
           info.latestDetail = "Puntos clave detectados";
-          info.latestLiveMessage = "Puntos clave detectados";
+          info.latestProcessMessage = "Puntos clave detectados";
           continue;
         }
         if (/^alignCameras completado/i.test(line)) {
           info.currentStage = "aligning";
           info.latestDetail = "Alineación de cámaras completada";
-          info.latestLiveMessage = "Alineación de cámaras completada";
+          info.latestProcessMessage = "Alineación de cámaras completada";
           continue;
         }
         if (/^buildDepthMaps completado/i.test(line)) {
           info.currentStage = "depth";
           info.latestDetail = "Mapas de profundidad completados";
-          info.latestLiveMessage = "Mapas de profundidad completados";
+          info.latestProcessMessage = "Mapas de profundidad completados";
           continue;
         }
         if (/^buildPointCloud completado/i.test(line)) {
           info.currentStage = "pointcloud";
           info.latestDetail = "Nube de puntos completada";
-          info.latestLiveMessage = "Nube de puntos completada";
+          info.latestProcessMessage = "Nube de puntos completada";
           continue;
         }
         if (/^buildModel completado/i.test(line)) {
           info.currentStage = "export";
           info.latestDetail = "Modelo 3D completado";
-          info.latestLiveMessage = "Modelo 3D completado";
+          info.latestProcessMessage = "Modelo 3D completado";
           continue;
         }
         if (/^buildUV completado/i.test(line)) {
           info.currentStage = "export";
           info.latestDetail = "UV del modelo completado";
-          info.latestLiveMessage = "Preparando textura final";
+          info.latestProcessMessage = "Preparando textura final";
           continue;
         }
         if (/^buildTexture completado/i.test(line)) {
           info.currentStage = "export";
           info.latestDetail = "Textura completada";
-          info.latestLiveMessage = "Textura final completada";
+          info.latestProcessMessage = "Textura final completada";
           continue;
         }
 
@@ -5541,7 +5346,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (inferred) {
           info.currentStage = inferred || info.currentStage;
           info.latestDetail = line;
-          if (!info.latestLiveMessage) info.latestLiveMessage = line;
+          if (!info.latestProcessMessage) info.latestProcessMessage = line;
         }
       }
 
@@ -5609,7 +5414,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         parsed.quality ||
         (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible");
 
-      qualityText = cleanLiveStepText(qualityText);
+      qualityText = cleanProcessStepText(qualityText);
       if (!qualityText || /No disponible/i.test(qualityText)) {
         qualityText = "Fotogrametría profesional";
       }
@@ -5798,7 +5603,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
 
     
-    function cleanLiveStepText(item) {
+    function cleanProcessStepText(item) {
       let text = String(item || "")
         .replace(/\s*\(\d+%\)\s*$/g, "")
         .replace(/Metashape/gi, "Xproces")
@@ -5844,7 +5649,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       return Number.isFinite(p) ? Math.max(0, Math.min(100, Math.round(p))) : 0;
     }
 
-    function getLiveProgressFromJobAndLog(job, parsed) {
+    function getProgressFromJobAndLog(job, parsed) {
       const fromLog = Number(parsed?.latestProgressPercent);
       if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, Math.round(fromLog)));
 
@@ -5892,108 +5697,94 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       return "Preparando el procesado.";
     }
 
-    function renderLiveProcessSummary(job, logText, eta) {
-      const parsed = parseProcessLog(logText || "");
-      const statusValue = String(job?.status || "").toLowerCase();
-      const rawProgress = Number(parsed?.latestProgressPercent ?? job?.progress ?? 0);
-      const qualityText = parsed.quality || (job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "Normal");
-      const photosText = parsed.photos ? `${parsed.photos} fotos` : `${job?.photos_count || ""} fotos`.trim() || "Fotos en proceso";
-      const progress = Math.round(getLiveProgressFromJobAndLog(job, parsed));
-      const outputText = parsed.requestedOutputs.length
-        ? parsed.requestedOutputs.map((x) => formatOutputLabel(String(x).trim().toLowerCase())).join(" · ")
-        : "Inspección estándar";
+    function extractReadableJobLogLines(logText) {
+      const rawLines = String(logText || "")
+        .split(/\r?\n/)
+        .map((line) => String(line || "").trim())
+        .filter(Boolean);
 
-      const latestFromLog = parsed.latestLiveMessage ? cleanLiveStepText(parsed.latestLiveMessage) : (parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "");
-      const stage = parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || "");
-      const stageTitleMap = {
-        matching: "Preparando proyecto",
-        aligning: "Alineando cámaras",
-        depth: "Generando mapas de profundidad",
-        pointcloud: "Generando nube de puntos",
-        export: "Generando entregables"
+      const visible = [];
+
+      const cleanLine = (line) => {
+        let text = String(line || "").trim();
+
+        const patchMatch = text.match(/=>\s*(\{.*\})\s*$/);
+        if (patchMatch) {
+          try {
+            const obj = JSON.parse(patchMatch[1]);
+            if (obj && obj.process_log) text = String(obj.process_log);
+          } catch (_) {
+            const m = text.match(/"process_log"\s*:\s*"([^"]*)"/);
+            if (m) text = m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+          }
+        }
+
+        text = text
+          .replace(/^\[[^\]]+\]\s*/, "")
+          .replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s*/,"")
+          .replace(/^Metashape stdout:\s*/i, "")
+          .replace(/^Metashape stderr:\s*/i, "")
+          .trim();
+
+        if (text.startsWith("XPROCES_PROGRESS|")) {
+          const parts = text.split("|");
+          text = parts.slice(2).join("|").trim() || text;
+        }
+
+        text = cleanProcessStepText(text);
+        return text.trim();
       };
-      const phaseText = latestFromLog || cleanLiveStepText(job?.message || stageTitleMap[stage] || "Procesando proyecto");
-      const phaseHint = getHumanPhaseHint(stage, progress);
 
-      const startDate = getFirstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.started_at ? new Date(job.started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
-      const elapsedSeconds = startDate && !Number.isNaN(startDate.getTime())
-        ? Math.max(0, Math.floor((Date.now() - startDate.getTime()) / 1000))
-        : Number(job?.total_seconds || job?.processing_seconds || 0);
+      const pushUnique = (line) => {
+        const clean = cleanLine(line);
+        if (!clean) return;
+        if (/PATCH job/i.test(clean) && !/process_log/i.test(clean)) return;
+        if (!visible.includes(clean)) visible.push(clean);
+      };
 
-      const estimatedTotal = estimateTotalSecondsFromProfile(qualityText, photosText, progress, elapsedSeconds, eta);
-      const remainingSeconds = Math.max(0, Math.round(estimatedTotal - elapsedSeconds));
-      const finishText = remainingSeconds > 0 ? formatClockTimeFromSeconds(remainingSeconds) : "finalizando";
-      const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
-      const remainingText = remainingSeconds > 0 ? formatEtaText(remainingSeconds) : "Finalizando";
+      rawLines.forEach(pushUnique);
 
-      const projectName = job?.project_name || job?.client_name || "Proyecto";
-      const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: pendiente";
-      let detailText =
-        cleanLiveStepText(parsed.lastImportantOk || parsed.lastOk || parsed.latestLiveMessage || parsed.latestProgressMessage || "") ||
-        (parsed.pointCount ? `Puntos reconstruidos: ${parsed.pointCount}` : alignedText);
+      return visible.slice(-8);
+    }
 
-      if (/C:\\|->/.test(detailText)) detailText = cleanLiveStepText(detailText);
-      const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
+    function renderRunningProcessLog(job, logText, eta) {
+      const lines = extractReadableJobLogLines(logText);
+      const statusValue = String(job?.status || "").toLowerCase();
+      const uiStatus = normalizeJobStatus(job);
+      const statusText = uiStatus.key === "queued" ? "En cola" : uiStatus.key === "running" ? "Procesando" : uiStatus.label;
+      const progress = Math.max(0, Math.min(100, Math.round(Number(job?.progress || 0))));
+      const qualityText = job?.quality_mode ? formatQualityModeLabel(String(job.quality_mode).toLowerCase()) : "No disponible";
+      const outputsText = formatSelectedOutputsTextFromJob(job) || "No disponible";
+      const etaText = eta?.total_estimated_human || eta?.estimated_human || "No disponible";
 
-      const phaseOrder = [
-        ["matching", "Preparación"],
-        ["aligning", "Alineación"],
-        ["depth", "Profundidad"],
-        ["pointcloud", "Nube puntos"],
-        ["export", "Modelo/Textura"],
-        ["final", "Entrega"]
-      ];
-      const currentIndex = stage === "matching" ? 0 : stage === "aligning" ? 1 : stage === "depth" ? 2 : stage === "pointcloud" ? 3 : stage === "export" ? (rawProgress >= 92 ? 5 : 4) : 0;
+      const safeLines = lines.length
+        ? lines.map((line) => `<div>${escapeHtml(line)}</div>`).join("")
+        : `<div class="muted">Esperando mensajes del proceso...</div>`;
 
       return `
-        <div class="xproces-live-card">
-          <div class="xproces-live-top">
-            <div>
-              <div class="xproces-live-eyebrow">
-                <span class="xproces-live-chip">${escapeHtml(statusChip)}</span>
-                <span class="xproces-live-chip">${escapeHtml(qualityText)}</span>
-                <span class="xproces-live-chip">${escapeHtml(photosText)}</span>
-              </div>
-              <h2 class="xproces-live-title">${escapeHtml(phaseText)}</h2>
-              <div class="xproces-live-subtitle">${escapeHtml(projectName)} · ${escapeHtml(phaseHint)}</div>
+        <div class="process-log-list">
+          <div class="process-log-head">
+            <div class="process-log-card">
+              <div class="process-log-card-label">Estado</div>
+              <div class="process-log-card-value">${escapeHtml(statusText)}</div>
             </div>
-            <div class="xproces-live-percent">${escapeHtml(String(progress))}%</div>
-          </div>
-
-          <div class="xproces-live-progress"><div style="width:${Math.max(0, Math.min(100, progress))}%"></div></div>
-
-          <div class="xproces-live-metrics">
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">Tiempo transcurrido</div>
-              <div class="xproces-live-metric-value">${escapeHtml(elapsedText)}</div>
+            <div class="process-log-card">
+              <div class="process-log-card-label">Calidad</div>
+              <div class="process-log-card-value">${escapeHtml(qualityText)}</div>
             </div>
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">Tiempo restante aprox.</div>
-              <div class="xproces-live-metric-value">${escapeHtml(remainingText)}</div>
+            <div class="process-log-card">
+              <div class="process-log-card-label">Tiempo estimado</div>
+              <div class="process-log-card-value">${escapeHtml(etaText)}</div>
             </div>
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">Finalización estimada</div>
-              <div class="xproces-live-metric-value">${escapeHtml(finishText)}</div>
-            </div>
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">Entrega</div>
-              <div class="xproces-live-metric-value">${escapeHtml(outputText)}</div>
-            </div>
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">Control de calidad</div>
-              <div class="xproces-live-metric-value">${escapeHtml(detailText)}</div>
-            </div>
-            <div class="xproces-live-metric">
-              <div class="xproces-live-metric-label">ID del trabajo</div>
-              <div class="xproces-live-metric-value">${escapeHtml(String(job?.id || "").slice(0, 8))}</div>
+            <div class="process-log-card">
+              <div class="process-log-card-label">ID del trabajo</div>
+              <div class="process-log-card-value">${escapeHtml(String(job?.id || "").slice(0, 8))}</div>
             </div>
           </div>
 
-          <div class="xproces-live-phases">
-            ${phaseOrder.map(([key, label], index) => {
-              const cls = index < currentIndex ? "done" : index === currentIndex ? "active" : "";
-              return `<div class="xproces-live-phase ${cls}">${escapeHtml(label)}</div>`;
-            }).join("")}
+          <div class="process-summary-section">
+            <div class="process-summary-section-title">Últimos procesos del log</div>
+            <div class="process-summary-list">${safeLines}</div>
           </div>
         </div>
       `;
@@ -6064,18 +5855,18 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             window.__lastParsedProcessLog = null;
           }
 
-          const parsedLiveProgress = getLiveProgressFromJobAndLog(job, window.__lastParsedProcessLog || null);
+          const parsedProgress = getProgressFromJobAndLog(job, window.__lastParsedProcessLog || null);
 
-          // XPROCES LIVE PROGRESS FIX:
+          // XPROCES PROGRESS FIX:
           // El backend/worker puede quedarse en progress=0/45/50 mientras Metashape avanza.
           // La fuente real del avance es metashape-python-log.txt vía /jobs/:id/log.
           if (window.__lastParsedProcessLog) {
             const parsed = window.__lastParsedProcessLog;
 
-            if (Number.isFinite(parsedLiveProgress)) {
-              if (progressFill) progressFill.style.width = `${parsedLiveProgress}%`;
-              if (progressPercent) progressPercent.textContent = `${parsedLiveProgress}%`;
-              job.progress = parsedLiveProgress;
+            if (Number.isFinite(parsedProgress)) {
+              if (progressFill) progressFill.style.width = `${parsedProgress}%`;
+              if (progressPercent) progressPercent.textContent = `${parsedProgress}%`;
+              job.progress = parsedProgress;
             }
 
             if (parsed.latestProgressMessage) {
@@ -6098,9 +5889,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.innerHTML = window.XProcesLogRenderer
-              ? window.XProcesLogRenderer.render(job, logText, eta)
-              : renderLiveProcessSummary(job, logText, eta);
+            jobStatusEl.innerHTML = renderRunningProcessLog(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -6117,9 +5906,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
                 "Procesado completado correctamente.\nPreparando entrega del proyecto.";
             } else {
               const doneLogText = logText || await getJobLog(job.id);
-              jobStatusEl.innerHTML = window.XProcesLogRenderer
-                ? window.XProcesLogRenderer.render(job, doneLogText, null)
-                : renderProcessSummary(job, doneLogText);
+              jobStatusEl.innerHTML = renderProcessSummary(job, doneLogText);
               showDownloadButton(job);
             }
 
@@ -6140,9 +5927,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             const failedLogText = logText || await getJobLog(job.id);
 
             if (failedLogText) {
-              jobStatusEl.innerHTML = window.XProcesLogRenderer
-                ? window.XProcesLogRenderer.render(job, failedLogText, null)
-                : renderProcessSummary(job, failedLogText);
+              jobStatusEl.innerHTML = renderProcessSummary(job, failedLogText);
             } else {
               const rawError = `${job.error || ""} ${job.message || ""}`.toLowerCase();
 
