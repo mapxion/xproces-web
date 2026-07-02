@@ -30,9 +30,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="xproces-log-renderer.js"></script>
-  <link rel="stylesheet" href="/xproces-live-widget.css">
-  <script defer src="/xproces-live-widget.js"></script>
-  <style>
+<style>
     :root {
       --bg: #f4f6f3;
       --bg-soft: #eef2ee;
@@ -6033,7 +6031,6 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       pollTimer = setInterval(async () => {
         try {
           const job = await getJob(jobId);
-          window.XProcesLiveViewport?.update(job);
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "").toLowerCase();
           if (datasetPanel) datasetPanel.style.display = "none";
@@ -6110,7 +6107,6 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
           if (normalizeJobStatus(job).canDownload) {
             stopPolling();
-            window.XProcesLiveViewport?.stop();
             if (progressFill) progressFill.style.width = "100%";
             if (progressLabel) progressLabel.textContent = "Trabajo procesado correctamente";
             if (progressPercent) progressPercent.textContent = "100%";
