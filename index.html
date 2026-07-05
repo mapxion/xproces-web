@@ -1970,6 +1970,188 @@
       color: #9b3737;
     }
 
+
+
+    /* XPROCES: ejemplo de resultados de una urbanizacion */
+    .xproces-example-panel {
+      margin-bottom: 16px;
+    }
+
+    .xproces-example-head {
+      text-align: center;
+      max-width: 980px;
+      margin: 0 auto 22px;
+    }
+
+    .xproces-example-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(122,171,57,0.10);
+      border: 1px solid rgba(122,171,57,0.25);
+      color: #7aab39;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    .xproces-example-title {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .xproces-example-text {
+      margin: 12px auto 0;
+      max-width: 790px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .xproces-example-flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px auto 24px;
+      max-width: 1050px;
+    }
+
+    .xproces-example-flow-card {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .xproces-example-flow-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    .xproces-example-flow-label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .xproces-results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .xproces-result-card {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 12px;
+      overflow: hidden;
+      transition: 0.18s ease;
+    }
+
+    .xproces-result-card:hover {
+      border-color: rgba(122,171,57,0.45);
+      box-shadow: 0 10px 24px rgba(24,33,29,0.08);
+    }
+
+    .xproces-result-preview {
+      min-height: 150px;
+      border-radius: 14px;
+      border: 1px solid rgba(122,171,57,0.18);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px;
+      background:
+        linear-gradient(135deg, rgba(122,171,57,0.16), rgba(255,255,255,0.82)),
+        repeating-linear-gradient(45deg, rgba(122,171,57,0.07) 0 10px, rgba(255,255,255,0.25) 10px 20px);
+      color: var(--text);
+    }
+
+    .xproces-result-preview-inner {
+      display: grid;
+      gap: 7px;
+      justify-items: center;
+    }
+
+    .xproces-result-icon {
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .xproces-result-coming {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(122,171,57,0.25);
+      color: #7aab39;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .xproces-result-card h3 {
+      margin: 0 0 7px;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .xproces-result-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .xproces-example-note {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .xproces-example-note span {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(122,171,57,0.28);
+      color: #7aab39;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 900px) {
+      .xproces-example-flow,
+      .xproces-results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 
   <!-- Google tag (gtag.js) -->
@@ -2078,6 +2260,113 @@
 
   </div>
 </div>  
+
+<div class="panel xproces-example-panel" id="examplePanel">
+  <div class="panel-inner" style="padding:26px;">
+    <div class="xproces-example-head">
+      <div class="xproces-example-kicker">Ejemplo de proyecto real</div>
+      <h2 class="xproces-example-title">Fotogrametría completa de una urbanización</h2>
+      <p class="xproces-example-text">
+        Un único vuelo de dron permite obtener todos los entregables técnicos necesarios para inspección, topografía, ingeniería y documentación del estado real de una zona urbana.
+      </p>
+    </div>
+
+    <div class="xproces-example-flow">
+      <div class="xproces-example-flow-card">
+        <div class="xproces-example-flow-value">520</div>
+        <div class="xproces-example-flow-label">fotografías capturadas con dron</div>
+      </div>
+      <div class="xproces-example-flow-card">
+        <div class="xproces-example-flow-value">Automático</div>
+        <div class="xproces-example-flow-label">alineado, nube, modelos, ortofoto y entregables</div>
+      </div>
+      <div class="xproces-example-flow-card">
+        <div class="xproces-example-flow-value">ZIP final</div>
+        <div class="xproces-example-flow-label">archivos listos para descargar y usar</div>
+      </div>
+    </div>
+
+    <div class="xproces-results-grid">
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">🗺️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Ortofoto georreferenciada</h3>
+        <p>Imagen aérea de alta resolución para medición, revisión visual, inventario urbano y documentación técnica.</p>
+      </div>
+
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">⛰️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Modelo Digital de Superficie</h3>
+        <p>Representación de alturas incluyendo edificios, vegetación, muros, mobiliario urbano y otros elementos visibles.</p>
+      </div>
+
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">🌍</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Modelo Digital del Terreno</h3>
+        <p>Terreno filtrado para análisis topográfico, pendientes, explanaciones, drenajes y movimiento de tierras.</p>
+      </div>
+
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">☁️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Nube de puntos LAS</h3>
+        <p>Millones de puntos tridimensionales compatibles con software CAD, GIS, topografía e inspección técnica.</p>
+      </div>
+
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">🏘️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Modelo 3D texturizado</h3>
+        <p>Modelo visual realista para revisar cubiertas, calles, fachadas, zonas comunes y elementos constructivos.</p>
+      </div>
+
+      <div class="xproces-result-card">
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">📈</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
+        </div>
+        <h3>Curvas de nivel</h3>
+        <p>Generación de curvas para planos topográficos, estudios de pendiente y documentación del terreno.</p>
+      </div>
+    </div>
+
+    <div class="xproces-example-note">
+      <span>Ortofoto</span>
+      <span>DSM</span>
+      <span>DTM</span>
+      <span>LAS</span>
+      <span>Modelo 3D</span>
+      <span>Curvas de nivel</span>
+      <span>Informe PDF</span>
+      <span>ZIP final</span>
+    </div>
+  </div>
+</div>
+
 <div class="panel" id="uploadPanel">
           <div class="panel-inner">
             <div class="drop" id="drop">
@@ -3581,16 +3870,15 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     
     function updateLandingVisibility() {
   const landing = document.getElementById("landingPanel");
+  const example = document.getElementById("examplePanel");
 
-  if (!landing) return;
+  if (!landing && !example) return;
 
   const user = getStoredUser();
+  const publicDisplay = (user && user.email) ? "none" : "";
 
-  if (user && user.email) {
-    landing.style.display = "none";
-  } else {
-    landing.style.display = "";
-  }
+  if (landing) landing.style.display = publicDisplay;
+  if (example) example.style.display = publicDisplay;
 }
 
     function openAuthModal(mode = "login") {
