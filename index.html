@@ -1104,7 +1104,9 @@
 
     .xproces-completed-wrap {
       display: grid;
-      gap: 8px;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
     }
 
     .xproces-completed-title {
@@ -1118,68 +1120,39 @@
     .xproces-completed-empty {
       color: var(--muted);
       font-size: 13px;
-      padding: 4px 0;
+      padding: 2px 0;
     }
 
-    .xproces-live-phases {
+    .xproces-process-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 8px;
+      gap: 7px;
     }
 
-    .xproces-live-phase {
+    .xproces-process-row {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 34px;
-      padding: 7px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #fafcf9;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .xproces-live-phase::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      flex: 0 0 8px;
-      border-radius: 999px;
-      background: #c9d3cc;
-    }
-
-    .xproces-live-phase.done {
-      color: var(--ok);
-      border-color: rgba(34, 163, 74, 0.22);
-      background: rgba(34, 163, 74, 0.06);
-    }
-
-    .xproces-live-phase.done::before { background: var(--ok); }
-
-    .xproces-live-phase.active {
+      gap: 9px;
+      min-height: 28px;
       color: var(--text);
-      border-color: rgba(184, 255, 26, 0.75);
-      background: rgba(184, 255, 26, 0.14);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.35;
     }
 
-    .xproces-live-phase.active::before { background: #95db00; }
+    .xproces-process-row.done {
+      color: var(--ok);
+    }
 
-    @media (max-width: 900px) {
-      .xproces-live-top,
-      .xproces-live-metrics {
-        grid-template-columns: 1fr;
-      }
-      .xproces-live-percent {
-        text-align: left;
-      }
-      .xproces-live-phases {
-        grid-template-columns: 1fr;
-      }
+    .xproces-process-row.current {
+      color: var(--warning);
+      margin-top: 3px;
+    }
+
+    .xproces-process-icon {
+      width: 18px;
+      flex: 0 0 18px;
+      text-align: center;
+      font-weight: 900;
     }
 
     .process-live-list {
@@ -6415,13 +6388,17 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
           <div class="xproces-completed-wrap">
             <div class="xproces-completed-title">Procesos completados</div>
-            <div class="xproces-live-phases">
+            <div class="xproces-process-list">
               ${completedProcesses.length
                 ? completedProcesses.map((label) =>
-                    `<div class="xproces-live-phase done">${escapeHtml(label)}</div>`
+                    `<div class="xproces-process-row done"><span class="xproces-process-icon">✓</span><span>${escapeHtml(label)}</span></div>`
                   ).join("")
                 : `<div class="xproces-completed-empty">Todavía no hay procesos terminados.</div>`
               }
+              <div class="xproces-process-row current">
+                <span class="xproces-process-icon">▶</span>
+                <span>${escapeHtml(liveTitle)}</span>
+              </div>
             </div>
           </div>
         </div>
