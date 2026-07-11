@@ -3203,7 +3203,7 @@ function getSelectedQualityMode() {
       return getSelectedOutputMode() === "preset" && getSelectedPreset() === "inspection_tams";
     }
 
-    function buildXprocesMeta() {
+    function buildXprocesMeta(selectedQualityMode) {
       return {
         project_type: getSelectedProjectType(),
         tams: {
@@ -3212,7 +3212,7 @@ function getSelectedQualityMode() {
           address: document.getElementById("tamsAddress")?.value?.trim() || "",
           notes: document.getElementById("tamsNotes")?.value?.trim() || ""
         },
-        quality_mode: getSelectedQualityMode() || "normal",
+        quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
         outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
         preset_key: getSelectedPreset() || "",
         output_mode: getSelectedOutputMode() || "",
@@ -5415,10 +5415,10 @@ if (map) {
       await upload();
     });
 
-    async function createJob() {
+    async function createJob(selectedQualityMode) {
       const cleanExifSummary = stripNullCharsDeep({
         ...(latestExifSummary || {}),
-        _xproces: buildXprocesMeta()
+        _xproces: buildXprocesMeta(selectedQualityMode)
       });
 
       const response = await fetch(`${API_BASE}/jobs`, {
@@ -5433,7 +5433,7 @@ if (map) {
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null,
   project_type: getSelectedProjectType(),
-  quality_mode: getSelectedQualityMode(),
+  quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
   outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
   tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
   expected_photos_count: files.length,
@@ -5496,17 +5496,17 @@ if (map) {
       });
     }
 
-    async function submitJob(jobId) {
+    async function submitJob(jobId, selectedQualityMode) {
       const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          quality_mode: getSelectedQualityMode() || "normal",
+          quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
           outputs_requested: getSelectedOutputs(),
           tams_export: isTamsPresetSelected(),
-          xproces_meta: buildXprocesMeta()
+          xproces_meta: buildXprocesMeta(selectedQualityMode)
         })
       });
 
@@ -6651,6 +6651,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       }
 
       lastPreview = preview;
+      const selectedQualityModeForJob = getSelectedQualityMode() || "normal";
 
       const timeText = preview.estimated_human || "No disponible";
       const priceText = `${preview.price} €`;
@@ -6678,7 +6679,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             </div>
             <div class="modal-card">
               <div class="modal-label">Calidad</div>
-              <div class="modal-value">${formatQualityModeLabel(getSelectedQualityMode())}</div>
+              <div class="modal-value">${formatQualityModeLabel(selectedQualityModeForJob)}</div>
             </div>
             <div class="modal-card full">
               <div class="modal-label">Archivos de salida</div>
@@ -6753,7 +6754,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (progressPercent) progressPercent.textContent = "0%";
         jobStatusEl.textContent = "Creando job...";
 
-        const createdJob = await createJob();
+        console.log("[XPROCES] quality_mode seleccionado:", selectedQualityModeForJob);
+        const createdJob = await createJob(selectedQualityModeForJob);
         const jobId = createdJob.id;
         renderStoredJobs();
 
@@ -6788,7 +6790,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (progressLabel) progressLabel.textContent = "Subida completada";
         jobStatusEl.textContent = `Subida verificada: ${realCount}/${files.length} fotos. Enviando a procesado...`;
 
-        await submitJob(jobId);
+        await submitJob(jobId, selectedQualityModeForJob);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
