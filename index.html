@@ -3123,7 +3123,7 @@ function stripNullCharsDeep(value) {
     function formatQualityModeLabel(mode) {
       if (mode === "fast") return "Rápido";
       if (mode === "normal") return "Normal";
-      if (mode === "full") return "Máxima calidad";
+      if (mode === "full" || mode === "max") return "Máxima calidad";
       return "Sin seleccionar";
     }
 
@@ -3189,7 +3189,8 @@ function stripNullCharsDeep(value) {
     }
 
 function getSelectedQualityMode() {
-      return qualityModeInput?.value || "";
+      const value = String(qualityModeInput?.value || "").trim().toLowerCase();
+      return value === "max" ? "full" : value;
     }
 
     function getSelectedOutputs() {
@@ -3319,15 +3320,16 @@ function getSelectedQualityMode() {
     }
 
     function setSelectedQualityMode(mode, refresh = true) {
-      const normalized =
-        mode === "fast" || mode === "normal" || mode === "full" ? mode : "";
+      const rawMode = String(mode || "").trim().toLowerCase();
+      const normalized = rawMode === "max" ? "full" : rawMode;
 
       if (qualityModeInput) {
         qualityModeInput.value = normalized;
       }
 
       document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
-        btn.classList.toggle("active", normalized !== "" && btn.dataset.qualityMode === normalized);
+        const buttonMode = String(btn.dataset.qualityMode || "").trim().toLowerCase();
+        btn.classList.toggle("active", normalized !== "" && (buttonMode === "max" ? "full" : buttonMode) === normalized);
       });
 
       updateSelectedQualityBadge();
