@@ -3595,6 +3595,14 @@ function getSelectedQualityMode() {
 
       const uiStatusNow = normalizeJobStatus(job);
 
+      // Al abrir un trabajo ya completado, reconstruir el estado final desde
+      // el job del servidor y no desde el último mensaje temporal del proceso.
+      if (uiStatusNow.key === "completed" || uiStatusNow.canDownload) {
+        job.progress = 100;
+        job.stage = "final";
+        job.message = "Trabajo procesado correctamente";
+      }
+
 if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   getJobLog(job.id)
     .then((logText) => {
@@ -3659,14 +3667,19 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
-        const pct = Math.max(0, Math.min(100, Number(job.progress || 0)));
+        const pct = normalizeJobStatus(job).key === "completed"
+          ? 100
+          : Math.max(0, Math.min(100, Number(job.progress || 0)));
         progressFill.classList.remove("error");
         progressFill.style.background = "";
         progressFill.style.width = `${pct}%`;
         progressFill.classList.toggle("error", normalizeJobStatus(job).className === "error");
       }
       if (progressPercent) {
-        progressPercent.textContent = `${Math.max(0, Math.min(100, Number(job.progress || 0)))}%`;
+        const pct = normalizeJobStatus(job).key === "completed"
+          ? 100
+          : Math.max(0, Math.min(100, Number(job.progress || 0)));
+        progressPercent.textContent = `${pct}%`;
       }
       if (progressLabel) {
         const uiStatus = normalizeJobStatus(job);
@@ -5897,9 +5910,28 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         qualityText = "Fotogrametría profesional";
       }
 
-      const photosText = parsed.photos || "No disponible";
+      const statusValue = String(job?.status || "").toLowerCase();
+      const uiStatus = normalizeJobStatus(job);
+      const completed = uiStatus.key === "completed" || uiStatus.canDownload || statusValue === "done" || statusValue === "completed";
 
-      const requestedRaw = parsed.requestedOutputs.length ? parsed.requestedOutputs : [];
+      const photosCount =
+        Number(parsed.photos || 0) ||
+        Number(job?.photos_count || 0) ||
+        Number(job?.expected_photos_count || 0) ||
+        Number(job?.photo_count || 0);
+
+      const photosText = photosCount > 0 ? String(photosCount) : "Fotografías procesadas";
+
+      const jobRequestedRaw = Array.isArray(job?.outputs_requested)
+        ? job.outputs_requested
+        : typeof job?.outputs_requested === "string"
+          ? job.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
+          : [];
+
+      const requestedRaw = parsed.requestedOutputs.length
+        ? parsed.requestedOutputs
+        : jobRequestedRaw;
+
       const requestedLabels = requestedRaw.map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
 
       const generatedRaw = parsed.generatedOutputs.length ? parsed.generatedOutputs : [];
@@ -5930,8 +5962,6 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         }
       });
 
-      const statusValue = String(job?.status || "").toLowerCase();
-
       // Si el log del worker confirma PROCESO OK o Trabajo procesado correctamente,
       // el resumen debe mostrarse como correcto aunque el backend conserve un
       // status failed antiguo por la validación previa de archivos.
@@ -5953,16 +5983,48 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         warningLines.push("El procesado no se completó correctamente.");
       }
 
-      const generatedText = generatedLabels.length ? generatedLabels.join(" · ") : "No disponible";
-      const alignedText = parsed.alignedCameras ? `Cámaras alineadas: ${parsed.alignedCameras}` : "Cámaras alineadas: No disponible";
-      const stateText = warningLines.length ? `⚠ ${warningLines.join(" · ")}` : "✔ Todo correcto";
-      const titleText = failed ? "✖ Procesado fallido" : "✔ Procesado completado";
+      // Un trabajo descargable ya ha superado la validación final del servidor.
+      // No arrastrar al resumen avisos temporales de predescarga o cierre de GUI.
+      if (completed) {
+        warningLines.length = 0;
+      }
+
+      const generatedText = generatedLabels.length
+        ? generatedLabels.join(" · ")
+        : requestedLabels.length && completed
+          ? requestedLabels.join(" · ")
+          : completed
+            ? "Resultados disponibles para descargar"
+            : "No disponible";
+
+      const alignedFallback =
+        Number(job?.aligned_cameras || 0) > 0
+          ? String(job.aligned_cameras)
+          : completed && photosCount > 0
+            ? `${photosCount}/${photosCount}`
+            : "";
+
+      const alignedText = parsed.alignedCameras
+        ? `Cámaras alineadas: ${parsed.alignedCameras}`
+        : alignedFallback
+          ? `Cámaras alineadas: ${alignedFallback}`
+          : completed
+            ? "Procesado fotogramétrico completado"
+            : "Cámaras alineadas: No disponible";
+
+      const stateText = completed
+        ? "✔ Todo correcto"
+        : warningLines.length
+          ? `⚠ ${warningLines.join(" · ")}`
+          : "✔ Todo correcto";
+
+      const titleText = failed && !completed ? "✖ Procesado fallido" : "✔ Procesado completado";
 
       return `
         <div class="process-summary">
           <div class="process-summary-hero">
             <div class="process-summary-title">${titleText}</div>
-            <div class="process-summary-subtitle">${photosText} fotos · Calidad ${qualityText}</div>
+            <div class="process-summary-subtitle">${photosCount > 0 ? `${photosText} fotos` : photosText} · Calidad ${qualityText}</div>
           </div>
 
           <div class="process-summary-section">
