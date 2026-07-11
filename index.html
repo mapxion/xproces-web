@@ -3347,7 +3347,7 @@ function getSelectedQualityMode() {
 
     function setSelectedQualityMode(mode, refresh = true) {
       const normalized =
-        mode === "fast" || mode === "normal" || mode === "max" ? mode : "";
+        mode === "fast" || mode === "normal" || mode === "full" ? mode : "";
 
       if (qualityModeInput) {
         qualityModeInput.value = normalized;
@@ -6254,7 +6254,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       const photos = Math.max(1, Number(String(photosText || "").match(/\d+/)?.[0] || 372));
       let baseFor372 = 5400;
       if (q.includes("normal")) baseFor372 = 9000;
-      if (q.includes("max") || q.includes("máxima")) baseFor372 = 12000;
+      if (q.includes("full") || q.includes("max") || q.includes("máxima")) baseFor372 = 12000;
       if (q.includes("rápido") || q.includes("rapido") || q.includes("fast")) baseFor372 = 4800;
       const byProfile = baseFor372 * Math.pow(photos / 372, 1.12);
       const byBackend = Number(eta?.total_estimated_seconds || eta?.estimated_seconds || 0);
