@@ -2894,7 +2894,7 @@ function stripNullCharsDeep(value) {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        setSelectedQualityMode(btn.dataset.qualityMode || "normal", true);
+        setSelectedQualityMode(btn.dataset.qualityMode, true);
       });
     });
 
@@ -3189,7 +3189,10 @@ function stripNullCharsDeep(value) {
     }
 
 function getSelectedQualityMode() {
-      const value = String(qualityModeInput?.value || "").trim().toLowerCase();
+      const activeButton = document.querySelector(".quality-mode-btn.active");
+      const buttonValue = String(activeButton?.dataset?.qualityMode || "").trim().toLowerCase();
+      const inputValue = String(qualityModeInput?.value || "").trim().toLowerCase();
+      const value = buttonValue || inputValue;
       return value === "max" ? "full" : value;
     }
 
@@ -3212,7 +3215,7 @@ function getSelectedQualityMode() {
           address: document.getElementById("tamsAddress")?.value?.trim() || "",
           notes: document.getElementById("tamsNotes")?.value?.trim() || ""
         },
-        quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
+        quality_mode: selectedQualityMode || getSelectedQualityMode(),
         outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
         preset_key: getSelectedPreset() || "",
         output_mode: getSelectedOutputMode() || "",
@@ -3322,14 +3325,15 @@ function getSelectedQualityMode() {
     function setSelectedQualityMode(mode, refresh = true) {
       const rawMode = String(mode || "").trim().toLowerCase();
       const normalized = rawMode === "max" ? "full" : rawMode;
+      const validMode = ["fast", "normal", "full"].includes(normalized) ? normalized : "";
 
       if (qualityModeInput) {
-        qualityModeInput.value = normalized;
+        qualityModeInput.value = validMode;
       }
 
       document.querySelectorAll(".quality-mode-btn").forEach((btn) => {
         const buttonMode = String(btn.dataset.qualityMode || "").trim().toLowerCase();
-        btn.classList.toggle("active", normalized !== "" && (buttonMode === "max" ? "full" : buttonMode) === normalized);
+        btn.classList.toggle("active", validMode !== "" && (buttonMode === "max" ? "full" : buttonMode) === validMode);
       });
 
       updateSelectedQualityBadge();
@@ -5421,6 +5425,7 @@ if (map) {
         _xproces: buildXprocesMeta(selectedQualityMode)
       });
 
+      console.log("[XPROCES] quality_mode enviado al crear job:", selectedQualityMode);
       const response = await fetch(`${API_BASE}/jobs`, {
         method: "POST",
         headers: {
@@ -5433,7 +5438,7 @@ if (map) {
   client_name: getStoredUser()?.name || "",
   user_id: getStoredUser()?.id || null,
   project_type: getSelectedProjectType(),
-  quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
+  quality_mode: selectedQualityMode || getSelectedQualityMode(),
   outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
   tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
   expected_photos_count: files.length,
@@ -5497,13 +5502,14 @@ if (map) {
     }
 
     async function submitJob(jobId, selectedQualityMode) {
+      console.log("[XPROCES] quality_mode enviado al submit:", selectedQualityMode);
       const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          quality_mode: selectedQualityMode || getSelectedQualityMode() || "normal",
+          quality_mode: selectedQualityMode || getSelectedQualityMode(),
           outputs_requested: getSelectedOutputs(),
           tams_export: isTamsPresetSelected(),
           xproces_meta: buildXprocesMeta(selectedQualityMode)
@@ -6651,7 +6657,16 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       }
 
       lastPreview = preview;
-      const selectedQualityModeForJob = getSelectedQualityMode() || "normal";
+      const selectedQualityModeForJob = getSelectedQualityMode();
+      if (!["fast", "normal", "full"].includes(selectedQualityModeForJob)) {
+        await showInfoModal(
+          "Seleccione una calidad",
+          "Calidad de procesado no válida",
+          "Debe seleccionar Rápido, Normal o Máxima calidad antes de continuar.",
+          "warning"
+        );
+        return;
+      }
 
       const timeText = preview.estimated_human || "No disponible";
       const priceText = `${preview.price} €`;
