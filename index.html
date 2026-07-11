@@ -6167,11 +6167,33 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
     }
 
-    function getHumanPhaseHint(stage, progress) {
-      if (stage === "depth") return "Calculando geometría base del proyecto.";
+    function getDetailedLivePhase(text, fallbackStage, progress) {
+      const value = String(text || "").toLowerCase();
+      if (value.includes("emparejando") || value.includes("matchphotos") || value.includes("matching photos")) return "matching";
+      if (value.includes("orientando") || value.includes("alineando") || value.includes("aligncameras") || value.includes("estimating camera")) return "aligning";
+      if (value.includes("mapas de profundidad") || value.includes("builddepthmaps") || value.includes("depth maps")) return "depth";
+      if (value.includes("modelo de teselas") || value.includes("teselas") || value.includes("buildtiledmodel") || value.includes("tiled model")) return "tiled";
+      if (value.includes("nube de puntos") || value.includes("buildpointcloud") || value.includes("point cloud")) return "pointcloud";
+      if (value.includes("modelo 3d") || value.includes("creando modelo") || value.includes("buildmodel")) return "model";
+      if (value.includes("generando uv") || value.includes("builduv") || value.includes("textura") || value.includes("buildtexture")) return "texture";
+      if (value.includes("generando mde") || value.includes("generating dem") || value.includes("builddem")) return "dem";
+      if (value.includes("ortofoto") || value.includes("ortomosaico") || value.includes("orthomosaic") || value.includes("buildorthomosaic")) return "ortho";
+      if (value.includes("exportando") || value.includes("exportaciones") || value.includes("archivos finales") || value.includes("comprimiendo")) return "delivery";
+      if (progress >= 95) return "delivery";
+      return fallbackStage || "matching";
+    }
+
+    function getHumanPhaseHint(stage) {
+      if (stage === "matching") return "Buscando puntos comunes entre las fotografías.";
+      if (stage === "aligning") return "Calculando posiciones de cámara y optimizando la orientación.";
+      if (stage === "depth") return "Calculando la geometría base del proyecto.";
+      if (stage === "model") return "Construyendo la geometría del modelo 3D.";
+      if (stage === "texture") return "Generando UV y aplicando la textura fotográfica.";
+      if (stage === "tiled") return "Creando el modelo de teselas para visualización.";
       if (stage === "pointcloud") return "Reconstruyendo la nube de puntos principal.";
-      if (stage === "export") return progress >= 90 ? "Preparando archivos finales para descarga." : "Generando modelo, UV o textura.";
-      if (stage === "aligning") return "Calculando posiciones de cámara y optimizando puntos.";
+      if (stage === "dem") return "Generando el modelo digital de elevaciones.";
+      if (stage === "ortho") return "Generando la ortofoto final del proyecto.";
+      if (stage === "delivery") return "Preparando los archivos finales para descarga.";
       return "Preparando el procesado.";
     }
 
@@ -6188,15 +6210,21 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const latestFromLog = parsed.latestLiveMessage ? cleanLiveStepText(parsed.latestLiveMessage) : (parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "");
       const stage = parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || "");
+      const livePhase = getDetailedLivePhase(latestFromLog || job?.message || "", stage, progress);
       const stageTitleMap = {
-        matching: "Preparando proyecto",
-        aligning: "Alineando cámaras",
+        matching: "Emparejando fotografías",
+        aligning: "Orientando fotografías",
         depth: "Generando mapas de profundidad",
+        model: "Creando modelo 3D",
+        texture: "Generando UV y textura",
+        tiled: "Creando modelo de teselas",
         pointcloud: "Generando nube de puntos",
-        export: "Generando entregables"
+        dem: "Generando MDE",
+        ortho: "Generando ortofoto",
+        delivery: "Preparando entrega"
       };
-      const phaseText = latestFromLog || cleanLiveStepText(job?.message || stageTitleMap[stage] || "Procesando proyecto");
-      const phaseHint = getHumanPhaseHint(stage, progress);
+      const phaseText = latestFromLog || cleanLiveStepText(job?.message || stageTitleMap[livePhase] || "Procesando proyecto");
+      const phaseHint = getHumanPhaseHint(livePhase);
 
       const startDate = getFirstLogDate(logText) || (job?.processing_started_at ? new Date(job.processing_started_at) : null) || (job?.started_at ? new Date(job.started_at) : null) || (job?.created_at ? new Date(job.created_at) : null);
       const elapsedSeconds = startDate && !Number.isNaN(startDate.getTime())
@@ -6226,7 +6254,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         ["export", "Modelo/Textura"],
         ["final", "Entrega"]
       ];
-      const currentIndex = stage === "matching" ? 0 : stage === "aligning" ? 1 : stage === "depth" ? 2 : stage === "pointcloud" ? 3 : stage === "export" ? (rawProgress >= 92 ? 5 : 4) : 0;
+      const currentIndex = livePhase === "matching" ? 0
+        : livePhase === "aligning" ? 1
+        : livePhase === "depth" ? 2
+        : livePhase === "pointcloud" || livePhase === "tiled" ? 3
+        : livePhase === "model" || livePhase === "texture" || livePhase === "dem" || livePhase === "ortho" ? 4
+        : livePhase === "delivery" ? 5
+        : 0;
 
       return `
         <div class="xproces-live-card">
