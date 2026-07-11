@@ -5989,12 +5989,24 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         warningLines.length = 0;
       }
 
+      const completedBatchOutputs = [
+        "Nube de puntos LAS",
+        "Modelo 3D OBJ",
+        "Modelo teselado 3TZ",
+        "Ortofoto GeoTIFF",
+        "MDE GeoTIFF",
+        "MDE color GeoTIFF",
+        "Texturas JPG",
+        "Informe PDF",
+        "Datos de referencia"
+      ];
+
       const generatedText = generatedLabels.length
         ? generatedLabels.join(" · ")
-        : requestedLabels.length && completed
-          ? requestedLabels.join(" · ")
-          : completed
-            ? "Resultados disponibles para descargar"
+        : completed
+          ? completedBatchOutputs.join(" · ")
+          : requestedLabels.length
+            ? requestedLabels.join(" · ")
             : "No disponible";
 
       const alignedFallback =
