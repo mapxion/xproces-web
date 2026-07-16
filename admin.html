@@ -801,7 +801,33 @@
       </div></div>
     </div>
 
-    <div class="admin-section" data-admin-section="codes"><div class="panel"><div class="admin-empty-panel"><h2>Códigos de invitado</h2>Sección preparada; necesita endpoint de invite_codes.</div></div></div>
+    <div class="admin-section" data-admin-section="codes">
+      <div class="panel">
+        <div class="panel-inner">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+            <h2 class="panel-title" style="margin:0;">Códigos de invitado</h2>
+            <button class="btn btn-primary" id="generateInviteCodesBtn" type="button">Generar 10 códigos</button>
+          </div>
+          <div class="users-table-wrap">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Estado</th>
+                  <th>Usado por</th>
+                  <th>Nombre</th>
+                  <th>Creado</th>
+                  <th>Usado</th>
+                </tr>
+              </thead>
+              <tbody id="inviteCodesTableBody">
+                <tr><td colspan="6" class="muted">Cargando códigos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="admin-section" data-admin-section="stats"><div class="panel"><div class="admin-empty-panel"><h2>Estadísticas</h2>Preparada para gráficas y métricas históricas.</div></div></div>
     <div class="admin-section" data-admin-section="settings"><div class="panel"><div class="admin-empty-panel"><h2>Configuración</h2>Preparada para precios, soporte y workers.</div></div></div>
 
@@ -866,7 +892,11 @@
       adminAuthGate.style.display = "none";
       adminApp.style.display = "grid";
       adminAuthError.style.display = "none";
-      await loadJobs();
+      await Promise.all([
+        loadJobs(),
+        loadUsers(),
+        loadInviteCodes()
+      ]);
       startAutoRefresh();
       return true;
     }
@@ -942,6 +972,9 @@
     const adminNav = document.getElementById("adminNav");
     const usersTableBody = document.getElementById("usersTableBody");
     const dashboardLatestList = document.getElementById("dashboardLatestList");
+    const inviteCodesTableBody = document.getElementById("inviteCodesTableBody");
+    const generateInviteCodesBtn = document.getElementById("generateInviteCodesBtn");
+
 
 
     function escapeHtml(value) {
@@ -1185,20 +1218,99 @@ function translateStage(stage) {
     }
     adminNav.addEventListener("click",e=>{const b=e.target.closest("[data-admin-tab]");if(b)setAdminTab(b.dataset.adminTab);});
 
-    function renderUsers(rows){
-      const m=new Map();
-      for(const j of rows){
-        const email=String(j.client_email||"Sin email"), key=email.toLowerCase();
-        if(!m.has(key))m.set(key,{email,client:j.client_name||"—",jobs:0,done:0,failed:0,photos:0,revenue:0,latest:null});
-        const u=m.get(key);u.jobs++;u.photos+=Number(j.photos_count||0);
-        if(String(j.status||"").toLowerCase()==="done"){u.done++;u.revenue+=Number(j.price||0);}
-        if(String(j.status||"").toLowerCase()==="failed")u.failed++;
-        const d=new Date(j.created_at||0);if(!u.latest||d>u.latest)u.latest=d;
+    function renderUsers(users){
+      const rows = Array.isArray(users) ? users : [];
+      statUsers.textContent = rows.length.toLocaleString("es-ES");
+
+      if (!rows.length) {
+        usersTableBody.innerHTML = '<tr><td colspan="8" class="muted">No hay usuarios registrados.</td></tr>';
+        return;
       }
-      const users=[...m.values()].sort((a,b)=>(b.latest||0)-(a.latest||0));
-      statUsers.textContent=users.length.toLocaleString("es-ES");
-      usersTableBody.innerHTML=users.length?users.map(u=>`<tr><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.client)}</td><td>${u.jobs}</td><td>${u.done}</td><td>${u.failed}</td><td>${u.photos.toLocaleString("es-ES")}</td><td>${formatMoney(u.revenue)}</td><td>${u.latest?u.latest.toLocaleString("es-ES"):"—"}</td></tr>`).join(""):'<tr><td colspan="8">No hay usuarios.</td></tr>';
+
+      usersTableBody.innerHTML = rows.map((user) => `
+        <tr>
+          <td>${escapeHtml(user.email || "—")}</td>
+          <td>${escapeHtml(user.name || "—")}</td>
+          <td>${Number(user.jobs_count || 0)}</td>
+          <td>${Number(user.completed_jobs || 0)}</td>
+          <td>${Number(user.failed_jobs || 0)}</td>
+          <td>${Number(user.photos_count || 0).toLocaleString("es-ES")}</td>
+          <td>${formatMoney(user.revenue_total)}</td>
+          <td>${formatDate(user.last_job_at)}</td>
+        </tr>
+      `).join("");
     }
+
+    async function loadUsers() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/users`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+        const data = await response.json();
+        renderUsers(Array.isArray(data.users) ? data.users : []);
+      } catch (error) {
+        console.error("load users error", error);
+        statUsers.textContent = "—";
+        usersTableBody.innerHTML = '<tr><td colspan="8" class="error-text">No se pudieron cargar los usuarios.</td></tr>';
+      }
+    }
+
+    function renderInviteCodes(codes) {
+      const rows = Array.isArray(codes) ? codes : [];
+
+      if (!rows.length) {
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="muted">No hay códigos de invitado.</td></tr>';
+        return;
+      }
+
+      inviteCodesTableBody.innerHTML = rows.map((code) => `
+        <tr>
+          <td class="mono">${escapeHtml(code.code || "—")}</td>
+          <td><span class="${code.is_used ? "badge badge-done" : "badge badge-info"}">${code.is_used ? "Usado" : "Disponible"}</span></td>
+          <td>${escapeHtml(code.used_by_email || "—")}</td>
+          <td>${escapeHtml(code.used_by_name || "—")}</td>
+          <td>${formatDate(code.created_at)}</td>
+          <td>${formatDate(code.used_at)}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function loadInviteCodes() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/invite-codes`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+        const data = await response.json();
+        renderInviteCodes(Array.isArray(data.codes) ? data.codes : []);
+      } catch (error) {
+        console.error("load invite codes error", error);
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="error-text">No se pudieron cargar los códigos.</td></tr>';
+      }
+    }
+
+    async function generateInviteCodes() {
+      generateInviteCodesBtn.disabled = true;
+      generateInviteCodesBtn.textContent = "Generando...";
+      try {
+        const response = await fetch(`${API_BASE}/admin/invite-codes/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ count: 10 })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || `Error ${response.status}`);
+        }
+        await loadInviteCodes();
+      } catch (error) {
+        console.error("generate invite codes error", error);
+        alert("No se pudieron generar los códigos.");
+      } finally {
+        generateInviteCodesBtn.disabled = false;
+        generateInviteCodesBtn.textContent = "Generar 10 códigos";
+      }
+    }
+
+    generateInviteCodesBtn.addEventListener("click", generateInviteCodes);
+
 
     function renderDashboardLatest(rows){
       const latest=[...rows].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
@@ -1228,7 +1340,6 @@ function translateStage(stage) {
       statRevenueTotal.textContent = formatMoney(revenueTotal);
       statRevenueMonth.textContent = formatMoney(revenueMonth);
 
-      renderUsers(rows);
       renderDashboardLatest(rows);
       renderTamsPending(rows);
       renderWorkerSummary(rows);
@@ -1449,8 +1560,16 @@ function translateStage(stage) {
 
     function startAutoRefresh() {
       stopAutoRefresh();
+      let slowRefreshCounter = 0;
       timer = setInterval(() => {
-        if (autoRefresh) loadJobs();
+        if (!autoRefresh) return;
+        loadJobs();
+        slowRefreshCounter += 1;
+        if (slowRefreshCounter >= 6) {
+          slowRefreshCounter = 0;
+          loadUsers();
+          loadInviteCodes();
+        }
       }, REFRESH_MS);
     }
 
@@ -1471,7 +1590,9 @@ function translateStage(stage) {
       if (adminAuthInput) adminAuthInput.value = "";
     });
 
-    refreshBtn.addEventListener("click", loadJobs);
+    refreshBtn.addEventListener("click", async () => {
+      await Promise.all([loadJobs(), loadUsers(), loadInviteCodes()]);
+    });
 
     autoRefreshBtn.addEventListener("click", () => {
       autoRefresh = !autoRefresh;
