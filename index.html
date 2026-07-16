@@ -683,6 +683,120 @@
   color: var(--ok);
 }
 
+
+    .pricing-summary {
+      display: grid;
+      gap: 12px;
+    }
+
+    .pricing-summary-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .pricing-summary-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .pricing-summary-subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .pricing-summary-total {
+      min-width: 130px;
+      text-align: right;
+    }
+
+    .pricing-summary-total-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .pricing-summary-total-value {
+      margin-top: 3px;
+      color: var(--ok);
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      transition: transform 0.18s ease;
+    }
+
+    .pricing-summary-total-value.bump {
+      transform: scale(1.08);
+    }
+
+    .pricing-breakdown {
+      display: grid;
+      gap: 7px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pricing-breakdown-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 28px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .pricing-breakdown-row strong {
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .pricing-breakdown-row.included strong {
+      color: var(--ok);
+    }
+
+    .pricing-breakdown-row.total {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .pricing-vat-note {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .output-price-tag {
+      display: inline-block;
+      margin-left: 6px;
+      color: var(--ok);
+      font-size: 10px;
+      font-weight: 900;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 760px) {
+      .pricing-summary-total {
+        width: 100%;
+        text-align: left;
+      }
+
+      .pricing-vat-note {
+        text-align: left;
+      }
+    }
+
     .price-card-value {
   font-size: 20px;
   font-weight: bold;
@@ -2598,7 +2712,7 @@
                       <div class="outputs-section">
                         <div class="outputs-section-title">Formatos de nube de puntos</div>
                         <div class="outputs-group">
-                          <div class="output-item"><button class="output-btn" type="button" data-output="las">LAS</button><div class="output-tooltip"><strong>LAS</strong>Nube de puntos estándar muy usada en inspección, topografía, CAD y GIS.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="las">LAS<span class="output-price-tag">Incluido</span></button><div class="output-tooltip"><strong>LAS</strong>Nube de puntos estándar muy usada en inspección, topografía, CAD y GIS.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="laz">LAZ</button><div class="output-tooltip"><strong>LAZ</strong>La misma nube que LAS, pero comprimida para ocupar menos espacio.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="e57">E57</button><div class="output-tooltip"><strong>E57</strong>Formato profesional de nube de puntos para compatibilidad con software de ingeniería.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="ply">PLY</button><div class="output-tooltip"><strong>PLY</strong>Formato técnico 3D muy usado en software especializado.</div></div>
@@ -2611,12 +2725,12 @@
                       <div class="outputs-section">
                         <div class="outputs-section-title">Ortofotos, elevación y documentación</div>
                         <div class="outputs-group">
-                          <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_tif">Ortofoto</button><div class="output-tooltip"><strong>Ortofoto GeoTIFF</strong>Imagen corregida geométricamente, útil para una vista cenital precisa.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_tif">Ortofoto<span class="output-price-tag">Incluido</span></button><div class="output-tooltip"><strong>Ortofoto GeoTIFF</strong>Imagen corregida geométricamente, útil para una vista cenital precisa.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_jpg">Ortomosaico JPG</button><div class="output-tooltip"><strong>Ortomosaico JPG</strong>Versión más ligera del ortomosaico, buena para consulta rápida.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DSM</button><div class="output-tooltip"><strong>DSM</strong>Modelo digital de superficie para topografía y cartografía.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="dtm_tif">DTM</button><div class="output-tooltip"><strong>DTM</strong>Modelo digital del terreno.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="contours_dxf">Curvas de nivel</button><div class="output-tooltip"><strong>Curvas de nivel</strong>Entrega de curvas para trabajo topográfico.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="pdf_report">Informe PDF</button><div class="output-tooltip"><strong>Informe PDF</strong>Resumen del proyecto y del procesado para documentación y entrega.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DSM<span class="output-price-tag">+10 €</span></button><div class="output-tooltip"><strong>DSM</strong>Modelo digital de superficie para topografía y cartografía.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="dtm_tif">DTM<span class="output-price-tag">+10 €</span></button><div class="output-tooltip"><strong>DTM</strong>Modelo digital del terreno.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="contours_dxf">Curvas de nivel<span class="output-price-tag">+5 €</span></button><div class="output-tooltip"><strong>Curvas de nivel</strong>Entrega de curvas para trabajo topográfico.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="pdf_report">Informe PDF<span class="output-price-tag">Incluido</span></button><div class="output-tooltip"><strong>Informe PDF</strong>Resumen del proyecto y del procesado para documentación y entrega.</div></div>
                         </div>
                       </div>
 
@@ -2624,11 +2738,11 @@
                         <div class="outputs-section-title">Modelos 3D y mallas</div>
                         <div id="xproces3dTimeNote" class="outputs-note" style="margin-bottom:10px;">Las texturas fotográficas y el modelo teselado aumentan significativamente el tiempo de procesado y el coste del proyecto.</div>
                         <div class="outputs-group">
-                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_obj">Malla OBJ</button><div class="output-tooltip"><strong>Malla OBJ</strong>Modelo 3D de superficie con textura, muy compatible con programas 3D.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="glb">GLB</button><div class="output-tooltip"><strong>GLB</strong>Modelo 3D en un solo archivo, ideal para web y visualización.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_fbx">FBX</button><div class="output-tooltip"><strong>FBX</strong>Formato muy usado en visualización, animación y programas 3D.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="textures">Texturas</button><div class="output-tooltip"><strong>Texturas</strong>Carpeta de imágenes de textura asociadas al modelo 3D.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="tiled_model">Modelo teselado</button><div class="output-tooltip"><strong>Modelo teselado</strong>Modelo 3D por teselas para visualización avanzada. Aumenta notablemente el tiempo de procesado y el coste.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_obj">Malla OBJ<span class="output-price-tag">+10 €</span></button><div class="output-tooltip"><strong>Malla OBJ</strong>Modelo 3D de superficie con textura, muy compatible con programas 3D.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="glb">GLB<span class="output-price-tag">+10 €</span></button><div class="output-tooltip"><strong>GLB</strong>Modelo 3D en un solo archivo, ideal para web y visualización.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="mesh_fbx">FBX<span class="output-price-tag">+10 €</span></button><div class="output-tooltip"><strong>FBX</strong>Formato muy usado en visualización, animación y programas 3D.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="textures">Texturas<span class="output-price-tag">+5 €</span></button><div class="output-tooltip"><strong>Texturas</strong>Carpeta de imágenes de textura asociadas al modelo 3D.</div></div>
+                          <div class="output-item"><button class="output-btn" type="button" data-output="tiled_model">Modelo teselado<span class="output-price-tag">Incluido</span></button><div class="output-tooltip"><strong>Modelo teselado</strong>Modelo 3D por teselas para visualización avanzada. Aumenta notablemente el tiempo de procesado y el coste.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_stl">STL</button><div class="output-tooltip"><strong>STL</strong>Formato clásico de malla, conocido por impresión 3D e ingeniería.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_dae">DAE</button><div class="output-tooltip"><strong>DAE</strong>Formato Collada para intercambio entre distintos programas 3D.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="mesh_3ds">3DS</button><div class="output-tooltip"><strong>3DS</strong>Formato 3D clásico, útil sobre todo por compatibilidad antigua.</div></div>
@@ -2648,17 +2762,33 @@
 
 <div class="panel" id="pricingPanel" style="display:none;">
           <div class="panel-inner">
-            <div class="price-time-box">
-              <div class="price-time-grid">
-                <div class="price-card" style="display:none;">
-                  <div class="price-card-label"></div>
-                  <div class="price-card-value" id="priceBig"></div>
+            <div class="price-time-box pricing-summary">
+              <div class="pricing-summary-head">
+                <div>
+                  <div class="pricing-summary-title">Resumen del proyecto</div>
+                  <div class="pricing-summary-subtitle" id="pricingSummarySubtitle">Seleccione la calidad y los entregables.</div>
                 </div>
+                <div class="pricing-summary-total">
+                  <div class="pricing-summary-total-label">Total estimado</div>
+                  <div class="pricing-summary-total-value" id="priceBig">0 €</div>
+                </div>
+              </div>
 
-                <div class="price-card" style="grid-column: 1 / -1;">
-                  <div class="price-card-label">Tiempo estimado</div>
-                  <div class="price-card-value" id="etaBig">Sin calcular</div>
-                </div>
+              <div class="pricing-breakdown" id="pricingBreakdown">
+                <div class="pricing-breakdown-row"><span>Procesado base</span><strong>10 €</strong></div>
+                <div class="pricing-breakdown-row"><span>Seleccione las opciones del proyecto</span><strong>—</strong></div>
+              </div>
+
+              <div class="pricing-breakdown-row total">
+                <span>Total</span>
+                <strong id="pricingTotalBottom">0 €</strong>
+              </div>
+
+              <div class="pricing-vat-note">IVA no incluido</div>
+
+              <div class="price-card" style="margin-top:2px;">
+                <div class="price-card-label">Tiempo estimado</div>
+                <div class="price-card-value" id="etaBig">Sin calcular</div>
               </div>
             </div>
           </div>
@@ -2872,6 +3002,9 @@ function stripNullCharsDeep(value) {
     const analysisBadgeEl = document.getElementById("analysisBadge");
 
     const priceBig = document.getElementById("priceBig");
+    const pricingBreakdown = document.getElementById("pricingBreakdown");
+    const pricingTotalBottom = document.getElementById("pricingTotalBottom");
+    const pricingSummarySubtitle = document.getElementById("pricingSummarySubtitle");
     const etaBig = document.getElementById("etaBig");
     const selectedQualityRow = null;
     const selectedQualityBadge = null;
@@ -2931,6 +3064,7 @@ function stripNullCharsDeep(value) {
         e.preventDefault();
         e.stopPropagation();
         setSelectedQualityMode(btn.dataset.qualityMode, true);
+        renderPricingBreakdown(lastPreview?.price);
       });
     });
 
@@ -2965,6 +3099,7 @@ function stripNullCharsDeep(value) {
           setSelectedOutputMode("manual");
         }
         btn.classList.toggle("active");
+        renderPricingBreakdown(null);
         updateProcessSelectionSummary();
         updateStartButtonState();
         refreshPricingPreviewDebounced();
@@ -2975,7 +3110,7 @@ function stripNullCharsDeep(value) {
     setSelectedOutputMode("");
     setSelectedPreset("");
     updateProcessSelectionSummary();
-
+    renderPricingBreakdown(0);
 
 
 
@@ -2991,6 +3126,7 @@ function stripNullCharsDeep(value) {
       clearSelectedOutputs();
       updateProcessSelectionSummary();
       updateStartButtonState();
+      renderPricingBreakdown(null);
       if (refresh) refreshPricingPreviewDebounced();
     }
 
@@ -4360,6 +4496,104 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       setTimeout(refreshMapAfterResize, 220);
     });
 
+
+    const XPROCES_PRICE_RULES = {
+      base: 10,
+      quality: { fast: 0, normal: 0, full: 20 },
+      outputs: {
+        dem_tif: 10,
+        dtm_tif: 10,
+        contours_dxf: 5,
+        mesh_obj: 10,
+        glb: 10,
+        mesh_fbx: 10,
+        textures: 5
+      }
+    };
+
+    function getPhotoSupplement(count) {
+      const photos = Number(count || 0);
+      if (photos > 1000) return 40;
+      if (photos > 500) return 20;
+      if (photos > 100) return 10;
+      return 0;
+    }
+
+    function formatPriceAmount(amount, includedLabel = "Incluido") {
+      const value = Number(amount || 0);
+      return value > 0 ? `+${value} €` : includedLabel;
+    }
+
+    function animatePriceTotal() {
+      if (!priceBig) return;
+      priceBig.classList.remove("bump");
+      void priceBig.offsetWidth;
+      priceBig.classList.add("bump");
+      setTimeout(() => priceBig?.classList.remove("bump"), 190);
+    }
+
+    function renderPricingBreakdown(serverTotal = null) {
+      if (!pricingBreakdown) return;
+
+      const type = getSelectedProjectType();
+      const quality = getSelectedQualityMode();
+      const outputs = getSelectedOutputs();
+      const rows = [];
+
+      if (type === "tams") {
+        rows.push({ label: "Proyecto TAMS", amount: 0, text: "Sin coste" });
+      } else {
+        rows.push({ label: "Procesado base", amount: XPROCES_PRICE_RULES.base });
+
+        const photoExtra = getPhotoSupplement(files.length);
+        rows.push({
+          label: `${files.length.toLocaleString("es-ES")} fotografías`,
+          amount: photoExtra,
+          text: photoExtra ? null : "Incluido"
+        });
+
+        if (quality) {
+          const qualityAmount = XPROCES_PRICE_RULES.quality[quality] || 0;
+          rows.push({
+            label: `Calidad ${formatQualityModeLabel(quality)}`,
+            amount: qualityAmount,
+            text: qualityAmount ? null : "Incluida"
+          });
+        }
+
+        for (const output of outputs) {
+          const amount = XPROCES_PRICE_RULES.outputs[output] || 0;
+          rows.push({
+            label: formatOutputLabel(output),
+            amount,
+            text: amount ? null : "Incluido"
+          });
+        }
+      }
+
+      pricingBreakdown.innerHTML = rows.map((row) => {
+        const included = !Number(row.amount || 0);
+        const value = row.text || formatPriceAmount(row.amount);
+        return `<div class="pricing-breakdown-row ${included ? "included" : ""}">
+          <span>${escapeHtml(row.label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </div>`;
+      }).join("");
+
+      const fallbackTotal = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+      const total = Number.isFinite(Number(serverTotal)) ? Number(serverTotal) : fallbackTotal;
+      const totalText = `${total} €`;
+
+      if (priceBig && priceBig.textContent !== totalText) animatePriceTotal();
+      if (priceBig) priceBig.textContent = totalText;
+      if (pricingTotalBottom) pricingTotalBottom.textContent = totalText;
+
+      if (pricingSummarySubtitle) {
+        const typeLabel = type === "fotogrametria" ? "Fotogrametría" : type === "3d" ? "Modelado 3D" : type === "tams" ? "TAMS" : "Proyecto";
+        pricingSummarySubtitle.textContent = `${typeLabel} · ${files.length.toLocaleString("es-ES")} fotografías`;
+      }
+    }
+
     async function fetchPricingPreview(photoCount, totalBytes) {
       try {
         const response = await fetch(`${API_BASE}/pricing/preview`, {
@@ -4392,7 +4626,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
       if (getSelectedProjectType() === "tams") {
         lastPreview = { ok: true, price: 0, estimated_human: "Recepción de fotos" };
-        if (priceBig) priceBig.textContent = "0 €";
+        renderPricingBreakdown(0);
         if (etaBig) etaBig.textContent = "Recepción";
         updateStartButtonState();
         return;
@@ -4400,7 +4634,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
       if (files.length === 0) {
         lastPreview = null;
-        priceBig.textContent = "0 €";
+        renderPricingBreakdown(0);
         etaBig.textContent = "Sin calcular";
         return;
       }
@@ -4416,19 +4650,19 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
           if (preview && preview.ok) {
             lastPreview = preview;
-            priceBig.textContent = `${preview.price} €`;
+            renderPricingBreakdown(preview.price);
             etaBig.textContent = preview.estimated_human || "No disponible";
             jobStatusEl.textContent = "Pendiente de inicio. El trabajo todavía no se ha enviado a procesado.";
           } else {
             lastPreview = null;
-            priceBig.textContent = "No disponible";
+            renderPricingBreakdown(null);
             etaBig.textContent = "No disponible";
             jobStatusEl.textContent = "No se pudo obtener el precio y el tiempo.";
           }
         } catch (_) {
           if (requestId !== previewRequestId) return;
           lastPreview = null;
-          priceBig.textContent = "No disponible";
+          renderPricingBreakdown(null);
           etaBig.textContent = "No disponible";
           jobStatusEl.textContent = "No se pudo obtener el precio y el tiempo.";
         }
@@ -7037,3 +7271,4 @@ document.addEventListener("click", async function(event) {
 
 </body>
 </html>
+ 
