@@ -515,6 +515,20 @@
       }
     }
 
+    .admin-nav{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+    .admin-nav-btn{border:1px solid var(--border);background:#fff;color:var(--text);min-height:40px;padding:0 14px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer}
+    .admin-nav-btn.active{background:var(--accent);border-color:rgba(158,224,0,.55)}
+    .admin-section{display:none;gap:16px}.admin-section.active{display:grid}
+    .users-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:#fbfcfb}
+    .users-table{width:100%;min-width:900px;border-collapse:collapse}
+    .users-table th,.users-table td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+    .users-table th{background:#f3f7f2;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+    .admin-empty-panel{padding:28px;text-align:center;color:var(--muted);line-height:1.5}
+    .dashboard-latest-list{display:grid;gap:10px}
+    .dashboard-latest-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:#fbfcfb}
+    .dashboard-latest-title{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dashboard-latest-meta{margin-top:4px;font-size:12px;color:var(--muted)}
+
   </style>
 </head>
 <body>
@@ -540,7 +554,18 @@
         <button class="btn btn-primary" id="refreshBtn" type="button">Actualizar</button>
       </div>
     </div>
+    <div class="admin-nav" id="adminNav">
+      <button class="admin-nav-btn active" data-admin-tab="dashboard">Dashboard</button>
+      <button class="admin-nav-btn" data-admin-tab="jobs">Trabajos</button>
+      <button class="admin-nav-btn" data-admin-tab="users">Usuarios</button>
+      <button class="admin-nav-btn" data-admin-tab="codes">Códigos</button>
+      <button class="admin-nav-btn" data-admin-tab="stats">Estadísticas</button>
+      <button class="admin-nav-btn" data-admin-tab="settings">Configuración</button>
+    </div>
 
+
+
+    <div class="admin-section active" data-admin-section="dashboard">
     <div class="panel">
       <div class="panel-inner">
         <h2 class="panel-title">Resumen</h2>
@@ -637,6 +662,14 @@
       </div>
     </div>
 
+
+    <div class="panel"><div class="panel-inner">
+      <h2 class="panel-title">Últimos trabajos</h2>
+      <div class="dashboard-latest-list" id="dashboardLatestList"><div class="admin-empty-panel">Cargando...</div></div>
+    </div></div>
+    </div>
+
+    <div class="admin-section" data-admin-section="jobs">
     <div class="panel">
       <div class="panel-inner">
         <h2 class="panel-title">Filtros</h2>
@@ -753,6 +786,24 @@
         </div>
       </div>
     </div>
+
+
+    </div>
+
+    <div class="admin-section" data-admin-section="users">
+      <div class="panel"><div class="panel-inner">
+        <h2 class="panel-title">Usuarios</h2>
+        <div class="admin-note" style="margin:0 0 14px">Usuarios agrupados desde los trabajos actuales.</div>
+        <div class="users-table-wrap"><table class="users-table">
+          <thead><tr><th>Email</th><th>Cliente</th><th>Trabajos</th><th>Completados</th><th>Fallidos</th><th>Fotos</th><th>Importe</th><th>Último trabajo</th></tr></thead>
+          <tbody id="usersTableBody"><tr><td colspan="8">Cargando...</td></tr></tbody>
+        </table></div>
+      </div></div>
+    </div>
+
+    <div class="admin-section" data-admin-section="codes"><div class="panel"><div class="admin-empty-panel"><h2>Códigos de invitado</h2>Sección preparada; necesita endpoint de invite_codes.</div></div></div>
+    <div class="admin-section" data-admin-section="stats"><div class="panel"><div class="admin-empty-panel"><h2>Estadísticas</h2>Preparada para gráficas y métricas históricas.</div></div></div>
+    <div class="admin-section" data-admin-section="settings"><div class="panel"><div class="admin-empty-panel"><h2>Configuración</h2>Preparada para precios, soporte y workers.</div></div></div>
 
     <div class="footer-note">
       Panel de administración inicial. Luego se puede proteger con login, añadir workers, métricas y acciones.
@@ -888,6 +939,10 @@
     const workerRealityMeta = document.getElementById("workerRealityMeta");
     const workerTamsStatus = document.getElementById("workerTamsStatus");
     const workerTamsMeta = document.getElementById("workerTamsMeta");
+    const adminNav = document.getElementById("adminNav");
+    const usersTableBody = document.getElementById("usersTableBody");
+    const dashboardLatestList = document.getElementById("dashboardLatestList");
+
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -1123,6 +1178,33 @@ function translateStage(stage) {
       return rows;
     }
 
+
+    function setAdminTab(name){
+      document.querySelectorAll("[data-admin-section]").forEach(x=>x.classList.toggle("active",x.dataset.adminSection===name));
+      document.querySelectorAll("[data-admin-tab]").forEach(x=>x.classList.toggle("active",x.dataset.adminTab===name));
+    }
+    adminNav.addEventListener("click",e=>{const b=e.target.closest("[data-admin-tab]");if(b)setAdminTab(b.dataset.adminTab);});
+
+    function renderUsers(rows){
+      const m=new Map();
+      for(const j of rows){
+        const email=String(j.client_email||"Sin email"), key=email.toLowerCase();
+        if(!m.has(key))m.set(key,{email,client:j.client_name||"—",jobs:0,done:0,failed:0,photos:0,revenue:0,latest:null});
+        const u=m.get(key);u.jobs++;u.photos+=Number(j.photos_count||0);
+        if(String(j.status||"").toLowerCase()==="done"){u.done++;u.revenue+=Number(j.price||0);}
+        if(String(j.status||"").toLowerCase()==="failed")u.failed++;
+        const d=new Date(j.created_at||0);if(!u.latest||d>u.latest)u.latest=d;
+      }
+      const users=[...m.values()].sort((a,b)=>(b.latest||0)-(a.latest||0));
+      statUsers.textContent=users.length.toLocaleString("es-ES");
+      usersTableBody.innerHTML=users.length?users.map(u=>`<tr><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.client)}</td><td>${u.jobs}</td><td>${u.done}</td><td>${u.failed}</td><td>${u.photos.toLocaleString("es-ES")}</td><td>${formatMoney(u.revenue)}</td><td>${u.latest?u.latest.toLocaleString("es-ES"):"—"}</td></tr>`).join(""):'<tr><td colspan="8">No hay usuarios.</td></tr>';
+    }
+
+    function renderDashboardLatest(rows){
+      const latest=[...rows].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
+      dashboardLatestList.innerHTML=latest.length?latest.map(j=>`<div class="dashboard-latest-item"><div><div class="dashboard-latest-title">${escapeHtml(j.project_name||j.id||"Trabajo")}</div><div class="dashboard-latest-meta">${escapeHtml(j.client_email||"Sin email")} · ${formatDate(j.created_at)}</div></div><span class="${statusBadgeClass(j.status)}">${escapeHtml(translateStatus(j.status))}</span><strong>${Number(j.progress||0)}%</strong></div>`).join(""):'<div class="admin-empty-panel">No hay trabajos.</div>';
+    }
+
     function renderStats(rows) {
       statTotal.textContent = rows.length;
       statQueued.textContent = rows.filter(j => j.status === "queued").length;
@@ -1146,6 +1228,8 @@ function translateStage(stage) {
       statRevenueTotal.textContent = formatMoney(revenueTotal);
       statRevenueMonth.textContent = formatMoney(revenueMonth);
 
+      renderUsers(rows);
+      renderDashboardLatest(rows);
       renderTamsPending(rows);
       renderWorkerSummary(rows);
     }
