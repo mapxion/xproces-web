@@ -828,8 +828,60 @@
         </div>
       </div>
     </div>
-    <div class="admin-section" data-admin-section="stats"><div class="panel"><div class="admin-empty-panel"><h2>Estadísticas</h2>Preparada para gráficas y métricas históricas.</div></div></div>
-    <div class="admin-section" data-admin-section="settings"><div class="panel"><div class="admin-empty-panel"><h2>Configuración</h2>Preparada para precios, soporte y workers.</div></div></div>
+    <div class="admin-section" data-admin-section="stats">
+      <div class="panel"><div class="panel-inner">
+        <h2 class="panel-title">Estadísticas generales</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Trabajos totales</div><div class="stat-value" id="statsJobsTotal">0</div></div>
+          <div class="stat-card"><div class="stat-label">Tasa de éxito</div><div class="stat-value" id="statsSuccessRate">0%</div></div>
+          <div class="stat-card"><div class="stat-label">Fotos por trabajo</div><div class="stat-value" id="statsAvgPhotos">0</div></div>
+          <div class="stat-card"><div class="stat-label">Importe medio</div><div class="stat-value small" id="statsAvgRevenue">0 €</div></div>
+          <div class="stat-card"><div class="stat-label">Este mes</div><div class="stat-value small" id="statsMonthJobs">0</div></div>
+          <div class="stat-card"><div class="stat-label">Ingresos mes</div><div class="stat-value small" id="statsMonthRevenue">0 €</div></div>
+        </div>
+      </div></div>
+
+      <div class="admin-columns">
+        <div class="panel"><div class="panel-inner">
+          <h2 class="panel-title">Distribución por estado</h2>
+          <div id="statsStatusList" class="dashboard-latest-list"></div>
+        </div></div>
+        <div class="panel"><div class="panel-inner">
+          <h2 class="panel-title">Distribución por tipo</h2>
+          <div id="statsTypeList" class="dashboard-latest-list"></div>
+        </div></div>
+      </div>
+
+      <div class="panel"><div class="panel-inner">
+        <h2 class="panel-title">Calidades utilizadas</h2>
+        <div id="statsQualityList" class="dashboard-latest-list"></div>
+      </div></div>
+    </div>
+    <div class="admin-section" data-admin-section="settings">
+      <div class="panel"><div class="panel-inner">
+        <h2 class="panel-title">Configuración operativa</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">API</div><div class="stat-value small" id="configApi">—</div></div>
+          <div class="stat-card"><div class="stat-label">Correo soporte</div><div class="stat-value small" id="configSupport">—</div></div>
+          <div class="stat-card"><div class="stat-label">Auto actualización</div><div class="stat-value small" id="configRefresh">—</div></div>
+          <div class="stat-card"><div class="stat-label">Precio base</div><div class="stat-value small" id="configBasePrice">—</div></div>
+          <div class="stat-card"><div class="stat-label">Máxima calidad</div><div class="stat-value small" id="configFullPrice">—</div></div>
+          <div class="stat-card"><div class="stat-label">Curvas</div><div class="stat-value small" id="configContoursPrice">—</div></div>
+        </div>
+        <div class="admin-note">Estos valores se leen del servidor y reflejan la configuración aplicada actualmente.</div>
+      </div></div>
+
+      <div class="admin-columns">
+        <div class="panel"><div class="panel-inner">
+          <h2 class="panel-title">Suplementos por número de fotos</h2>
+          <div id="configPhotoPrices" class="dashboard-latest-list"></div>
+        </div></div>
+        <div class="panel"><div class="panel-inner">
+          <h2 class="panel-title">Suplementos de entregables</h2>
+          <div id="configOutputPrices" class="dashboard-latest-list"></div>
+        </div></div>
+      </div>
+    </div>
 
     <div class="footer-note">
       Panel de administración inicial. Luego se puede proteger con login, añadir workers, métricas y acciones.
@@ -895,7 +947,8 @@
       await Promise.all([
         loadJobs(),
         loadUsers(),
-        loadInviteCodes()
+        loadInviteCodes(),
+        loadConfig()
       ]);
       startAutoRefresh();
       return true;
@@ -974,6 +1027,24 @@
     const dashboardLatestList = document.getElementById("dashboardLatestList");
     const inviteCodesTableBody = document.getElementById("inviteCodesTableBody");
     const generateInviteCodesBtn = document.getElementById("generateInviteCodesBtn");
+    const statsJobsTotal = document.getElementById("statsJobsTotal");
+    const statsSuccessRate = document.getElementById("statsSuccessRate");
+    const statsAvgPhotos = document.getElementById("statsAvgPhotos");
+    const statsAvgRevenue = document.getElementById("statsAvgRevenue");
+    const statsMonthJobs = document.getElementById("statsMonthJobs");
+    const statsMonthRevenue = document.getElementById("statsMonthRevenue");
+    const statsStatusList = document.getElementById("statsStatusList");
+    const statsTypeList = document.getElementById("statsTypeList");
+    const statsQualityList = document.getElementById("statsQualityList");
+    const configApi = document.getElementById("configApi");
+    const configSupport = document.getElementById("configSupport");
+    const configRefresh = document.getElementById("configRefresh");
+    const configBasePrice = document.getElementById("configBasePrice");
+    const configFullPrice = document.getElementById("configFullPrice");
+    const configContoursPrice = document.getElementById("configContoursPrice");
+    const configPhotoPrices = document.getElementById("configPhotoPrices");
+    const configOutputPrices = document.getElementById("configOutputPrices");
+
 
 
 
@@ -1312,6 +1383,110 @@ function translateStage(stage) {
     generateInviteCodesBtn.addEventListener("click", generateInviteCodes);
 
 
+
+    function getQualityMode(job) {
+      const direct = String(job.quality_mode || job.qualityMode || "").toLowerCase();
+      if (direct) return direct;
+      const exif = job.exif_summary || {};
+      const nested = exif && typeof exif === "object" ? exif._xproces || {} : {};
+      return String(nested.quality_mode || nested.qualityMode || "sin seleccionar").toLowerCase();
+    }
+
+    function statListHtml(items, total) {
+      return items.map(([label, value]) => {
+        const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+        return `<div class="dashboard-latest-item">
+          <div><div class="dashboard-latest-title">${escapeHtml(label)}</div>
+          <div class="dashboard-latest-meta">${pct}% del total</div></div>
+          <strong>${Number(value).toLocaleString("es-ES")}</strong>
+          <span class="badge badge-info">${pct}%</span>
+        </div>`;
+      }).join("");
+    }
+
+    function renderDetailedStats(rows) {
+      const list = Array.isArray(rows) ? rows : [];
+      const done = list.filter(j => ["done", "completed", "tams_downloaded"].includes(String(j.status || "").toLowerCase()));
+      const failed = list.filter(j => String(j.status || "").toLowerCase() === "failed");
+      const totalPhotos = list.reduce((a,j) => a + Number(j.photos_count || 0), 0);
+      const totalRevenue = done.reduce((a,j) => a + Number(j.price || 0), 0);
+      const monthRows = list.filter(j => isSameMonth(j.created_at));
+      const monthDone = done.filter(j => isSameMonth(j.finished_at || j.created_at));
+
+      statsJobsTotal.textContent = list.length.toLocaleString("es-ES");
+      statsSuccessRate.textContent = list.length ? `${Math.round((done.length / Math.max(1, done.length + failed.length)) * 100)}%` : "0%";
+      statsAvgPhotos.textContent = list.length ? Math.round(totalPhotos / list.length).toLocaleString("es-ES") : "0";
+      statsAvgRevenue.textContent = done.length ? formatMoney(totalRevenue / done.length) : "0 €";
+      statsMonthJobs.textContent = monthRows.length.toLocaleString("es-ES");
+      statsMonthRevenue.textContent = formatMoney(monthDone.reduce((a,j) => a + Number(j.price || 0), 0));
+
+      const statusCounts = new Map();
+      list.forEach(j => {
+        const key = translateStatus(j.status);
+        statusCounts.set(key, (statusCounts.get(key) || 0) + 1);
+      });
+      statsStatusList.innerHTML = statListHtml([...statusCounts.entries()].sort((a,b)=>b[1]-a[1]), list.length);
+
+      const typeCounts = new Map();
+      list.forEach(j => {
+        const key = translateProjectType(getProjectType(j));
+        typeCounts.set(key, (typeCounts.get(key) || 0) + 1);
+      });
+      statsTypeList.innerHTML = statListHtml([...typeCounts.entries()].sort((a,b)=>b[1]-a[1]), list.length);
+
+      const qualityCounts = new Map();
+      list.forEach(j => {
+        const raw = getQualityMode(j);
+        const key = raw === "fast" ? "Rápido" : raw === "normal" ? "Normal" : raw === "full" ? "Máxima" : "Sin seleccionar";
+        qualityCounts.set(key, (qualityCounts.get(key) || 0) + 1);
+      });
+      statsQualityList.innerHTML = statListHtml([...qualityCounts.entries()].sort((a,b)=>b[1]-a[1]), list.length);
+    }
+
+    function renderConfig(config) {
+      const c = config || {};
+      configApi.textContent = c.api_base || "—";
+      configSupport.textContent = c.support_email || "—";
+      configRefresh.textContent = `${Number(c.auto_refresh_seconds || 0)} s`;
+      configBasePrice.textContent = formatMoney(c.base_price);
+      configFullPrice.textContent = `+${formatMoney(c.quality_supplements?.full || 0)}`;
+      configContoursPrice.textContent = `+${formatMoney(c.output_supplements?.contours || 0)}`;
+
+      configPhotoPrices.innerHTML = (c.photo_supplements || []).map(item => `
+        <div class="dashboard-latest-item">
+          <div><div class="dashboard-latest-title">${escapeHtml(item.range)}</div></div>
+          <strong>${Number(item.amount || 0) ? "+" : ""}${formatMoney(item.amount)}</strong>
+          <span class="badge badge-info">Fotos</span>
+        </div>
+      `).join("");
+
+      const outputs = [
+        ["DSM", c.output_supplements?.dsm || 0],
+        ["MDT", c.output_supplements?.dtm || 0],
+        ["Curvas de nivel", c.output_supplements?.contours || 0],
+        ["Calidad máxima", c.quality_supplements?.full || 0]
+      ];
+      configOutputPrices.innerHTML = outputs.map(([name, amount]) => `
+        <div class="dashboard-latest-item">
+          <div><div class="dashboard-latest-title">${escapeHtml(name)}</div></div>
+          <strong>+${formatMoney(amount)}</strong>
+          <span class="badge badge-info">Suplemento</span>
+        </div>
+      `).join("");
+    }
+
+    async function loadConfig() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/config`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+        const data = await response.json();
+        renderConfig(data.config || {});
+      } catch (error) {
+        console.error("load config error", error);
+        configApi.textContent = "No disponible";
+      }
+    }
+
     function renderDashboardLatest(rows){
       const latest=[...rows].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
       dashboardLatestList.innerHTML=latest.length?latest.map(j=>`<div class="dashboard-latest-item"><div><div class="dashboard-latest-title">${escapeHtml(j.project_name||j.id||"Trabajo")}</div><div class="dashboard-latest-meta">${escapeHtml(j.client_email||"Sin email")} · ${formatDate(j.created_at)}</div></div><span class="${statusBadgeClass(j.status)}">${escapeHtml(translateStatus(j.status))}</span><strong>${Number(j.progress||0)}%</strong></div>`).join(""):'<div class="admin-empty-panel">No hay trabajos.</div>';
@@ -1341,6 +1516,7 @@ function translateStage(stage) {
       statRevenueMonth.textContent = formatMoney(revenueMonth);
 
       renderDashboardLatest(rows);
+      renderDetailedStats(rows);
       renderTamsPending(rows);
       renderWorkerSummary(rows);
     }
@@ -1591,7 +1767,7 @@ function translateStage(stage) {
     });
 
     refreshBtn.addEventListener("click", async () => {
-      await Promise.all([loadJobs(), loadUsers(), loadInviteCodes()]);
+      await Promise.all([loadJobs(), loadUsers(), loadInviteCodes(), loadConfig()]);
     });
 
     autoRefreshBtn.addEventListener("click", () => {
