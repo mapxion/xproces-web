@@ -3195,7 +3195,18 @@ function stripNullCharsDeep(value) {
       const hasQuality = type === "tams" || !!getSelectedQualityMode();
       const hasOutputs = type === "tams" || getSelectedOutputs().length > 0;
       const ready = hasFiles && datasetCanUpload && !!type && hasQuality && hasOutputs;
+
+      if (processPanel) processPanel.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "flex";
+
+      uploadBtn.textContent = hasFiles
+        ? "Iniciar procesado"
+        : "Seleccione las fotos para continuar";
       uploadBtn.disabled = !ready;
+
+      if (jobStatusEl && !hasFiles) {
+        jobStatusEl.textContent = "Suba las fotografías para configurar un nuevo proyecto.";
+      }
 
       if (jobStatusEl && hasFiles) {
         if (!type) {
@@ -4910,7 +4921,8 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       if (uploadActions) uploadActions.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
-      if (processStartWrap) processStartWrap.style.display = "none";
+      if (processPanel) processPanel.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "flex";
 
       if (map && marker) {
         map.removeLayer(marker);
@@ -4950,13 +4962,13 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
-      if (processStartWrap) processStartWrap.style.display = "none";
+      if (processPanel) processPanel.style.display = "block";
+      if (processStartWrap) processStartWrap.style.display = "flex";
       if (uploadBtn) {
-        uploadBtn.textContent = "Iniciar procesado";
+        uploadBtn.textContent = "Seleccione las fotos para continuar";
         uploadBtn.disabled = true;
       }
       if (pricingPanel) pricingPanel.style.display = "none";
-      if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
@@ -7197,6 +7209,7 @@ Revise la conexión y vuelva a subir el proyecto completo.`,
     }
 
       resetAll();
+updateStartButtonState();
 renderStoredJobs();
 renderTopbarUser();
 syncStoredUserToForm();
