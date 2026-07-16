@@ -683,6 +683,12 @@
   color: var(--ok);
 }
 
+    .price-card-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--ok);
+}
+
 
     .pricing-summary {
       display: grid;
@@ -756,7 +762,6 @@
 
     .pricing-breakdown-row strong {
       white-space: nowrap;
-      color: var(--text);
     }
 
     .pricing-breakdown-row.included strong {
@@ -777,15 +782,6 @@
       text-align: right;
     }
 
-    .output-price-tag {
-      display: inline-block;
-      margin-left: 6px;
-      color: var(--ok);
-      font-size: 10px;
-      font-weight: 900;
-      vertical-align: middle;
-    }
-
     @media (max-width: 760px) {
       .pricing-summary-total {
         width: 100%;
@@ -796,12 +792,6 @@
         text-align: left;
       }
     }
-
-    .price-card-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--ok);
-}
 
     .selected-quality-row {
       display: none !important;
@@ -2768,6 +2758,7 @@
                   <div class="pricing-summary-title">Procesos necesarios y precio</div>
                   <div class="pricing-summary-subtitle" id="pricingSummarySubtitle">Seleccione la calidad y los entregables.</div>
                 </div>
+
                 <div class="pricing-summary-total">
                   <div class="pricing-summary-total-label">Total estimado</div>
                   <div class="pricing-summary-total-value" id="priceBig">0 €</div>
@@ -2775,8 +2766,10 @@
               </div>
 
               <div class="pricing-breakdown" id="pricingBreakdown">
-                <div class="pricing-breakdown-row"><span>Procesado base</span><strong>10 €</strong></div>
-                <div class="pricing-breakdown-row"><span>Seleccione las opciones del proyecto</span><strong>—</strong></div>
+                <div class="pricing-breakdown-row included">
+                  <span>Seleccione los entregables del proyecto</span>
+                  <strong>—</strong>
+                </div>
               </div>
 
               <div class="pricing-breakdown-row total">
@@ -2786,7 +2779,7 @@
 
               <div class="pricing-vat-note">IVA no incluido</div>
 
-              <div class="price-card" style="margin-top:2px;">
+              <div class="price-card">
                 <div class="price-card-label">Tiempo estimado</div>
                 <div class="price-card-value" id="etaBig">Sin calcular</div>
               </div>
@@ -3064,7 +3057,6 @@ function stripNullCharsDeep(value) {
         e.preventDefault();
         e.stopPropagation();
         setSelectedQualityMode(btn.dataset.qualityMode, true);
-        renderPricingBreakdown(lastPreview?.pricing || null);
       });
     });
 
@@ -3099,7 +3091,6 @@ function stripNullCharsDeep(value) {
           setSelectedOutputMode("manual");
         }
         btn.classList.toggle("active");
-        renderPricingBreakdown(null);
         updateProcessSelectionSummary();
         updateStartButtonState();
         refreshPricingPreviewDebounced();
@@ -3110,7 +3101,7 @@ function stripNullCharsDeep(value) {
     setSelectedOutputMode("");
     setSelectedPreset("");
     updateProcessSelectionSummary();
-    renderPricingBreakdown({ price: 0, processes: [] });
+
 
 
 
@@ -3126,7 +3117,6 @@ function stripNullCharsDeep(value) {
       clearSelectedOutputs();
       updateProcessSelectionSummary();
       updateStartButtonState();
-      renderPricingBreakdown(null);
       if (refresh) refreshPricingPreviewDebounced();
     }
 
@@ -3195,18 +3185,7 @@ function stripNullCharsDeep(value) {
       const hasQuality = type === "tams" || !!getSelectedQualityMode();
       const hasOutputs = type === "tams" || getSelectedOutputs().length > 0;
       const ready = hasFiles && datasetCanUpload && !!type && hasQuality && hasOutputs;
-
-      if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "flex";
-
-      uploadBtn.textContent = hasFiles
-        ? "Iniciar procesado"
-        : "Seleccione las fotos para continuar";
       uploadBtn.disabled = !ready;
-
-      if (jobStatusEl && !hasFiles) {
-        jobStatusEl.textContent = "Suba las fotografías para configurar un nuevo proyecto.";
-      }
 
       if (jobStatusEl && hasFiles) {
         if (!type) {
@@ -4536,14 +4515,11 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       e57: ["alignment", "dense_cloud"],
       ply: ["alignment", "dense_cloud"],
       pts: ["alignment", "dense_cloud"],
-
       orthomosaic_tif: ["alignment", "dense_cloud", "dsm"],
       orthomosaic_jpg: ["alignment", "dense_cloud", "dsm"],
       dem_tif: ["alignment", "dense_cloud", "dsm"],
-
       dtm_tif: ["alignment", "dense_cloud", "ground_classification", "dtm"],
       contours_dxf: ["alignment", "dense_cloud", "ground_classification", "dtm", "contours"],
-
       mesh_obj: ["alignment", "dense_cloud", "mesh", "texture"],
       mesh_fbx: ["alignment", "dense_cloud", "mesh", "texture"],
       mesh_stl: ["alignment", "dense_cloud", "mesh"],
@@ -4558,7 +4534,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       pdf_report: []
     };
 
-    function getPhotoSupplement(count) {
+    function getPhotoPricingSupplement(count) {
       const photos = Number(count || 0);
       if (photos > 1000) return 40;
       if (photos > 500) return 20;
@@ -4566,7 +4542,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       return 0;
     }
 
-    function getQualitySupplement(mode) {
+    function getQualityPricingSupplement(mode) {
       return String(mode || "").toLowerCase() === "full" ? 20 : 0;
     }
 
@@ -4586,7 +4562,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       }));
     }
 
-    function animatePriceTotal() {
+    function animatePricingTotal() {
       if (!priceBig) return;
       priceBig.classList.remove("bump");
       void priceBig.offsetWidth;
@@ -4595,7 +4571,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     }
 
     function renderPricingBreakdown(serverPricing = null) {
-      if (!pricingBreakdown) return;
+      if (!pricingBreakdown || !priceBig || !pricingTotalBottom) return;
 
       const type = getSelectedProjectType();
       const quality = getSelectedQualityMode();
@@ -4608,45 +4584,45 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             <strong>Sin coste</strong>
           </div>
         `;
-        if (priceBig) priceBig.textContent = "0 €";
-        if (pricingTotalBottom) pricingTotalBottom.textContent = "0 €";
+        priceBig.textContent = "0 €";
+        pricingTotalBottom.textContent = "0 €";
+        if (pricingSummarySubtitle) {
+          pricingSummarySubtitle.textContent = "Proyecto TAMS · recepción de fotografías";
+        }
         return;
       }
 
-      const localProcesses = getRequiredPricingProcesses(outputs);
       const serverProcesses = Array.isArray(serverPricing?.processes)
         ? serverPricing.processes
         : null;
-      const processes = serverProcesses || localProcesses;
+
+      const processes = serverProcesses || getRequiredPricingProcesses(outputs);
 
       const photosSupplement = Number.isFinite(Number(serverPricing?.photos_supplement))
         ? Number(serverPricing.photos_supplement)
-        : getPhotoSupplement(files.length);
+        : getPhotoPricingSupplement(files.length);
 
       const qualitySupplement = Number.isFinite(Number(serverPricing?.quality_supplement))
         ? Number(serverPricing.quality_supplement)
-        : getQualitySupplement(quality);
+        : getQualityPricingSupplement(quality);
 
-      const rows = [];
-
-      for (const process of processes) {
-        rows.push({
-          label: process.label || XPROCES_PROCESS_LABELS[process.key] || process.key,
-          amount: Number(process.price || 0)
-        });
-      }
+      const rows = processes.map((process) => ({
+        label: process.label || XPROCES_PROCESS_LABELS[process.key] || process.key,
+        amount: Number(process.price || 0),
+        zeroText: "Incluido"
+      }));
 
       rows.push({
         label: `${files.length.toLocaleString("es-ES")} fotografías`,
         amount: photosSupplement,
-        includedText: photosSupplement ? "" : "Sin suplemento"
+        zeroText: "Sin suplemento"
       });
 
       if (quality) {
         rows.push({
           label: `Calidad ${formatQualityModeLabel(quality)}`,
           amount: qualitySupplement,
-          includedText: qualitySupplement ? "" : "Sin suplemento"
+          zeroText: "Sin suplemento"
         });
       }
 
@@ -4654,34 +4630,26 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         rows.unshift({
           label: "Seleccione al menos un entregable",
           amount: 0,
-          includedText: "—"
+          zeroText: "—"
         });
       }
 
       pricingBreakdown.innerHTML = rows.map((row) => {
         const amount = Number(row.amount || 0);
-        const included = amount === 0;
-        const value = included
-          ? (row.includedText || "Incluido")
-          : `+${amount} €`;
-
-        return `<div class="pricing-breakdown-row ${included ? "included" : ""}">
+        return `<div class="pricing-breakdown-row ${amount === 0 ? "included" : ""}">
           <span>${escapeHtml(row.label)}</span>
-          <strong>${escapeHtml(value)}</strong>
+          <strong>${amount > 0 ? `+${amount} €` : escapeHtml(row.zeroText || "Incluido")}</strong>
         </div>`;
       }).join("");
 
-      const localTotal = rows.reduce(
-        (sum, row) => sum + Number(row.amount || 0),
-        0
-      );
-      const serverTotal = Number(serverPricing?.price);
-      const total = Number.isFinite(serverTotal) ? serverTotal : localTotal;
+      const localTotal = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+      const returnedTotal = Number(serverPricing?.price);
+      const total = Number.isFinite(returnedTotal) ? returnedTotal : localTotal;
       const totalText = `${total} €`;
 
-      if (priceBig && priceBig.textContent !== totalText) animatePriceTotal();
-      if (priceBig) priceBig.textContent = totalText;
-      if (pricingTotalBottom) pricingTotalBottom.textContent = totalText;
+      if (priceBig.textContent !== totalText) animatePricingTotal();
+      priceBig.textContent = totalText;
+      pricingTotalBottom.textContent = totalText;
 
       if (pricingSummarySubtitle) {
         const typeLabel =
@@ -4690,12 +4658,9 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           type === "tams" ? "TAMS" :
           "Proyecto";
 
-        const outputText = outputs.length
-          ? `${outputs.length} entregable${outputs.length === 1 ? "" : "s"}`
-          : "sin entregables";
-
         pricingSummarySubtitle.textContent =
-          `${typeLabel} · ${files.length.toLocaleString("es-ES")} fotografías · ${outputText}`;
+          `${typeLabel} · ${files.length.toLocaleString("es-ES")} fotografías · ` +
+          `${outputs.length} entregable${outputs.length === 1 ? "" : "s"}`;
       }
     }
 
@@ -4921,8 +4886,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       if (uploadActions) uploadActions.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
-      if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "flex";
+      if (processStartWrap) processStartWrap.style.display = "none";
 
       if (map && marker) {
         map.removeLayer(marker);
@@ -4962,13 +4926,13 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       if (topConfigRow) topConfigRow.style.display = "none";
       datasetGrid.style.display = "none";
       if (uploadActions) uploadActions.style.display = "none";
-      if (processPanel) processPanel.style.display = "block";
-      if (processStartWrap) processStartWrap.style.display = "flex";
+      if (processStartWrap) processStartWrap.style.display = "none";
       if (uploadBtn) {
-        uploadBtn.textContent = "Seleccione las fotos para continuar";
+        uploadBtn.textContent = "Iniciar procesado";
         uploadBtn.disabled = true;
       }
       if (pricingPanel) pricingPanel.style.display = "none";
+      if (processPanel) processPanel.style.display = "none";
       if (mapWrap) mapWrap.style.display = "none";
       if (qualityModeWrap) qualityModeWrap.style.display = "none";
       if (outputsWrap) outputsWrap.style.display = "none";
@@ -7209,7 +7173,6 @@ Revise la conexión y vuelva a subir el proyecto completo.`,
     }
 
       resetAll();
-updateStartButtonState();
 renderStoredJobs();
 renderTopbarUser();
 syncStoredUserToForm();
