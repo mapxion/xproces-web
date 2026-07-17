@@ -689,7 +689,6 @@
   color: var(--ok);
 }
 
-
     .selected-quality-row {
       display: none !important;
       justify-content: center;
@@ -1965,7 +1964,7 @@
 
 
 
-    /* XPROCES: ejemplo de resultados */
+    /* XPROCES: ejemplo de resultados de una urbanizacion */
     .xproces-example-panel {
       margin-bottom: 16px;
     }
@@ -2145,6 +2144,29 @@
       }
     }
 
+  
+
+    /* XProces v52: resumen informativo aislado. No interviene en el procesado. */
+    .xproces-included-summary {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid rgba(54, 95, 156, 0.22);
+      border-radius: 14px;
+      background: rgba(54, 95, 156, 0.055);
+    }
+    .xproces-included-summary.is-visible { display: block; }
+    .xproces-included-summary-title { margin: 0 0 7px; font-size: 15px; font-weight: 900; color: #24364f; }
+    .xproces-included-summary-intro,
+    .xproces-included-summary-note { margin: 0; color: #53657b; font-size: 13px; line-height: 1.55; }
+    .xproces-included-files { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .xproces-included-file {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px;
+      border: 1px solid rgba(54, 95, 156, 0.20); border-radius: 999px;
+      background: #fff; color: #304866; font-size: 12px; font-weight: 800;
+    }
+    .xproces-included-file::before { content: "✓"; color: #6f9f30; font-weight: 900; }
+
   </style>
 
   <!-- Google tag (gtag.js) -->
@@ -2236,7 +2258,20 @@
     </p>
   </div>
 
+</div>
 
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px;">
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">LAS</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">Ortofoto</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">DSM</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">DTM</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">OBJ</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">GLB</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid rgba(122,171,57,0.28);color:#7aab39;font-size:12px;font-weight:900;">FBX</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:900;">Telecomunicaciones</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:900;">Topografía</span>
+      <span style="padding:8px 11px;border-radius:999px;background:#fff;border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:900;">Ingeniería</span>
+    </div>
 
   </div>
 </div>  
@@ -2245,15 +2280,15 @@
   <div class="panel-inner" style="padding:26px;">
     <div class="xproces-example-head">
       <div class="xproces-example-kicker">Ejemplo de proyecto real</div>
-      <h2 class="xproces-example-title">Fotogrametría completa con procesado rápido</h2>
+      <h2 class="xproces-example-title">Fotogrametría completa de una urbanización</h2>
       <p class="xproces-example-text">
-        Un único vuelo de dron de 372 fotos con DJI Mavic 2 Pro con solape al 80%, procesado rápido, tiempo de procesado, 65 minutos.
+        Un único vuelo de dron de 372 fotos con DJI Mavic 2 Pro con solape al 80%, procesado rápido, tiempo de procesado, 40 minutos.
       </p>
     </div>
 
     <div class="xproces-example-flow">
       <div class="xproces-example-flow-card">
-        <div class="xproces-example-flow-value">372</div>
+        <div class="xproces-example-flow-value">520</div>
         <div class="xproces-example-flow-label">fotografías capturadas con dron</div>
       </div>
       <div class="xproces-example-flow-card">
@@ -2268,19 +2303,20 @@
 
     <div class="xproces-results-grid">
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/orto_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/orto_peq.jpg" alt="Ortofoto georreferenciada" style="width:100%;height:150px;object-fit:cover;display:block;">
-          </a>
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">🗺️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
         </div>
         <h3>Ortofoto georreferenciada</h3>
         <p>Imagen aérea de alta resolución para medición, revisión visual, inventario urbano y documentación técnica.</p>
       </div>
 
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/mde_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/mde_peq.jpg" alt="Modelo Digital de Superficie" style="width:100%;height:150px;object-fit:cover;display:block;">
+        <div class="xproces-result-preview" style="padding:0;overflow:hidden;">
+          <a href="ejemplos/mde_grande.png" target="_blank" style="display:block;width:100%;height:100%;">
+            <img src="ejemplos/mde_peq.jpg" alt="Modelo Digital de Superficie" style="width:100%;height:100%;min-height:150px;object-fit:cover;display:block;">
           </a>
         </div>
         <h3>Modelo Digital de Superficie</h3>
@@ -2288,9 +2324,9 @@
       </div>
 
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/mdetif_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/mdetif_peq.jpg" alt="Modelo Digital del Terreno" style="width:100%;height:150px;object-fit:cover;display:block;">
+        <div class="xproces-result-preview" style="padding:0;overflow:hidden;">
+          <a href="ejemplos/mdetif_grande.png" target="_blank" style="display:block;width:100%;height:100%;">
+            <img src="ejemplos/mdetif_peq.jpg" alt="Modelo Digital del Terreno" style="width:100%;height:100%;min-height:150px;object-fit:cover;display:block;">
           </a>
         </div>
         <h3>Modelo Digital del Terreno</h3>
@@ -2298,19 +2334,20 @@
       </div>
 
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/nube_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/Nube_peq.jpg" alt="Nube de puntos LAS" style="width:100%;height:150px;object-fit:cover;display:block;">
-          </a>
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">☁️</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
         </div>
         <h3>Nube de puntos LAS</h3>
         <p>Millones de puntos tridimensionales compatibles con software CAD, GIS, topografía e inspección técnica.</p>
       </div>
 
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/Obj_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/Obj_peq.jpg" alt="Modelo 3D texturizado" style="width:100%;height:150px;object-fit:cover;display:block;">
+        <div class="xproces-result-preview" style="padding:0;overflow:hidden;">
+          <a href="ejemplos/Obj_grande.png" target="_blank" style="display:block;width:100%;height:100%;">
+            <img src="ejemplos/Obj_peq.jpg" alt="Modelo 3D texturizado" style="width:100%;height:100%;min-height:150px;object-fit:cover;display:block;">
           </a>
         </div>
         <h3>Modelo 3D texturizado</h3>
@@ -2318,10 +2355,11 @@
       </div>
 
       <div class="xproces-result-card">
-        <div class="xproces-result-preview" style="padding:0;overflow:hidden;height:150px;min-height:150px;">
-          <a href="ejemplos/curvas_grande.png" target="_blank" style="display:block;width:100%;height:150px;">
-            <img src="ejemplos/curvas_peq.jpg" alt="Curvas de nivel" style="width:100%;height:150px;object-fit:cover;display:block;">
-          </a>
+        <div class="xproces-result-preview">
+          <div class="xproces-result-preview-inner">
+            <div class="xproces-result-icon">📈</div>
+            <div class="xproces-result-coming">Imagen real próximamente</div>
+          </div>
         </div>
         <h3>Curvas de nivel</h3>
         <p>Generación de curvas para planos topográficos, estudios de pendiente y documentación del terreno.</p>
@@ -2337,58 +2375,6 @@
       <span>Curvas de nivel</span>
       <span>Informe PDF</span>
       <span>ZIP final</span>
-    </div>
-  </div>
-</div>
-
-<div class="panel" id="qualityComparisonPanel" style="margin-top:16px;">
-  <div class="panel-inner" style="padding:26px;">
-    <div style="text-align:center;max-width:920px;margin:0 auto 22px;">
-      <div style="display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 12px;border-radius:999px;background:rgba(122,171,57,0.10);border:1px solid rgba(122,171,57,0.25);color:#7aab39;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">
-        Calidad de procesado
-      </div>
-      <h2 style="margin:0;font-size:30px;line-height:1.18;letter-spacing:-0.03em;color:var(--text);">
-        Calidad adaptada a cada proyecto
-      </h2>
-      <p style="margin:12px auto 0;max-width:850px;color:var(--muted);font-size:15px;line-height:1.6;font-weight:700;">
-        Todos los procesados utilizan el mismo flujo fotogramétrico profesional de XProces. La diferencia entre ellos está en la resolución utilizada durante el cálculo, lo que influye directamente en el tiempo de procesamiento y en el nivel de detalle final.
-      </p>
-    </div>
-
-    <div style="overflow-x:auto;">
-      <table style="width:100%;min-width:760px;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:18px;overflow:hidden;background:#ffffff;">
-        <thead>
-          <tr style="background:#f7f9f7;">
-            <th style="padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;">Característica</th>
-            <th style="padding:14px 16px;text-align:center;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;">⚡ Rápido</th>
-            <th style="padding:14px 16px;text-align:center;border-bottom:1px solid rgba(122,171,57,0.35);background:rgba(122,171,57,0.08);color:#7aab39;font-size:13px;">⭐ Recomendado</th>
-            <th style="padding:14px 16px;text-align:center;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;">🏆 Máxima</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Tiempo de procesado</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Muy rápido</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;">Equilibrado</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Más largo</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Precisión</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Buena</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;">Muy alta</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Máxima</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Densidad de nube</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Media</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;">Alta</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Muy alta</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Modelo 3D</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;color:#22a34a;">✔</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Texturas</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Buenas</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;">Muy altas</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">Máximas</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Ortofoto</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;color:#22a34a;">✔</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">DSM</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;color:#22a34a;">✔</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">MDT</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;color:#22a34a;">✔</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td></tr>
-          <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:800;">Informe PDF</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td><td style="padding:12px 16px;border-bottom:1px solid rgba(122,171,57,0.25);text-align:center;background:rgba(122,171,57,0.05);font-weight:800;color:#22a34a;">✔</td><td style="padding:12px 16px;border-bottom:1px solid var(--border);text-align:center;">✔</td></tr>
-          <tr><td style="padding:12px 16px;font-weight:800;">Recomendado para</td><td style="padding:12px 16px;text-align:center;">Revisiones</td><td style="padding:12px 16px;text-align:center;background:rgba(122,171,57,0.05);font-weight:900;color:#7aab39;">La mayoría de proyectos</td><td style="padding:12px 16px;text-align:center;">Ingeniería de máxima precisión</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div style="margin-top:22px;padding:20px;border-radius:18px;background:rgba(34,163,74,0.06);border:1px solid rgba(34,163,74,0.25);">
-      <h3 style="margin:0 0 10px;color:#22a34a;font-size:18px;">🟢 Nuestra recomendación</h3>
-      <p style="margin:0 0 10px;color:var(--text);font-size:15px;line-height:1.55;"><strong>Calidad Normal</strong> es la opción recomendada para la mayoría de trabajos.</p>
-      <p style="margin:0;color:var(--muted);font-size:14px;line-height:1.55;font-weight:700;">Ofrece un equilibrio excelente entre tiempo de cálculo, tamaño de los archivos y precisión, siendo la modalidad utilizada habitualmente para inspecciones técnicas, topografía y fotogrametría profesional.</p>
-    </div>
-
-    <div style="margin-top:16px;padding:17px 18px;border-radius:16px;background:#fafcf9;border:1px solid var(--border);color:var(--text);font-size:14px;line-height:1.55;">
-      <strong>📌 Curvas de nivel</strong><br>
-      Las curvas de nivel se generan a partir del <strong>MDT</strong> y se ofrecen como un <strong>entregable opcional</strong>, ya que cada proyecto puede requerir una equidistancia diferente según las necesidades del cliente.
     </div>
   </div>
 </div>
@@ -2638,6 +2624,14 @@
                         </div>
                       </div>
 
+
+
+                    <div class="xproces-included-summary" id="xprocesIncludedSummary" aria-live="polite">
+                      <div class="xproces-included-summary-title">Productos incluidos en la entrega</div>
+                      <p class="xproces-included-summary-intro" id="xprocesIncludedIntro"></p>
+                      <div class="xproces-included-files" id="xprocesIncludedFiles"></div>
+                      <p class="xproces-included-summary-note">Los productos comunes se generan una sola vez y se incluyen en el paquete final cuando son necesarios para obtener los resultados seleccionados.</p>
+                    </div>
                     </div>
                   </div>
                 </div>
@@ -4360,7 +4354,6 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     window.addEventListener("orientationchange", () => {
       setTimeout(refreshMapAfterResize, 220);
     });
-
 
     async function fetchPricingPreview(photoCount, totalBytes) {
       try {
@@ -7035,7 +7028,70 @@ document.addEventListener("click", async function(event) {
     }
   }
 }, true);
-</script>
+
+
+    /* XProces v52: módulo visual independiente de productos incluidos. */
+    (() => {
+      const INCLUDED_PRODUCTS = Object.freeze({
+        las: ["las.las"],
+        dem_tif: ["mde.tif", "mde_color.tif", "las.las"],
+        dtm_tif: ["mdt.tif", "las.las"],
+        orthomosaic_tif: ["orto.tif", "mde.tif", "mde_color.tif", "las.las", "modelo.obj"],
+        mesh_obj: ["modelo.obj"],
+        textures: ["modelo.obj", "textura.jpg"],
+        tiled_model: ["teselas.3tz"],
+        glb: ["modelo.obj", "textura.jpg", "modelo.glb"],
+        mesh_fbx: ["modelo.obj", "textura.jpg", "modelo.fbx"],
+        pdf_report: ["informe.pdf"]
+      });
+      const PRODUCT_EXPLANATIONS = Object.freeze({
+        orthomosaic_tif: "Para generar la ortofoto es necesario crear previamente varios productos fotogramétricos. Todos los archivos útiles obtenidos durante ese proceso se incorporarán a la entrega.",
+        dem_tif: "Para obtener el MDE / DSM es necesario generar previamente la nube de puntos, que también se incluirá en la entrega.",
+        dtm_tif: "Para obtener el MDT es necesario procesar y clasificar la nube de puntos, que también se incluirá en la entrega.",
+        textures: "Las texturas se generan sobre el modelo 3D, por lo que el modelo OBJ se incluye junto con la imagen de textura.",
+        glb: "El GLB se obtiene mediante postprocesado del modelo OBJ texturizado. Los archivos utilizados para la conversión también se incluyen.",
+        mesh_fbx: "El FBX se obtiene mediante postprocesado del modelo OBJ texturizado. Los archivos utilizados para la conversión también se incluyen.",
+        pdf_report: "El informe PDF se añadirá a los productos correspondientes al resto de opciones seleccionadas."
+      });
+      function renderIncludedProductsSummary() {
+        const box = document.getElementById("xprocesIncludedSummary");
+        const intro = document.getElementById("xprocesIncludedIntro");
+        const filesBox = document.getElementById("xprocesIncludedFiles");
+        if (!box || !intro || !filesBox) return;
+        const selected = Array.from(document.querySelectorAll("[data-output].active"))
+          .map((button) => button.dataset.output)
+          .filter((key) => Object.prototype.hasOwnProperty.call(INCLUDED_PRODUCTS, key));
+        if (!selected.length) {
+          box.classList.remove("is-visible");
+          intro.textContent = "";
+          filesBox.replaceChildren();
+          return;
+        }
+        const deliveredFiles = [];
+        selected.forEach((key) => INCLUDED_PRODUCTS[key].forEach((filename) => {
+          if (!deliveredFiles.includes(filename)) deliveredFiles.push(filename);
+        }));
+        const explanations = selected.map((key) => PRODUCT_EXPLANATIONS[key]).filter(Boolean);
+        intro.textContent = explanations.length
+          ? explanations[0]
+          : "Además del producto seleccionado, se entregarán los archivos técnicos necesarios que se hayan generado durante el procesamiento.";
+        filesBox.replaceChildren(...deliveredFiles.map((filename) => {
+          const item = document.createElement("span");
+          item.className = "xproces-included-file";
+          item.textContent = filename;
+          return item;
+        }));
+        box.classList.add("is-visible");
+      }
+      document.addEventListener("click", (event) => {
+        if (event.target.closest("[data-output], .project-type-card")) {
+          setTimeout(renderIncludedProductsSummary, 0);
+        }
+      });
+      renderIncludedProductsSummary();
+    })();
+
+  </script>
 
 </body>
 </html>
