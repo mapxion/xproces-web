@@ -7083,10 +7083,15 @@ document.addEventListener("click", async function(event) {
         }));
         box.classList.add("is-visible");
       }
-      document.addEventListener("click", (event) => {
-        if (event.target.closest("[data-output], .project-type-card")) {
+      document.querySelectorAll("[data-output]").forEach((button) => {
+        button.addEventListener("click", () => {
           setTimeout(renderIncludedProductsSummary, 0);
-        }
+        });
+      });
+      document.querySelectorAll(".project-type-card").forEach((button) => {
+        button.addEventListener("click", () => {
+          setTimeout(renderIncludedProductsSummary, 0);
+        });
       });
       renderIncludedProductsSummary();
     })();
