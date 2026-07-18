@@ -5485,6 +5485,151 @@ if (map) {
       return response.json();
     }
 
+    let paypalSdkPromise = null;
+
+    async function getPayPalConfig() {
+      const response = await fetch(`${API_BASE}/paypal/config`, { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok || !data.enabled || !data.client_id) {
+        throw new Error(data.message || "PayPal no está configurado todavía en el servidor.");
+      }
+      return data;
+    }
+
+    async function loadPayPalSdk(config) {
+      if (window.paypal?.Buttons) return window.paypal;
+      if (paypalSdkPromise) return paypalSdkPromise;
+
+      paypalSdkPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const params = new URLSearchParams({
+          "client-id": config.client_id,
+          currency: config.currency || "EUR",
+          intent: "capture",
+          components: "buttons"
+        });
+        script.src = `https://www.paypal.com/sdk/js?${params.toString()}`;
+        script.async = true;
+        script.onload = () => window.paypal?.Buttons ? resolve(window.paypal) : reject(new Error("El SDK de PayPal no se cargó correctamente."));
+        script.onerror = () => reject(new Error("No se pudo cargar PayPal. Revise la conexión e inténtelo de nuevo."));
+        document.head.appendChild(script);
+      });
+
+      return paypalSdkPromise;
+    }
+
+    async function cancelPendingPayPalJob(jobId) {
+      try {
+        const userId = getStoredUser()?.id;
+        await fetch(`${API_BASE}/jobs/${jobId}/paypal/cancel`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(userId ? { "x-user-id": String(userId) } : {})
+          },
+          body: "{}"
+        });
+      } catch (_) {}
+    }
+
+    async function openPayPalCheckout(jobId, expectedPrice, projectName) {
+      if (Number(expectedPrice || 0) <= 0) return true;
+      const config = await getPayPalConfig();
+      const paypalSdk = await loadPayPalSdk(config);
+      let paymentCompleted = false;
+      let paymentError = null;
+
+      const modalPromise = openModal({
+        title: "Pago seguro con PayPal",
+        subtitle: "El proyecto comenzará automáticamente cuando PayPal confirme el pago.",
+        body: `
+          <div class="modal-grid">
+            <div class="modal-card">
+              <div class="modal-label">Proyecto</div>
+              <div class="modal-value" style="font-size:16px;">${escapeHtml(projectName || "Proyecto XPROCES")}</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">Total</div>
+              <div class="modal-value">${Number(expectedPrice || 0).toFixed(2)} €</div>
+            </div>
+            <div class="modal-card full">
+              <div id="paypalButtonContainer" style="min-height:48px;"></div>
+              <div id="paypalPaymentStatus" class="modal-note" style="margin-top:12px;">Seleccione PayPal o tarjeta para completar el pago.</div>
+            </div>
+          </div>
+        `,
+        confirmText: "Pago confirmado",
+        cancelText: "Cancelar pago",
+        showCancel: true,
+        tone: "default"
+      });
+
+      modalConfirmBtn.style.display = "none";
+      const statusEl = document.getElementById("paypalPaymentStatus");
+      const userId = getStoredUser()?.id;
+      const headers = {
+        "Content-Type": "application/json",
+        ...(userId ? { "x-user-id": String(userId) } : {})
+      };
+
+      try {
+        await paypalSdk.Buttons({
+          style: { layout: "vertical", shape: "rect", label: "paypal", height: 45 },
+          createOrder: async () => {
+            if (statusEl) statusEl.textContent = "Preparando el pago...";
+            const response = await fetch(`${API_BASE}/jobs/${jobId}/paypal/create-order`, {
+              method: "POST",
+              headers,
+              body: "{}"
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) throw new Error(data.message || "No se pudo crear la orden de PayPal.");
+            if (data.exempt || data.already_paid) {
+              paymentCompleted = true;
+              closeModal(true);
+              return data.order_id || "EXEMPT";
+            }
+            return data.order_id;
+          },
+          onApprove: async (data) => {
+            if (statusEl) statusEl.textContent = "Confirmando el pago con PayPal...";
+            const response = await fetch(`${API_BASE}/jobs/${jobId}/paypal/capture-order`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ order_id: data.orderID })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok || !result.paid) {
+              throw new Error(result.message || "PayPal no pudo confirmar el pago.");
+            }
+            paymentCompleted = true;
+            if (statusEl) statusEl.textContent = "Pago confirmado. Iniciando la subida de fotografías...";
+            closeModal(true);
+          },
+          onCancel: () => {
+            if (statusEl) statusEl.textContent = "El pago se ha cancelado. No se ha iniciado la subida.";
+          },
+          onError: (error) => {
+            paymentError = error instanceof Error ? error : new Error("Se produjo un error en PayPal.");
+            if (statusEl) statusEl.textContent = paymentError.message;
+          }
+        }).render("#paypalButtonContainer");
+      } catch (error) {
+        paymentError = error instanceof Error ? error : new Error(String(error));
+        if (statusEl) statusEl.textContent = paymentError.message;
+      }
+
+      const modalResult = await modalPromise;
+      modalConfirmBtn.style.display = "inline-block";
+
+      if (!paymentCompleted) {
+        await cancelPendingPayPalJob(jobId);
+        if (paymentError) throw paymentError;
+        return false;
+      }
+      return !!modalResult;
+    }
+
     async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches) {
       return new Promise((resolve, reject) => {
         const form = new FormData();
@@ -5492,6 +5637,8 @@ if (map) {
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
+        const uploadUserId = getStoredUser()?.id;
+        if (uploadUserId) xhr.setRequestHeader("x-user-id", String(uploadUserId));
 
         xhr.upload.onprogress = function (e) {
           if (e.lengthComputable) {
@@ -5537,7 +5684,8 @@ if (map) {
       const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(getStoredUser()?.id ? { "x-user-id": String(getStoredUser().id) } : {})
         },
         body: JSON.stringify({
           quality_mode: selectedQualityMode || getSelectedQualityMode(),
@@ -6742,7 +6890,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             </div>
             <div class="modal-card full">
               <div class="modal-note">
-                Se creará un nuevo proyecto, se subirán las fotografías al servidor y el trabajo entrará en cola para su procesado automático.
+                Al confirmar, se abrirá PayPal. Cuando el pago quede confirmado, comenzará automáticamente la subida de las fotografías y el trabajo entrará en cola para su procesado.
               </div>
             </div>
           </div>
@@ -6787,6 +6935,23 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       try {
         stopPolling();
         hideDownloadButton();
+
+        console.log("[XPROCES] quality_mode seleccionado:", selectedQualityModeForJob);
+        const createdJob = await createJob(selectedQualityModeForJob);
+        const jobId = createdJob.id;
+
+        const paymentOk = await openPayPalCheckout(jobId, Number(createdJob.price ?? preview.price ?? 0), pendingProjectName);
+        if (!paymentOk) {
+          await showInfoModal(
+            "Pago cancelado",
+            "No se ha realizado ningún cargo ni ha comenzado la subida.",
+            "Puede volver a pulsar Iniciar proyecto cuando quiera intentarlo de nuevo.",
+            "warning"
+          );
+          return;
+        }
+
+        renderStoredJobs();
         if (processStageWrap) processStageWrap.style.display = "grid";
         resetStageClasses();
 
@@ -6796,14 +6961,9 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           progressFill.classList.remove("error");
           progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         }
-        if (progressLabel) progressLabel.textContent = "Creando proyecto...";
+        if (progressLabel) progressLabel.textContent = "Pago confirmado. Preparando subida...";
         if (progressPercent) progressPercent.textContent = "0%";
-        jobStatusEl.textContent = "Creando job...";
-
-        console.log("[XPROCES] quality_mode seleccionado:", selectedQualityModeForJob);
-        const createdJob = await createJob(selectedQualityModeForJob);
-        const jobId = createdJob.id;
-        renderStoredJobs();
+        jobStatusEl.textContent = "Pago confirmado. Preparando subida de fotografías...";
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
 
