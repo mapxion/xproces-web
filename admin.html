@@ -529,6 +529,15 @@
     .dashboard-latest-title{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .dashboard-latest-meta{margin-top:4px;font-size:12px;color:var(--muted)}
 
+    .payment-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .payment-filters{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:12px;align-items:end}
+    .payment-state{display:inline-flex;align-items:center;gap:7px;font-weight:800;white-space:nowrap}
+    .payment-dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+    .payment-dot.ok{background:var(--ok)}.payment-dot.warning{background:var(--warning)}.payment-dot.danger{background:var(--danger)}
+    .timeline{display:grid;gap:7px;min-width:280px}.timeline-step{display:grid;grid-template-columns:18px minmax(105px,auto) 1fr;gap:7px;align-items:start;font-size:12px}.timeline-icon{font-weight:900}.timeline-date{color:var(--muted);white-space:nowrap}.timeline-step.ok .timeline-icon{color:var(--ok)}.timeline-step.fail .timeline-icon{color:var(--danger)}.timeline-step.pending .timeline-icon{color:var(--warning)}
+    .audit-ok{background:rgba(34,163,74,.08);border:1px solid rgba(34,163,74,.18);border-radius:14px;padding:10px 12px;color:var(--ok);font-weight:800}.audit-fail{background:rgba(212,85,85,.08);border:1px solid rgba(212,85,85,.18);border-radius:14px;padding:10px 12px;color:var(--danger);font-weight:800}.audit-pending{background:rgba(212,154,17,.08);border:1px solid rgba(212,154,17,.18);border-radius:14px;padding:10px 12px;color:var(--warning);font-weight:800}
+    @media(max-width:1000px){.payment-summary-grid{grid-template-columns:repeat(2,1fr)}.payment-filters{grid-template-columns:1fr 1fr}}
+
   </style>
 </head>
 <body>
@@ -557,6 +566,7 @@
     <div class="admin-nav" id="adminNav">
       <button class="admin-nav-btn active" data-admin-tab="dashboard">Dashboard</button>
       <button class="admin-nav-btn" data-admin-tab="jobs">Trabajos</button>
+      <button class="admin-nav-btn" data-admin-tab="payments">Pagos</button>
       <button class="admin-nav-btn" data-admin-tab="users">Usuarios</button>
       <button class="admin-nav-btn" data-admin-tab="codes">Códigos</button>
       <button class="admin-nav-btn" data-admin-tab="stats">Estadísticas</button>
@@ -788,6 +798,37 @@
     </div>
 
 
+    </div>
+
+
+    <div class="admin-section" data-admin-section="payments">
+      <div class="panel"><div class="panel-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <div><h2 class="panel-title" style="margin:0 0 4px;">Pagos y trazabilidad completa</h2><div class="admin-note" style="margin:0;">Confirma pago, subida, procesado, disponibilidad y descarga final con fecha y hora.</div></div>
+          <button class="btn btn-secondary" id="exportPaymentsCsvBtn" type="button">Exportar CSV</button>
+        </div>
+        <div class="payment-summary-grid">
+          <div class="stat-card"><div class="stat-label">Pagados</div><div class="stat-value small" id="payStatPaid">0</div></div>
+          <div class="stat-card"><div class="stat-label">Importe cobrado</div><div class="stat-value small" id="payStatAmount">0 €</div></div>
+          <div class="stat-card"><div class="stat-label">Proceso completo</div><div class="stat-value small" id="payStatComplete">0</div></div>
+          <div class="stat-card"><div class="stat-label">Pendientes entrega</div><div class="stat-value small" id="payStatPending">0</div></div>
+          <div class="stat-card"><div class="stat-label">Con incidencia</div><div class="stat-value small" id="payStatFailed">0</div></div>
+        </div>
+      </div></div>
+      <div class="panel"><div class="panel-inner">
+        <div class="payment-filters">
+          <div class="field"><label for="paymentSearchInput">Buscar</label><input id="paymentSearchInput" placeholder="Proyecto, cliente, email, order o capture ID"></div>
+          <div class="field"><label for="paymentStatusFilter">Pago</label><select id="paymentStatusFilter"><option value="">Todos</option><option value="paid">Pagados</option><option value="pending">Pendientes</option><option value="cancelled">Cancelados</option></select></div>
+          <div class="field"><label for="deliveryStatusFilter">Entrega</label><select id="deliveryStatusFilter"><option value="">Todas</option><option value="complete">Proceso completo</option><option value="pending">Pendiente</option><option value="failed">Con incidencia</option></select></div>
+          <button class="btn btn-primary" id="clearPaymentFiltersBtn" type="button">Limpiar</button>
+        </div>
+      </div></div>
+      <div class="panel"><div class="panel-inner">
+        <div class="users-table-wrap"><table class="users-table" style="min-width:1800px">
+          <thead><tr><th>Resultado global</th><th>Proyecto</th><th>Cliente</th><th>Importe</th><th>Pago PayPal</th><th>Trazabilidad con fechas y horas</th><th>Order ID</th><th>Capture ID</th><th>Descargas</th></tr></thead>
+          <tbody id="paymentsTableBody"><tr><td colspan="9" class="muted">Cargando...</td></tr></tbody>
+        </table></div>
+      </div></div>
     </div>
 
     <div class="admin-section" data-admin-section="users">
@@ -1044,6 +1085,17 @@
     const configContoursPrice = document.getElementById("configContoursPrice");
     const configPhotoPrices = document.getElementById("configPhotoPrices");
     const configOutputPrices = document.getElementById("configOutputPrices");
+    const paymentsTableBody = document.getElementById("paymentsTableBody");
+    const paymentSearchInput = document.getElementById("paymentSearchInput");
+    const paymentStatusFilter = document.getElementById("paymentStatusFilter");
+    const deliveryStatusFilter = document.getElementById("deliveryStatusFilter");
+    const clearPaymentFiltersBtn = document.getElementById("clearPaymentFiltersBtn");
+    const exportPaymentsCsvBtn = document.getElementById("exportPaymentsCsvBtn");
+    const payStatPaid = document.getElementById("payStatPaid");
+    const payStatAmount = document.getElementById("payStatAmount");
+    const payStatComplete = document.getElementById("payStatComplete");
+    const payStatPending = document.getElementById("payStatPending");
+    const payStatFailed = document.getElementById("payStatFailed");
 
 
 
@@ -1117,6 +1169,7 @@
       if (s === "tams_pending_download") return "badge badge-warning";
       if (s === "tams_downloading") return "badge badge-info";
       if (s === "tams_downloaded") return "badge badge-ok";
+      if (s === "downloaded") return "badge badge-ok";
       return "badge badge-created";
     }
     function translateStatus(status) {
@@ -1132,6 +1185,7 @@
   if (s === "tams_pending_download") return "TAMS pendiente descarga";
   if (s === "tams_downloading") return "TAMS descargando";
   if (s === "tams_downloaded") return "TAMS descargado";
+  if (s === "downloaded") return "Resultados descargados";
 
   return status || "—";
 }
@@ -1289,6 +1343,109 @@ function translateStage(stage) {
     }
     adminNav.addEventListener("click",e=>{const b=e.target.closest("[data-admin-tab]");if(b)setAdminTab(b.dataset.adminTab);});
 
+    function normalizedPaymentStatus(job) {
+      return String(job.payment_status || "pending").toLowerCase();
+    }
+
+    function getDeliveryAudit(job) {
+      const paymentOk = ["paid", "exempt"].includes(normalizedPaymentStatus(job));
+      const uploadOk = !!job.upload_completed_at;
+      const processingStarted = !!(job.processing_started_at || job.started_at);
+      const processingFinished = !!(job.processing_finished_at || job.finished_at);
+      const resultsReady = !!job.results_ready_at || ["done", "downloaded", "tams_downloaded"].includes(String(job.status || "").toLowerCase());
+      const downloaded = !!job.download_verified || !!job.download_completed_at || String(job.status || "").toLowerCase() === "downloaded";
+      const failed = String(job.status || "").toLowerCase() === "failed" || !!String(job.error || "").trim();
+      const complete = paymentOk && uploadOk && processingStarted && processingFinished && resultsReady && downloaded && !failed;
+      return { paymentOk, uploadOk, processingStarted, processingFinished, resultsReady, downloaded, failed, complete };
+    }
+
+    function deliveryState(job) {
+      const a = getDeliveryAudit(job);
+      if (a.failed) return "failed";
+      if (a.complete) return "complete";
+      return "pending";
+    }
+
+    function timelineStep(ok, label, date, pendingText = "Pendiente") {
+      const state = ok ? "ok" : "pending";
+      return `<div class="timeline-step ${state}"><span class="timeline-icon">${ok ? "✓" : "○"}</span><strong>${escapeHtml(label)}</strong><span class="timeline-date">${ok ? formatDate(date) : pendingText}</span></div>`;
+    }
+
+    function renderPaymentTimeline(job) {
+      const a = getDeliveryAudit(job);
+      return `<div class="timeline">
+        ${timelineStep(a.paymentOk, "Pago confirmado", job.payment_date)}
+        ${timelineStep(a.uploadOk, "Subida verificada", job.upload_completed_at)}
+        ${timelineStep(a.processingStarted, "Procesado iniciado", job.processing_started_at || job.started_at)}
+        ${timelineStep(a.processingFinished, "Procesado finalizado", job.processing_finished_at || job.finished_at)}
+        ${timelineStep(a.resultsReady, "Resultados disponibles", job.results_ready_at || job.finished_at)}
+        ${timelineStep(a.downloaded, "Descarga completada", job.download_completed_at)}
+      </div>`;
+    }
+
+    function getFilteredPayments() {
+      const q = String(paymentSearchInput?.value || "").trim().toLowerCase();
+      const ps = String(paymentStatusFilter?.value || "");
+      const ds = String(deliveryStatusFilter?.value || "");
+      return jobsCache.filter(job => {
+        const bag = [job.project_name, job.client_name, job.client_email, job.paypal_order_id, job.paypal_capture_id, job.paypal_payer_email, job.id].join(" ").toLowerCase();
+        if (q && !bag.includes(q)) return false;
+        if (ps && normalizedPaymentStatus(job) !== ps) return false;
+        if (ds && deliveryState(job) !== ds) return false;
+        return true;
+      });
+    }
+
+    function renderPayments() {
+      const paidJobs = jobsCache.filter(j => normalizedPaymentStatus(j) === "paid");
+      const complete = paidJobs.filter(j => getDeliveryAudit(j).complete);
+      const failed = paidJobs.filter(j => getDeliveryAudit(j).failed);
+      const pending = paidJobs.filter(j => !getDeliveryAudit(j).complete && !getDeliveryAudit(j).failed);
+      payStatPaid.textContent = paidJobs.length.toLocaleString("es-ES");
+      payStatAmount.textContent = formatMoney(paidJobs.reduce((a,j)=>a+Number(j.payment_amount ?? j.price ?? 0),0));
+      payStatComplete.textContent = complete.length.toLocaleString("es-ES");
+      payStatPending.textContent = pending.length.toLocaleString("es-ES");
+      payStatFailed.textContent = failed.length.toLocaleString("es-ES");
+
+      const rows = getFilteredPayments();
+      if (!rows.length) {
+        paymentsTableBody.innerHTML = '<tr><td colspan="9" class="muted">No hay pagos que coincidan con los filtros.</td></tr>';
+        return;
+      }
+      paymentsTableBody.innerHTML = rows.map(job => {
+        const audit = getDeliveryAudit(job);
+        const global = audit.complete ? '<div class="audit-ok">✓ Proceso completo</div>' : audit.failed ? '<div class="audit-fail">✕ Incidencia</div>' : '<div class="audit-pending">○ Pendiente</div>';
+        const paid = normalizedPaymentStatus(job) === "paid";
+        return `<tr>
+          <td>${global}</td>
+          <td><strong>${escapeHtml(job.project_name || "—")}</strong><div class="mono muted">${escapeHtml(job.id || "")}</div></td>
+          <td>${escapeHtml(job.client_name || "—")}<br><span class="muted">${escapeHtml(job.client_email || "—")}</span></td>
+          <td><strong>${formatMoney(job.payment_amount ?? job.price)}</strong><br><span class="muted">${escapeHtml(job.payment_currency || "EUR")}</span></td>
+          <td><span class="payment-state"><span class="payment-dot ${paid ? "ok" : "warning"}"></span>${paid ? "Pagado" : escapeHtml(normalizedPaymentStatus(job))}</span><br><span class="muted">${formatDate(job.payment_date)}</span><br><span class="muted">${escapeHtml(job.paypal_payer_email || "—")}</span></td>
+          <td>${renderPaymentTimeline(job)}${audit.failed ? `<div class="error-text" style="margin-top:8px">${escapeHtml(job.error || job.message || "Error en el proceso")}</div>` : ""}</td>
+          <td class="mono">${escapeHtml(job.paypal_order_id || "—")}</td>
+          <td class="mono">${escapeHtml(job.paypal_capture_id || "—")}</td>
+          <td>${Number(job.download_count || 0)}<br><span class="muted">${job.download_verified ? "Verificada" : "No verificada"}</span></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function exportPaymentsCsv() {
+      const rows = getFilteredPayments();
+      const headers = ["job_id","proyecto","cliente","email","payment_status","importe","moneda","fecha_pago","subida_verificada","procesado_inicio","procesado_fin","resultados_disponibles","descarga_inicio","descarga_fin","descarga_verificada","proceso_completo","order_id","capture_id","payer_email","estado_job","error"];
+      const esc = v => `"${String(v ?? "").replaceAll('"','""')}"`;
+      const lines = [headers.join(",")];
+      rows.forEach(j => {
+        const a = getDeliveryAudit(j);
+        lines.push([
+          j.id,j.project_name,j.client_name,j.client_email,normalizedPaymentStatus(j),j.payment_amount ?? j.price,j.payment_currency || "EUR",j.payment_date,j.upload_completed_at,j.processing_started_at || j.started_at,j.processing_finished_at || j.finished_at,j.results_ready_at,j.download_started_at,j.download_completed_at,j.download_verified,a.complete,j.paypal_order_id,j.paypal_capture_id,j.paypal_payer_email,j.status,j.error
+        ].map(esc).join(","));
+      });
+      const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href=url; a.download=`xproces-pagos-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+
     function renderUsers(users){
       const rows = Array.isArray(users) ? users : [];
       statUsers.textContent = rows.length.toLocaleString("es-ES");
@@ -1409,16 +1566,17 @@ function translateStage(stage) {
       const done = list.filter(j => ["done", "completed", "tams_downloaded"].includes(String(j.status || "").toLowerCase()));
       const failed = list.filter(j => String(j.status || "").toLowerCase() === "failed");
       const totalPhotos = list.reduce((a,j) => a + Number(j.photos_count || 0), 0);
-      const totalRevenue = done.reduce((a,j) => a + Number(j.price || 0), 0);
+      const paidRows = list.filter(j => normalizedPaymentStatus(j) === "paid");
+      const totalRevenue = paidRows.reduce((a,j) => a + Number(j.payment_amount ?? j.price ?? 0), 0);
       const monthRows = list.filter(j => isSameMonth(j.created_at));
-      const monthDone = done.filter(j => isSameMonth(j.finished_at || j.created_at));
+      const monthPaid = paidRows.filter(j => isSameMonth(j.payment_date));
 
       statsJobsTotal.textContent = list.length.toLocaleString("es-ES");
       statsSuccessRate.textContent = list.length ? `${Math.round((done.length / Math.max(1, done.length + failed.length)) * 100)}%` : "0%";
       statsAvgPhotos.textContent = list.length ? Math.round(totalPhotos / list.length).toLocaleString("es-ES") : "0";
-      statsAvgRevenue.textContent = done.length ? formatMoney(totalRevenue / done.length) : "0 €";
+      statsAvgRevenue.textContent = paidRows.length ? formatMoney(totalRevenue / paidRows.length) : "0 €";
       statsMonthJobs.textContent = monthRows.length.toLocaleString("es-ES");
-      statsMonthRevenue.textContent = formatMoney(monthDone.reduce((a,j) => a + Number(j.price || 0), 0));
+      statsMonthRevenue.textContent = formatMoney(monthPaid.reduce((a,j) => a + Number(j.payment_amount ?? j.price ?? 0), 0));
 
       const statusCounts = new Map();
       list.forEach(j => {
@@ -1506,11 +1664,11 @@ function translateStage(stage) {
       statPhotogrammetry.textContent = rows.filter(j => getProjectType(j) === "photogrammetry").length;
       statModel3d.textContent = rows.filter(j => getProjectType(j) === "3d").length;
 
-      const revenueRows = rows.filter(j => ["done", "tams_downloaded"].includes(String(j.status || "").toLowerCase()));
-      const revenueTotal = revenueRows.reduce((acc, j) => acc + Number(j.price || 0), 0);
+      const revenueRows = rows.filter(j => normalizedPaymentStatus(j) === "paid");
+      const revenueTotal = revenueRows.reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
       const revenueMonth = revenueRows
-        .filter(j => isSameMonth(j.finished_at || j.created_at))
-        .reduce((acc, j) => acc + Number(j.price || 0), 0);
+        .filter(j => isSameMonth(j.payment_date))
+        .reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
 
       statRevenueTotal.textContent = formatMoney(revenueTotal);
       statRevenueMonth.textContent = formatMoney(revenueMonth);
@@ -1598,6 +1756,7 @@ function translateStage(stage) {
     function renderTable() {
       const rows = getFilteredJobs();
       renderStats(jobsCache);
+      renderPayments();
 
       if (!rows.length) {
         jobsTableBody.innerHTML = `
@@ -1780,6 +1939,12 @@ function translateStage(stage) {
     stageFilter.addEventListener("change", renderTable);
     projectTypeFilter.addEventListener("change", renderTable);
     sortFilter.addEventListener("change", renderTable);
+    paymentSearchInput.addEventListener("input", renderPayments);
+    paymentStatusFilter.addEventListener("change", renderPayments);
+    deliveryStatusFilter.addEventListener("change", renderPayments);
+    clearPaymentFiltersBtn.addEventListener("click", () => { paymentSearchInput.value=""; paymentStatusFilter.value=""; deliveryStatusFilter.value=""; renderPayments(); });
+    exportPaymentsCsvBtn.addEventListener("click", exportPaymentsCsv);
+
 
     if (ADMIN_TOKEN) {
       unlockAdmin(ADMIN_TOKEN);
