@@ -4389,6 +4389,10 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             quality_mode: getSelectedQualityMode(),
             outputs_requested: getSelectedProjectType() === "tams" ? ["tams_package"] : getSelectedOutputs(),
             tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
+            exif_summary: stripNullCharsDeep({
+              ...(latestExifSummary || {}),
+              _xproces: buildXprocesMeta(getSelectedQualityMode())
+            })
           })
         });
 
@@ -5473,7 +5477,12 @@ if (map) {
     async function createJob(selectedQualityMode) {
       const cleanExifSummary = stripNullCharsDeep({
         ...(latestExifSummary || {}),
-        _xproces: buildXprocesMeta(selectedQualityMode)
+        _xproces: {
+          ...buildXprocesMeta(selectedQualityMode),
+          timing_prediction: lastPreview?.timing_prediction || null,
+          quoted_price: Number(lastPreview?.price || 0),
+          quoted_processing_seconds: Number(lastPreview?.estimated_seconds || 0)
+        }
       });
 
       console.log("[XPROCES] quality_mode enviado al crear job:", selectedQualityMode);
@@ -5493,7 +5502,8 @@ if (map) {
   outputs_requested: getSelectedProjectType() === "tams" ? [] : getSelectedOutputs(),
   tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
   expected_photos_count: files.length,
-  expected_total_bytes: Number(totalSize || 0)
+  expected_total_bytes: Number(totalSize || 0),
+  pricing_quote_token: lastPreview?.quote_token || ""
 })
       });
 
