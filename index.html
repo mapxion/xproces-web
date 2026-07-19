@@ -6386,11 +6386,25 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       return Number.isFinite(p) ? Math.max(0, Math.min(100, Math.round(p))) : 0;
     }
 
+    function isFinalDeliveryMessage(value) {
+      return /Preparando ZIP final|Subiendo ZIP final|Subiendo resultados/i.test(String(value || ""));
+    }
+
     function getLiveProgressFromJobAndLog(job, parsed) {
       const fromLog = Number(parsed?.latestProgressPercent);
-      if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, Math.round(fromLog)));
-
       const fromJob = Number(job?.progress ?? 0);
+
+      // Durante la preparación y subida del ZIP, el estado del worker/API es
+      // más reciente que el último progreso escrito en el log de Metashape.
+      if (isFinalDeliveryMessage(job?.message) && Number.isFinite(fromJob)) {
+        return Math.max(0, Math.min(100, Math.round(fromJob)));
+      }
+
+      if (Number.isFinite(fromLog) && Number.isFinite(fromJob)) {
+        return Math.max(0, Math.min(100, Math.round(Math.max(fromLog, fromJob))));
+      }
+
+      if (Number.isFinite(fromLog)) return Math.max(0, Math.min(100, Math.round(fromLog)));
       return Number.isFinite(fromJob) ? Math.max(0, Math.min(100, Math.round(fromJob))) : 0;
     }
 
@@ -6467,8 +6481,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         ? parsed.requestedOutputs.map((x) => formatOutputLabel(String(x).trim().toLowerCase())).join(" · ")
         : "Inspección estándar";
 
-      const latestFromLog = parsed.latestLiveMessage ? cleanLiveStepText(parsed.latestLiveMessage) : (parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : "");
-      const stage = parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || "");
+      const backendLiveMessage = cleanLiveStepText(job?.message || "");
+      const latestFromLog = isFinalDeliveryMessage(job?.message)
+        ? backendLiveMessage
+        : (parsed.latestLiveMessage ? cleanLiveStepText(parsed.latestLiveMessage) : (parsed.latestProgressMessage ? cleanLiveStepText(parsed.latestProgressMessage) : ""));
+      const stage = isFinalDeliveryMessage(job?.message)
+        ? (job?.stage || "export")
+        : (parsed.currentStage || job?.stage || inferStageFromText(latestFromLog || job?.message || ""));
       const livePhase = getDetailedLivePhase(latestFromLog || job?.message || "", stage, progress);
       const stageTitleMap = {
         matching: "Emparejando fotografías",
@@ -6668,12 +6687,16 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
               job.progress = parsedLiveProgress;
             }
 
-            if (parsed.latestProgressMessage) {
+            const backendMessageIsFinalDelivery = isFinalDeliveryMessage(job.message);
+
+            if (backendMessageIsFinalDelivery) {
+              if (progressLabel) progressLabel.textContent = cleanLiveStepText(job.message);
+            } else if (parsed.latestProgressMessage) {
               if (progressLabel) progressLabel.textContent = parsed.latestProgressMessage;
               job.message = parsed.latestProgressMessage;
             }
 
-            if (parsed.currentStage) {
+            if (!backendMessageIsFinalDelivery && parsed.currentStage) {
               job.stage = parsed.currentStage;
             }
           }
