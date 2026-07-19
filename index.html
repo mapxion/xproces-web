@@ -2166,6 +2166,29 @@
       background: #fff; color: #304866; font-size: 12px; font-weight: 800;
     }
     .xproces-included-file::before { content: "✓"; color: #6f9f30; font-weight: 900; }
+    .output-btn.xproces-auto-included {
+      background: rgba(122,171,57,0.10);
+      color: #5d842b;
+      border-color: rgba(122,171,57,0.45);
+      cursor: default;
+    }
+    .output-item.xproces-auto-included::after {
+      content: "Incluido";
+      position: absolute;
+      top: -9px;
+      right: -7px;
+      min-height: 18px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #7aab39;
+      color: #fff;
+      font-size: 8px;
+      line-height: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      pointer-events: none;
+    }
 
   </style>
 
@@ -2627,7 +2650,7 @@
                       <div class="xproces-included-summary-title">Productos incluidos en la entrega</div>
                       <p class="xproces-included-summary-intro" id="xprocesIncludedIntro"></p>
                       <div class="xproces-included-files" id="xprocesIncludedFiles"></div>
-                      <p class="xproces-included-summary-note">Los productos comunes se generan una sola vez y se incluyen en el paquete final cuando son necesarios para obtener los resultados seleccionados.</p>
+                      <p class="xproces-included-summary-note">No se cobra cada archivo por separado. El tiempo y el precio del proyecto ya contemplan el procesamiento necesario, y todos los productos útiles generados se incluyen en el paquete final sin coste adicional por archivo.</p>
                     </div>
                     </div>
                   </div>
@@ -7276,6 +7299,176 @@ document.addEventListener("click", async function(event) {
       renderIncludedProductsSummary();
     })();
 
+  </script>
+
+
+  <script>
+    /* XProces v53: entregables incluidos automáticamente, sin alterar la lógica existente. */
+    (() => {
+      const AUTO_INCLUDED_BY_OUTPUT = Object.freeze({
+        orthomosaic_tif: ["las", "dem_tif", "mesh_obj", "textures", "tiled_model"],
+        dem_tif: ["las"],
+        dtm_tif: ["las"],
+        mesh_obj: ["textures"],
+        textures: ["mesh_obj"],
+        tiled_model: ["mesh_obj", "textures"]
+      });
+
+      const DELIVERED_FILES = Object.freeze({
+        las: ["las.las"],
+        dem_tif: ["mde.tif", "mde_color.tif"],
+        dtm_tif: ["mdt.tif"],
+        orthomosaic_tif: ["orto.tif"],
+        mesh_obj: ["modelo.obj", "modelo.mtl"],
+        textures: ["textura.jpg / imágenes de textura"],
+        tiled_model: ["teselas.3tz"],
+        pdf_report: ["informe.pdf"],
+        contours_dxf: ["curvas.dxf"],
+        glb: ["modelo.glb"],
+        mesh_fbx: ["modelo.fbx"]
+      });
+
+      const OUTPUT_LABELS = Object.freeze({
+        las: "LAS",
+        dem_tif: "DSM",
+        dtm_tif: "DTM",
+        orthomosaic_tif: "Ortofoto",
+        mesh_obj: "Malla OBJ",
+        textures: "Texturas",
+        tiled_model: "Modelo teselado",
+        pdf_report: "Informe PDF",
+        contours_dxf: "Curvas de nivel",
+        glb: "GLB",
+        mesh_fbx: "FBX"
+      });
+
+      function getOutputButton(key) {
+        return document.querySelector(`[data-output="${key}"]`);
+      }
+
+      function clearAutomaticInclusions() {
+        document.querySelectorAll(".output-btn.xproces-auto-included").forEach((button) => {
+          button.classList.remove("xproces-auto-included");
+          button.disabled = false;
+          button.removeAttribute("aria-describedby");
+
+          const item = button.closest(".output-item");
+          if (item) item.classList.remove("xproces-auto-included");
+
+          if (button.dataset.xprocesWasActive !== "1") {
+            button.classList.remove("active");
+          }
+          delete button.dataset.xprocesWasActive;
+        });
+      }
+
+      function collectRequiredOutputs(selectedKeys) {
+        const required = new Set();
+        const queue = [...selectedKeys];
+
+        while (queue.length) {
+          const key = queue.shift();
+          const dependencies = AUTO_INCLUDED_BY_OUTPUT[key] || [];
+          dependencies.forEach((dependency) => {
+            if (!selectedKeys.has(dependency) && !required.has(dependency)) {
+              required.add(dependency);
+              queue.push(dependency);
+            }
+          });
+        }
+        return required;
+      }
+
+      function applyAutomaticInclusions() {
+        clearAutomaticInclusions();
+
+        const selected = new Set(
+          Array.from(document.querySelectorAll("[data-output].active"))
+            .map((button) => button.dataset.output)
+        );
+
+        const required = collectRequiredOutputs(selected);
+        required.forEach((key) => {
+          const button = getOutputButton(key);
+          if (!button) return;
+
+          button.dataset.xprocesWasActive = button.classList.contains("active") ? "1" : "0";
+          button.classList.add("active", "xproces-auto-included");
+          button.disabled = true;
+          button.setAttribute("aria-describedby", "xprocesIncludedSummary");
+
+          const item = button.closest(".output-item");
+          if (item) item.classList.add("xproces-auto-included");
+        });
+      }
+
+      function renderIncludedProductsSummary() {
+        applyAutomaticInclusions();
+
+        const box = document.getElementById("xprocesIncludedSummary");
+        const intro = document.getElementById("xprocesIncludedIntro");
+        const filesBox = document.getElementById("xprocesIncludedFiles");
+        if (!box || !intro || !filesBox) return;
+
+        const selectedButtons = Array.from(document.querySelectorAll("[data-output].active"));
+        const selectedKeys = selectedButtons.map((button) => button.dataset.output);
+
+        if (!selectedKeys.length) {
+          box.classList.remove("is-visible");
+          intro.textContent = "";
+          filesBox.replaceChildren();
+          return;
+        }
+
+        const autoKeys = selectedButtons
+          .filter((button) => button.classList.contains("xproces-auto-included"))
+          .map((button) => button.dataset.output);
+
+        const deliveredFiles = [];
+        selectedKeys.forEach((key) => {
+          (DELIVERED_FILES[key] || []).forEach((filename) => {
+            if (!deliveredFiles.includes(filename)) deliveredFiles.push(filename);
+          });
+        });
+
+        if (autoKeys.length) {
+          intro.textContent =
+            "Para obtener los resultados seleccionados es necesario generar también " +
+            autoKeys.map((key) => OUTPUT_LABELS[key] || key).join(", ") +
+            ". Como estos productos se crean durante el mismo procesamiento, se activan automáticamente y se entregan sin coste adicional por archivo.";
+        } else {
+          intro.textContent =
+            "La entrega incluirá todos los archivos correspondientes a los resultados seleccionados.";
+        }
+
+        filesBox.replaceChildren(...deliveredFiles.map((filename) => {
+          const item = document.createElement("span");
+          item.className = "xproces-included-file";
+          item.textContent = filename;
+          return item;
+        }));
+
+        box.classList.add("is-visible");
+      }
+
+      document.querySelectorAll("[data-output]").forEach((button) => {
+        button.addEventListener("click", () => setTimeout(renderIncludedProductsSummary, 0));
+      });
+
+      document.querySelectorAll(".project-type-card").forEach((button) => {
+        button.addEventListener("click", () => setTimeout(renderIncludedProductsSummary, 0));
+      });
+
+      const originalGetSelectedOutputs = window.getSelectedOutputs;
+      if (typeof originalGetSelectedOutputs === "function") {
+        window.getSelectedOutputs = function() {
+          applyAutomaticInclusions();
+          return originalGetSelectedOutputs.apply(this, arguments);
+        };
+      }
+
+      renderIncludedProductsSummary();
+    })();
   </script>
 
 </body>
