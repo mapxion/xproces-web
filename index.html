@@ -6566,6 +6566,40 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         ["delivery", "Exportaciones completadas"]
       ];
 
+      /*
+       * La lista se obtiene del historial completo del log. Así nunca retrocede
+       * ni desaparece cuando el mensaje actual cambia temporalmente a
+       * "Procesado finalizado", "Preparando ZIP" o "Subiendo resultados".
+       */
+      const phaseIndexByKey = new Map(
+        processPhaseOrder.map(([key], index) => [key, index])
+      );
+
+      function detectHighestProcessPhaseIndex(sourceText) {
+        const source = String(sourceText || "").toLowerCase();
+        let highest = -1;
+
+        const mark = (key, pattern) => {
+          if (pattern.test(source)) {
+            highest = Math.max(highest, phaseIndexByKey.get(key) ?? -1);
+          }
+        };
+
+        mark("matching", /matchphotos|matching photos|emparejando fotograf|puntos clave detectados/);
+        mark("aligning", /aligncameras|orientando fotograf|alineaci[oó]n de c[aá]maras/);
+        mark("depth", /builddepthmaps|mapas? de profundidad/);
+        mark("model", /buildmodel|creando modelo 3d|modelo 3d completado/);
+        mark("uv", /builduv|generando uv|uv del modelo completado/);
+        mark("texture", /buildtexture|generando textura|textura (final )?completada/);
+        mark("tiled", /buildtiledmodel|modelo de teselas|modelo teselado/);
+        mark("pointcloud", /buildpointcloud|nube de puntos (completada|creada|generando)|generando nube de puntos/);
+        mark("dem", /builddem|generando mde|mde completado|modelo digital de elevaci[oó]n/);
+        mark("ortho", /buildorthomosaic|generando orto|ortomosaico completado/);
+        mark("delivery", /exportaciones detectadas|exportaciones completas|comprimiendo resultados|preparando zip|subiendo zip|subiendo resultados|procesado finalizado/);
+
+        return highest;
+      }
+
       const normalizedPhaseText = String(phaseText || "").toLowerCase();
       let currentProcessPhase = livePhase;
 
@@ -6575,18 +6609,28 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       else if (/nube de puntos/.test(normalizedPhaseText)) currentProcessPhase = "pointcloud";
       else if (/mde|dem|elevaci/.test(normalizedPhaseText)) currentProcessPhase = "dem";
       else if (/orto/.test(normalizedPhaseText)) currentProcessPhase = "ortho";
-      else if (/zip|subiendo|entrega|export/.test(normalizedPhaseText)) currentProcessPhase = "delivery";
+      else if (/zip|subiendo|entrega|export|procesado finalizado/.test(normalizedPhaseText)) currentProcessPhase = "delivery";
 
-      const currentProcessIndex = processPhaseOrder.findIndex(([key]) => key === currentProcessPhase);
+      const currentProcessIndex = phaseIndexByKey.get(currentProcessPhase) ?? -1;
+      const historyProcessIndex = detectHighestProcessPhaseIndex(logText);
+      const highestReachedProcessIndex = Math.max(currentProcessIndex, historyProcessIndex);
 
-      const completedProcesses = currentProcessIndex >= 0
-        ? processPhaseOrder.slice(0, currentProcessIndex).map(([, label]) => label)
+      const completedProcesses = highestReachedProcessIndex >= 0
+        ? processPhaseOrder.slice(0, highestReachedProcessIndex).map(([, label]) => label)
         : [];
 
-      if (progress >= 95 && !completedProcesses.includes("Exportaciones completadas")) {
+      const deliveryContext = String(logText || "") + "\n" + String(job?.message || "");
+      const deliveryStarted = highestReachedProcessIndex >= (phaseIndexByKey.get("delivery") ?? 999);
+      const deliveryFinished =
+        /exportaciones detectadas|exportaciones completas|procesado finalizado|preparando zip|subiendo zip|subiendo resultados/i.test(deliveryContext);
+
+      if (deliveryStarted && deliveryFinished && !completedProcesses.includes("Exportaciones completadas")) {
         completedProcesses.push("Exportaciones completadas");
       }
-      if (progress >= 98 && !completedProcesses.includes("ZIP de resultados creado")) {
+      if (
+        /preparando zip|subiendo zip|subiendo resultados/i.test(deliveryContext) &&
+        !completedProcesses.includes("ZIP de resultados creado")
+      ) {
         completedProcesses.push("ZIP de resultados creado");
       }
       if (progress >= 100 && !completedProcesses.includes("Trabajo completado")) {
