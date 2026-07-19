@@ -234,7 +234,7 @@
     }
 
     .drop-title {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
       margin-bottom: 4px;
       color: var(--text);
@@ -2220,7 +2220,30 @@
 
     <div class="layout" id="mainLayout">
       <div class="left-stack">
-      <div class="panel" id="landingPanel" style="margin-bottom:16px;">
+      <div class="panel" id="uploadPanel">
+          <div class="panel-inner">
+            <div class="drop" id="drop">
+              <div class="drop-content">
+                <div class="drop-title" id="dropTitle">Sube tus fotos aquí</div>
+
+                <div class="drop-subtitle" id="dropSubtitle">
+                  para analizarlas, calcular tiempo y precio antes de procesar.
+                </div>
+
+                
+                <div class="upload-actions" id="uploadActions">
+                  <button class="btn btn-danger" id="clearBtn" type="button">Eliminar fotos</button>
+                </div>
+
+<input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
+
+            </div>
+            </div>
+          </div>
+        </div>
+
+
+<div class="panel" id="landingPanel" style="margin-bottom:16px;">
   <div class="panel-inner" style="padding:26px;">
 
     <div style="text-align:center;max-width:900px;margin:0 auto 22px;">
@@ -2409,29 +2432,6 @@
     </div>
   </div>
 </div>
-
-<div class="panel" id="uploadPanel">
-          <div class="panel-inner">
-            <div class="drop" id="drop">
-              <div class="drop-content">
-                <div class="drop-title" id="dropTitle">Subir fotos para analizarlas e iniciar el proceso.</div>
-
-                <div class="drop-subtitle" id="dropSubtitle">
-                  para analizarlas, calcular tiempo y precio antes de procesar.
-                </div>
-
-                
-                <div class="upload-actions" id="uploadActions">
-                  <button class="btn btn-danger" id="clearBtn" type="button">Eliminar fotos</button>
-                </div>
-
-<input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.tif,.tiff,.dng" />
-
-            </div>
-            </div>
-          </div>
-        </div>
-
 
 <div class="panel" id="datasetPanel" style="display:none;">
           <div class="panel-inner">
