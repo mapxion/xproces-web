@@ -6547,26 +6547,51 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       if (/C:\\|->/.test(detailText)) detailText = cleanLiveStepText(detailText);
       const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
 
-      const completedMilestones = [
-        [41, "Preparación completada"],
-        [47, "Emparejado de fotografías completado"],
-        [53, "Orientación de fotografías completada"],
-        [63, "Mapas de profundidad completados"],
-        [72, "Modelo 3D completado"],
-        [76, "UV completado"],
-        [82, "Textura completada"],
-        [86, "Modelo de teselas completado"],
-        [89, "Nube de puntos completada"],
-        [92, "MDE completado"],
-        [94, "Ortomosaico completado"],
-        [95, "Exportaciones completadas"],
-        [98, "ZIP de resultados creado"],
-        [100, "Trabajo completado"]
+      /*
+       * Los procesos terminados se calculan por la fase real alcanzada, no por
+       * el porcentaje visual. El porcentaje mostrado se recalcula según tiempo
+       * estimado y puede ser menor que los porcentajes internos de Metashape.
+       */
+      const processPhaseOrder = [
+        ["matching", "Emparejado de fotografías completado"],
+        ["aligning", "Orientación de fotografías completada"],
+        ["depth", "Mapas de profundidad completados"],
+        ["model", "Modelo 3D completado"],
+        ["uv", "UV completado"],
+        ["texture", "Textura completada"],
+        ["tiled", "Modelo de teselas completado"],
+        ["pointcloud", "Nube de puntos completada"],
+        ["dem", "MDE completado"],
+        ["ortho", "Ortomosaico completado"],
+        ["delivery", "Exportaciones completadas"]
       ];
 
-      const completedProcesses = completedMilestones
-        .filter(([threshold]) => progress > threshold || (progress === 100 && threshold <= 100))
-        .map(([, label]) => label);
+      const normalizedPhaseText = String(phaseText || "").toLowerCase();
+      let currentProcessPhase = livePhase;
+
+      if (/\buv\b/.test(normalizedPhaseText)) currentProcessPhase = "uv";
+      else if (/textur/.test(normalizedPhaseText)) currentProcessPhase = "texture";
+      else if (/tesel/.test(normalizedPhaseText)) currentProcessPhase = "tiled";
+      else if (/nube de puntos/.test(normalizedPhaseText)) currentProcessPhase = "pointcloud";
+      else if (/mde|dem|elevaci/.test(normalizedPhaseText)) currentProcessPhase = "dem";
+      else if (/orto/.test(normalizedPhaseText)) currentProcessPhase = "ortho";
+      else if (/zip|subiendo|entrega|export/.test(normalizedPhaseText)) currentProcessPhase = "delivery";
+
+      const currentProcessIndex = processPhaseOrder.findIndex(([key]) => key === currentProcessPhase);
+
+      const completedProcesses = currentProcessIndex >= 0
+        ? processPhaseOrder.slice(0, currentProcessIndex).map(([, label]) => label)
+        : [];
+
+      if (progress >= 95 && !completedProcesses.includes("Exportaciones completadas")) {
+        completedProcesses.push("Exportaciones completadas");
+      }
+      if (progress >= 98 && !completedProcesses.includes("ZIP de resultados creado")) {
+        completedProcesses.push("ZIP de resultados creado");
+      }
+      if (progress >= 100 && !completedProcesses.includes("Trabajo completado")) {
+        completedProcesses.push("Trabajo completado");
+      }
 
       return `
         <div class="xproces-live-card">
