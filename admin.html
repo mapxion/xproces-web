@@ -538,6 +538,15 @@
     .audit-ok{background:rgba(34,163,74,.08);border:1px solid rgba(34,163,74,.18);border-radius:14px;padding:10px 12px;color:var(--ok);font-weight:800}.audit-fail{background:rgba(212,85,85,.08);border:1px solid rgba(212,85,85,.18);border-radius:14px;padding:10px 12px;color:var(--danger);font-weight:800}.audit-pending{background:rgba(212,154,17,.08);border:1px solid rgba(212,154,17,.18);border-radius:14px;padding:10px 12px;color:var(--warning);font-weight:800}
     @media(max-width:1000px){.payment-summary-grid{grid-template-columns:repeat(2,1fr)}.payment-filters{grid-template-columns:1fr 1fr}}
 
+    /* Telegram en Configuración */
+    .telegram-config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+    .telegram-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .telegram-result{display:none;margin-top:14px;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:800;line-height:1.45}
+    .telegram-result.ok{display:block;background:rgba(34,163,74,.08);border:1px solid rgba(34,163,74,.18);color:var(--ok)}
+    .telegram-result.error{display:block;background:rgba(212,85,85,.08);border:1px solid rgba(212,85,85,.18);color:var(--danger)}
+    .telegram-result.info{display:block;background:rgba(45,127,249,.08);border:1px solid rgba(45,127,249,.18);color:var(--info)}
+    @media(max-width:760px){.telegram-config-grid{grid-template-columns:1fr}}
+
   </style>
 </head>
 <body>
@@ -922,6 +931,38 @@
           <div id="configOutputPrices" class="dashboard-latest-list"></div>
         </div></div>
       </div>
+
+      <div class="panel"><div class="panel-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <h2 class="panel-title" style="margin:0 0 4px;">Notificaciones de Telegram</h2>
+            <div class="admin-note" style="margin:0;">Comprueba la conexión del bot y envía un mensaje de prueba al chat configurado.</div>
+          </div>
+          <span class="badge badge-info" id="telegramStatusBadge">Sin comprobar</span>
+        </div>
+
+        <div class="telegram-config-grid" style="margin-top:14px;">
+          <div class="stat-card">
+            <div class="stat-label">Bot</div>
+            <div class="stat-value small" id="telegramBotName">@XProcesBot</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Chat ID</div>
+            <div class="stat-value small mono" id="telegramChatId">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Última comprobación</div>
+            <div class="stat-value small" id="telegramLastCheck">—</div>
+          </div>
+        </div>
+
+        <div class="telegram-actions">
+          <button class="btn btn-secondary" id="checkTelegramBtn" type="button">Comprobar configuración</button>
+          <button class="btn btn-primary" id="testTelegramBtn" type="button">Enviar mensaje de prueba</button>
+        </div>
+        <div class="telegram-result" id="telegramResult" role="status" aria-live="polite"></div>
+      </div></div>
+
     </div>
 
     <div class="footer-note">
@@ -1096,6 +1137,14 @@
     const payStatComplete = document.getElementById("payStatComplete");
     const payStatPending = document.getElementById("payStatPending");
     const payStatFailed = document.getElementById("payStatFailed");
+
+    const telegramStatusBadge = document.getElementById("telegramStatusBadge");
+    const telegramBotName = document.getElementById("telegramBotName");
+    const telegramChatId = document.getElementById("telegramChatId");
+    const telegramLastCheck = document.getElementById("telegramLastCheck");
+    const checkTelegramBtn = document.getElementById("checkTelegramBtn");
+    const testTelegramBtn = document.getElementById("testTelegramBtn");
+    const telegramResult = document.getElementById("telegramResult");
 
 
 
@@ -1645,6 +1694,91 @@ function translateStage(stage) {
       }
     }
 
+
+
+    function setTelegramResult(type, message) {
+      telegramResult.className = `telegram-result ${type}`;
+      telegramResult.textContent = message;
+    }
+
+    function setTelegramStatus(configured, text) {
+      telegramStatusBadge.className = configured ? "badge badge-ok" : "badge badge-warning";
+      telegramStatusBadge.textContent = text || (configured ? "Configurado" : "No configurado");
+    }
+
+    async function checkTelegramConfiguration(showResult = true) {
+      checkTelegramBtn.disabled = true;
+      checkTelegramBtn.textContent = "Comprobando...";
+      if (showResult) setTelegramResult("info", "Comprobando la configuración de Telegram...");
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/telegram/config`, { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.message || data.error || `Error ${response.status}`);
+        }
+
+        const configured = Boolean(data.configured ?? data.enabled ?? data.ok);
+        const botName = data.bot_username || data.bot_name || data.username || "@XProcesBot";
+        const chatId = data.chat_id || data.chatId || "—";
+
+        telegramBotName.textContent = String(botName).startsWith("@") ? botName : `@${botName}`;
+        telegramChatId.textContent = chatId;
+        telegramLastCheck.textContent = new Date().toLocaleString("es-ES");
+        setTelegramStatus(configured, configured ? "Configurado" : "No configurado");
+
+        if (showResult) {
+          setTelegramResult(
+            configured ? "ok" : "error",
+            configured
+              ? "Telegram está configurado correctamente en el servidor."
+              : "Falta TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID en el servidor."
+          );
+        }
+        return configured;
+      } catch (error) {
+        console.error("telegram config error", error);
+        telegramLastCheck.textContent = new Date().toLocaleString("es-ES");
+        setTelegramStatus(false, "No disponible");
+        if (showResult) setTelegramResult("error", `No se pudo comprobar Telegram: ${error.message}`);
+        return false;
+      } finally {
+        checkTelegramBtn.disabled = false;
+        checkTelegramBtn.textContent = "Comprobar configuración";
+      }
+    }
+
+    async function sendTelegramTest() {
+      testTelegramBtn.disabled = true;
+      testTelegramBtn.textContent = "Enviando...";
+      setTelegramResult("info", "Enviando mensaje de prueba...");
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/telegram/test`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: "xproces_admin" })
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || data.error || `Error ${response.status}`);
+        }
+
+        telegramLastCheck.textContent = new Date().toLocaleString("es-ES");
+        setTelegramStatus(true, "Conectado");
+        setTelegramResult("ok", "Mensaje enviado correctamente. Comprueba Telegram.");
+      } catch (error) {
+        console.error("telegram test error", error);
+        setTelegramStatus(false, "Error de envío");
+        setTelegramResult("error", `No se pudo enviar el mensaje: ${error.message}`);
+      } finally {
+        testTelegramBtn.disabled = false;
+        testTelegramBtn.textContent = "Enviar mensaje de prueba";
+      }
+    }
+
     function renderDashboardLatest(rows){
       const latest=[...rows].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
       dashboardLatestList.innerHTML=latest.length?latest.map(j=>`<div class="dashboard-latest-item"><div><div class="dashboard-latest-title">${escapeHtml(j.project_name||j.id||"Trabajo")}</div><div class="dashboard-latest-meta">${escapeHtml(j.client_email||"Sin email")} · ${formatDate(j.created_at)}</div></div><span class="${statusBadgeClass(j.status)}">${escapeHtml(translateStatus(j.status))}</span><strong>${Number(j.progress||0)}%</strong></div>`).join(""):'<div class="admin-empty-panel">No hay trabajos.</div>';
@@ -1944,6 +2078,9 @@ function translateStage(stage) {
     deliveryStatusFilter.addEventListener("change", renderPayments);
     clearPaymentFiltersBtn.addEventListener("click", () => { paymentSearchInput.value=""; paymentStatusFilter.value=""; deliveryStatusFilter.value=""; renderPayments(); });
     exportPaymentsCsvBtn.addEventListener("click", exportPaymentsCsv);
+
+    checkTelegramBtn.addEventListener("click", () => checkTelegramConfiguration(true));
+    testTelegramBtn.addEventListener("click", sendTelegramTest);
 
 
     if (ADMIN_TOKEN) {
