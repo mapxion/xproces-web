@@ -6,7 +6,7 @@
 (() => {
   "use strict";
 
-  const API = String(window.API_BASE || "https://api.xproces.com").replace(/\/$/, "");
+  const API = "";
   const TELEGRAM_ENDPOINTS = Object.freeze({
     status: `${API}/telegram/status`,
     createLink: `${API}/telegram/link-code`,
@@ -270,32 +270,22 @@
     if (!body) return;
     state.linkCode = String(data.link_code || data.code || state.linkCode || "");
     state.botUsername = String(data.bot_username || state.botUsername || "XProcesBot").replace(/^@/, "");
-    const command = `/vincular ${state.linkCode}`;
-    const botUrl = `https://t.me/${encodeURIComponent(state.botUsername)}`;
+    const botUrl = String(data.bot_url || `https://t.me/${encodeURIComponent(state.botUsername)}?start=${encodeURIComponent(state.linkCode)}`);
     body.innerHTML = `
       <div class="xptg-status-card">
         <div class="xptg-icon">✈️</div>
-        <div><div class="xptg-status-title">Esperando la conexión</div><div class="xptg-status-text">Completa estos pasos en Telegram. La web comprobará automáticamente la vinculación.</div><span class="xptg-badge wait">Pendiente</span></div>
+        <div><div class="xptg-status-title">Esperando la conexión</div><div class="xptg-status-text">Abre el chat privado del bot y pulsa «Iniciar». La web comprobará automáticamente la vinculación.</div><span class="xptg-badge wait">Pendiente</span></div>
       </div>
       <div class="xptg-section">
-        <div class="xptg-section-title">Código temporal</div>
-        <div class="xptg-code"><div class="xptg-code-value">${escapeHtml(state.linkCode || "Generando…")}</div><button class="xptg-copy" id="xptgCopy" type="button">Copiar</button></div>
-        <ol class="xptg-steps">
-          <li>Abre <a href="${botUrl}" target="_blank" rel="noopener">@${escapeHtml(state.botUsername)}</a> en Telegram.</li>
-          <li>Envía el comando <strong>${escapeHtml(command)}</strong>.</li>
-          <li>Espera la confirmación del bot. Esta ventana se actualizará automáticamente.</li>
-        </ol>
+        <div class="xptg-section-title">Conectar cuenta</div>
+        <div class="xptg-status-text">El enlace es privado y temporal. Solo vincula este usuario de XProces con tu chat personal de Telegram.</div>
       </div>
       <div class="xptg-actions">
-        <a class="xptg-btn primary" href="${botUrl}" target="_blank" rel="noopener" style="text-decoration:none">Abrir Telegram</a>
+        <a class="xptg-btn primary" href="${escapeHtml(botUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Abrir Telegram</a>
         <button class="xptg-btn" id="xptgCheckNow" type="button">Comprobar ahora</button>
-        <button class="xptg-btn" id="xptgNewCode" type="button">Generar otro código</button>
+        <button class="xptg-btn" id="xptgNewCode" type="button">Generar otro enlace</button>
       </div>
-      <div id="xptgFeedback">${messageBox("info", "El código es temporal y solo sirve para vincular esta cuenta.")}</div>`;
-    document.getElementById("xptgCopy")?.addEventListener("click", async () => {
-      await navigator.clipboard?.writeText(command).catch(() => {});
-      showFeedback("ok", "Comando copiado.");
-    });
+      <div id="xptgFeedback">${messageBox("info", "En Telegram, pulsa «Iniciar» para completar la conexión.")}</div>`;
     document.getElementById("xptgCheckNow")?.addEventListener("click", loadStatus);
     document.getElementById("xptgNewCode")?.addEventListener("click", createLinkCode);
     startStatusPolling();
@@ -305,7 +295,8 @@
     stopStatusPolling();
     const body = document.getElementById("xptgBody");
     if (!body) return;
-    const username = data.telegram_username ? `@${String(data.telegram_username).replace(/^@/, "")}` : "Cuenta de Telegram vinculada";
+    const telegramUsername = data.telegram_username || data.username;
+    const username = telegramUsername ? `@${String(telegramUsername).replace(/^@/, "")}` : (data.first_name || "Cuenta de Telegram vinculada");
     body.innerHTML = `
       <div class="xptg-status-card">
         <div class="xptg-icon">✈️</div>
