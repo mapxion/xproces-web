@@ -185,7 +185,7 @@
       <div class="xptg-modal" role="dialog" aria-modal="true" aria-labelledby="xptgTitle">
         <div class="xptg-head">
           <div>
-            <h2 class="xptg-title" id="xptgTitle">Mi perfil y notificaciones</h2>
+            <h2 class="xptg-title" id="xptgTitle">Notificaciones Telegram</h2>
             <div class="xptg-subtitle" id="xptgSubtitle">Gestiona los avisos automáticos de tus trabajos.</div>
           </div>
           <button class="xptg-close" id="xptgClose" type="button" aria-label="Cerrar">×</button>
@@ -461,7 +461,7 @@
     button.id = "xptgProfileBtn";
     button.type = "button";
     button.className = "btn btn-secondary xptg-top-btn";
-    button.textContent = "Mi perfil";
+    button.textContent = "Notificaciones Telegram";
     button.addEventListener("click", openProfile);
     actions.insertBefore(button, logout);
   }
@@ -545,7 +545,7 @@
     button.href = COMMUNITY_URL;
     button.target = "_blank";
     button.rel = "noopener noreferrer";
-    button.textContent = "Comunidad";
+    button.textContent = "Comunidad Telegram";
     button.title = "Comunidad XProces: ayuda, sugerencias, drones, toma de datos y procesado";
 
     const firstButton = actions.querySelector("button, a");
