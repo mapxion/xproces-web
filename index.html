@@ -2820,11 +2820,11 @@
                     <div class="xproces-upload-live-value" id="uploadLiveBytes">0 MB / 0 MB</div>
                   </div>
                   <div class="xproces-upload-live-card">
-                    <div class="xproces-upload-live-label">Velocidad actual</div>
+                    <div class="xproces-upload-live-label" id="uploadLiveSpeedLabel">Velocidad actual</div>
                     <div class="xproces-upload-live-value" id="uploadLiveSpeed">Calculando...</div>
                   </div>
                   <div class="xproces-upload-live-card">
-                    <div class="xproces-upload-live-label">Tiempo restante</div>
+                    <div class="xproces-upload-live-label" id="uploadLiveEtaLabel">Tiempo restante</div>
                     <div class="xproces-upload-live-value" id="uploadLiveEta">Calculando...</div>
                   </div>
                 </div>
@@ -3051,6 +3051,8 @@ function stripNullCharsDeep(value) {
     const uploadLiveBytes = document.getElementById("uploadLiveBytes");
     const uploadLiveSpeed = document.getElementById("uploadLiveSpeed");
     const uploadLiveEta = document.getElementById("uploadLiveEta");
+    const uploadLiveSpeedLabel = document.getElementById("uploadLiveSpeedLabel");
+    const uploadLiveEtaLabel = document.getElementById("uploadLiveEtaLabel");
 
     let uploadLiveLastAt = 0;
     let uploadLiveLastBytes = 0;
@@ -3082,8 +3084,59 @@ function stripNullCharsDeep(value) {
       }
       if (uploadLiveFiles) uploadLiveFiles.textContent = `0 / ${totalFiles}`;
       if (uploadLiveBytes) uploadLiveBytes.textContent = `0 B / ${formatBytes(totalBytes)}`;
+      if (uploadLiveSpeedLabel) uploadLiveSpeedLabel.textContent = "Velocidad actual";
+      if (uploadLiveEtaLabel) uploadLiveEtaLabel.textContent = "Tiempo restante";
       if (uploadLiveSpeed) uploadLiveSpeed.textContent = "Calculando...";
       if (uploadLiveEta) uploadLiveEta.textContent = "Calculando...";
+    }
+
+    function formatUploadIdle(seconds) {
+      const value = Number(seconds);
+      if (!Number.isFinite(value) || value < 0) return "Sin datos";
+      if (value < 60) return `Hace ${Math.round(value)} s`;
+      const minutes = Math.floor(value / 60);
+      const secs = Math.round(value % 60);
+      return `Hace ${minutes} min ${secs} s`;
+    }
+
+    function renderServerUploadProgress(job) {
+      const status = String(job?.status || "").toLowerCase();
+      const data = job?.upload_progress;
+      if (status !== "receiving" || !data) {
+        if (uploadLivePanel && !["created", "pending_payment"].includes(status)) {
+          uploadLivePanel.classList.remove("show");
+        }
+        return;
+      }
+
+      const receivedPhotos = Number(data.received_photos || 0);
+      const expectedPhotos = Number(data.expected_photos || 0);
+      const receivedBytes = Number(data.received_bytes || 0);
+      const expectedBytes = Number(data.expected_bytes || 0);
+      const percent = Math.max(0, Math.min(100, Number(data.percent || 0)));
+      const idleSeconds = Number(data.idle_seconds);
+      const stalled = Number.isFinite(idleSeconds) && idleSeconds >= 120;
+
+      if (uploadLivePanel) uploadLivePanel.classList.add("show");
+      if (uploadLiveTitle) uploadLiveTitle.textContent = stalled ? "Subida sin actividad" : "Recibiendo fotografías";
+      if (uploadLiveSubtitle) {
+        uploadLiveSubtitle.textContent = stalled
+          ? "No han llegado archivos nuevos al servidor durante más de 2 minutos."
+          : "Progreso real comprobado directamente en el servidor.";
+      }
+      if (uploadLivePercent) uploadLivePercent.textContent = `${percent.toFixed(percent % 1 ? 1 : 0)}%`;
+      if (uploadLiveFill) {
+        uploadLiveFill.style.width = `${percent}%`;
+        uploadLiveFill.classList.toggle("error", stalled);
+      }
+      if (uploadLiveFiles) uploadLiveFiles.textContent = expectedPhotos > 0 ? `${receivedPhotos} / ${expectedPhotos}` : String(receivedPhotos);
+      if (uploadLiveBytes) uploadLiveBytes.textContent = expectedBytes > 0
+        ? `${formatBytes(receivedBytes)} / ${formatBytes(expectedBytes)}`
+        : formatBytes(receivedBytes);
+      if (uploadLiveSpeedLabel) uploadLiveSpeedLabel.textContent = "Última actividad";
+      if (uploadLiveEtaLabel) uploadLiveEtaLabel.textContent = "Estado del servidor";
+      if (uploadLiveSpeed) uploadLiveSpeed.textContent = formatUploadIdle(idleSeconds);
+      if (uploadLiveEta) uploadLiveEta.textContent = data.complete ? "Completada" : (stalled ? "Parece detenida" : "Recibiendo");
     }
 
     function updateUploadLive({
@@ -3121,6 +3174,8 @@ function stripNullCharsDeep(value) {
       const etaSeconds = uploadLiveSmoothedSpeed > 0 ? remainingBytes / uploadLiveSmoothedSpeed : null;
 
       if (uploadLivePanel) uploadLivePanel.classList.add("show");
+      if (uploadLiveSpeedLabel) uploadLiveSpeedLabel.textContent = "Velocidad actual";
+      if (uploadLiveEtaLabel) uploadLiveEtaLabel.textContent = "Tiempo restante";
       if (uploadLiveSubtitle) {
         uploadLiveSubtitle.textContent = attempt > 1
           ? `Reintentando lote ${batchIndex + 1} de ${totalBatches} · intento ${attempt}`
@@ -3872,6 +3927,7 @@ function getSelectedQualityMode() {
 
       const fullJob = (await fetchFullJob(job)) || job;
       job = { ...job, ...fullJob };
+      renderServerUploadProgress(job);
 
       pendingProjectName = job.project_name || "";
       selectedHistoryJobId = job.id || "";
@@ -7050,6 +7106,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           const job = await getJob(jobId);
           const progress = Number(job.progress ?? 0);
           const status = String(job.status ?? "").toLowerCase();
+          renderServerUploadProgress(job);
           if (datasetPanel) datasetPanel.style.display = "none";
           if (pricingPanel) pricingPanel.style.display = "none";
           if (mapWrap) mapWrap.style.display = "none";
@@ -7066,12 +7123,17 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           }
           if (progressLabel) {
             const uiStatus = normalizeJobStatus(job);
-            if (uiStatus.key === "failed") progressLabel.textContent = uiStatus.label;
+            if (status === "receiving") progressLabel.textContent = "Subiendo fotografías";
+            else if (uiStatus.key === "failed") progressLabel.textContent = uiStatus.label;
             else if (uiStatus.key === "completed") progressLabel.textContent = "Procesado completado";
             else if (uiStatus.key === "queued") progressLabel.textContent = "En cola";
             else progressLabel.textContent = "Procesando";
           }
-          if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, progress))}%`;
+          const visibleProgress = status === "receiving" && job?.upload_progress
+            ? Number(job.upload_progress.percent || 0)
+            : progress;
+          if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, visibleProgress))}%`;
+          if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, visibleProgress))}%`;
 
           let logText = null;
           if (["queued", "running", "done", "completed", "failed", "cancelled"].includes(status)) {
