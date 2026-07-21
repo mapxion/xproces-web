@@ -945,6 +945,108 @@
       background: linear-gradient(90deg, #ff7a7a, #ff5252);
     }
 
+    .xproces-upload-live {
+      display: none;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding: 18px;
+      border: 1px solid rgba(122,171,57,0.30);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.92);
+    }
+
+    .xproces-upload-live.show { display: grid; }
+
+    .xproces-upload-live-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .xproces-upload-live-title {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.2;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .xproces-upload-live-subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    .xproces-upload-live-percent {
+      min-width: 78px;
+      text-align: right;
+      color: var(--accent);
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .xproces-upload-live-bar {
+      width: 100%;
+      height: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #edf1ed;
+    }
+
+    .xproces-upload-live-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width .18s ease;
+    }
+
+    .xproces-upload-live-fill.error {
+      background: linear-gradient(90deg, #ff7a7a, #ff5252);
+    }
+
+    .xproces-upload-live-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .xproces-upload-live-card {
+      min-height: 68px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .xproces-upload-live-label {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .xproces-upload-live-value {
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.3;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    @media (max-width: 760px) {
+      .xproces-upload-live-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
     .status {
       color: var(--text);
       min-height: 92px;
@@ -2695,6 +2797,39 @@
 <div class="panel" id="processPanel" style="display:none;">
           <div class="panel-inner">
             <div class="job-status-box xproces-status-clean">
+              <div class="xproces-upload-live" id="uploadLivePanel" aria-live="polite">
+                <div class="xproces-upload-live-head">
+                  <div>
+                    <h3 class="xproces-upload-live-title" id="uploadLiveTitle">Subiendo fotografías</h3>
+                    <div class="xproces-upload-live-subtitle" id="uploadLiveSubtitle">Preparando la subida...</div>
+                  </div>
+                  <div class="xproces-upload-live-percent" id="uploadLivePercent">0%</div>
+                </div>
+
+                <div class="xproces-upload-live-bar">
+                  <div class="xproces-upload-live-fill" id="uploadLiveFill"></div>
+                </div>
+
+                <div class="xproces-upload-live-grid">
+                  <div class="xproces-upload-live-card">
+                    <div class="xproces-upload-live-label">Fotografías</div>
+                    <div class="xproces-upload-live-value" id="uploadLiveFiles">0 / 0</div>
+                  </div>
+                  <div class="xproces-upload-live-card">
+                    <div class="xproces-upload-live-label">Datos enviados</div>
+                    <div class="xproces-upload-live-value" id="uploadLiveBytes">0 MB / 0 MB</div>
+                  </div>
+                  <div class="xproces-upload-live-card">
+                    <div class="xproces-upload-live-label">Velocidad actual</div>
+                    <div class="xproces-upload-live-value" id="uploadLiveSpeed">Calculando...</div>
+                  </div>
+                  <div class="xproces-upload-live-card">
+                    <div class="xproces-upload-live-label">Tiempo restante</div>
+                    <div class="xproces-upload-live-value" id="uploadLiveEta">Calculando...</div>
+                  </div>
+                </div>
+              </div>
+
               <div class="status" id="jobStatus">Aquí se mostrará el estado real del trabajo una vez iniciado.</div>
 
               <div class="process-download-wrap" id="processDownloadWrap">
@@ -2906,6 +3041,117 @@ function stripNullCharsDeep(value) {
     const progressFill = document.getElementById("progressFill");
     const progressLabel = document.getElementById("progressLabel");
     const progressPercent = document.getElementById("progressPercent");
+
+    const uploadLivePanel = document.getElementById("uploadLivePanel");
+    const uploadLiveTitle = document.getElementById("uploadLiveTitle");
+    const uploadLiveSubtitle = document.getElementById("uploadLiveSubtitle");
+    const uploadLivePercent = document.getElementById("uploadLivePercent");
+    const uploadLiveFill = document.getElementById("uploadLiveFill");
+    const uploadLiveFiles = document.getElementById("uploadLiveFiles");
+    const uploadLiveBytes = document.getElementById("uploadLiveBytes");
+    const uploadLiveSpeed = document.getElementById("uploadLiveSpeed");
+    const uploadLiveEta = document.getElementById("uploadLiveEta");
+
+    let uploadLiveLastAt = 0;
+    let uploadLiveLastBytes = 0;
+    let uploadLiveSmoothedSpeed = 0;
+
+    function formatUploadDuration(seconds) {
+      const value = Math.max(0, Math.round(Number(seconds || 0)));
+      if (!Number.isFinite(value)) return "Calculando...";
+      const hours = Math.floor(value / 3600);
+      const minutes = Math.floor((value % 3600) / 60);
+      const secs = value % 60;
+      if (hours > 0) return `${hours} h ${minutes} min`;
+      if (minutes > 0) return `${minutes} min ${secs} s`;
+      return `${secs} s`;
+    }
+
+    function resetUploadLive(totalFiles, totalBytes) {
+      uploadLiveLastAt = performance.now();
+      uploadLiveLastBytes = 0;
+      uploadLiveSmoothedSpeed = 0;
+
+      if (uploadLivePanel) uploadLivePanel.classList.add("show");
+      if (uploadLiveTitle) uploadLiveTitle.textContent = "Subiendo fotografías";
+      if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = "Conectando con el servidor...";
+      if (uploadLivePercent) uploadLivePercent.textContent = "0%";
+      if (uploadLiveFill) {
+        uploadLiveFill.style.width = "0%";
+        uploadLiveFill.classList.remove("error");
+      }
+      if (uploadLiveFiles) uploadLiveFiles.textContent = `0 / ${totalFiles}`;
+      if (uploadLiveBytes) uploadLiveBytes.textContent = `0 B / ${formatBytes(totalBytes)}`;
+      if (uploadLiveSpeed) uploadLiveSpeed.textContent = "Calculando...";
+      if (uploadLiveEta) uploadLiveEta.textContent = "Calculando...";
+    }
+
+    function updateUploadLive({
+      totalFiles,
+      totalBytes,
+      completedFiles,
+      currentBatchFiles,
+      currentBatchLoaded,
+      uploadedBytes,
+      batchIndex,
+      totalBatches,
+      attempt = 1
+    }) {
+      const now = performance.now();
+      const deltaSeconds = Math.max(0.001, (now - uploadLiveLastAt) / 1000);
+      const deltaBytes = Math.max(0, uploadedBytes - uploadLiveLastBytes);
+      const instantSpeed = deltaBytes / deltaSeconds;
+
+      if (instantSpeed > 0) {
+        uploadLiveSmoothedSpeed = uploadLiveSmoothedSpeed > 0
+          ? (uploadLiveSmoothedSpeed * 0.75) + (instantSpeed * 0.25)
+          : instantSpeed;
+      }
+
+      uploadLiveLastAt = now;
+      uploadLiveLastBytes = uploadedBytes;
+
+      const ratio = totalBytes > 0 ? Math.min(1, uploadedBytes / totalBytes) : 0;
+      const percent = Math.round(ratio * 100);
+      const filesInCurrentBatch = currentBatchFiles > 0
+        ? Math.min(currentBatchFiles, Math.floor(currentBatchFiles * Math.min(1, currentBatchLoaded)))
+        : 0;
+      const visibleCompletedFiles = Math.min(totalFiles, completedFiles + filesInCurrentBatch);
+      const remainingBytes = Math.max(0, totalBytes - uploadedBytes);
+      const etaSeconds = uploadLiveSmoothedSpeed > 0 ? remainingBytes / uploadLiveSmoothedSpeed : null;
+
+      if (uploadLivePanel) uploadLivePanel.classList.add("show");
+      if (uploadLiveSubtitle) {
+        uploadLiveSubtitle.textContent = attempt > 1
+          ? `Reintentando lote ${batchIndex + 1} de ${totalBatches} · intento ${attempt}`
+          : `Lote ${batchIndex + 1} de ${totalBatches}`;
+      }
+      if (uploadLivePercent) uploadLivePercent.textContent = `${percent}%`;
+      if (uploadLiveFill) uploadLiveFill.style.width = `${percent}%`;
+      if (uploadLiveFiles) uploadLiveFiles.textContent = `${visibleCompletedFiles} / ${totalFiles}`;
+      if (uploadLiveBytes) uploadLiveBytes.textContent = `${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`;
+      if (uploadLiveSpeed) {
+        uploadLiveSpeed.textContent = uploadLiveSmoothedSpeed > 0
+          ? `${formatBytes(uploadLiveSmoothedSpeed)}/s`
+          : "Calculando...";
+      }
+      if (uploadLiveEta) {
+        uploadLiveEta.textContent = etaSeconds !== null
+          ? formatUploadDuration(etaSeconds)
+          : "Calculando...";
+      }
+    }
+
+    function finishUploadLive(totalFiles, totalBytes) {
+      if (uploadLivePanel) uploadLivePanel.classList.add("show");
+      if (uploadLiveTitle) uploadLiveTitle.textContent = "Subida completada";
+      if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = "Todas las fotografías han llegado al servidor.";
+      if (uploadLivePercent) uploadLivePercent.textContent = "100%";
+      if (uploadLiveFill) uploadLiveFill.style.width = "100%";
+      if (uploadLiveFiles) uploadLiveFiles.textContent = `${totalFiles} / ${totalFiles}`;
+      if (uploadLiveBytes) uploadLiveBytes.textContent = `${formatBytes(totalBytes)} / ${formatBytes(totalBytes)}`;
+      if (uploadLiveEta) uploadLiveEta.textContent = "Completada";
+    }
 
     const processStageWrap = document.getElementById("processStageWrap");
     const processSelectionSummary = document.getElementById("processSelectionSummary");
@@ -5663,7 +5909,7 @@ if (map) {
       return !!modalResult;
     }
 
-    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches) {
+    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches, uploadedBytesBefore, uploadedFilesBefore, totalUploadBytes, totalUploadFiles) {
       const maxAttempts = 4;
       let lastError = null;
 
@@ -5682,9 +5928,10 @@ if (map) {
 
             xhr.upload.onprogress = function (e) {
               if (e.lengthComputable) {
-                const batchPercent = e.loaded / e.total;
-                const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
-                const rounded = Math.round(overallPercent);
+                const uploadedBytes = Math.min(totalUploadBytes, uploadedBytesBefore + e.loaded);
+                const rounded = totalUploadBytes > 0
+                  ? Math.round((uploadedBytes / totalUploadBytes) * 100)
+                  : 0;
 
                 if (progressFill) progressFill.style.width = `${rounded}%`;
                 if (progressLabel) {
@@ -5693,6 +5940,18 @@ if (map) {
                     : `Reintentando lote ${batchIndex + 1} de ${totalBatches} (${attempt}/${maxAttempts})...`;
                 }
                 if (progressPercent) progressPercent.textContent = `${rounded}%`;
+
+                updateUploadLive({
+                  totalFiles: totalUploadFiles,
+                  totalBytes: totalUploadBytes,
+                  completedFiles: uploadedFilesBefore,
+                  currentBatchFiles: batchFiles.length,
+                  currentBatchLoaded: e.total > 0 ? e.loaded / e.total : 0,
+                  uploadedBytes,
+                  batchIndex,
+                  totalBatches,
+                  attempt
+                });
               }
             };
 
@@ -7146,10 +7405,43 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
         const batches = chunkArray(files, BATCH_SIZE);
+        const batchByteSizes = batches.map((batch) =>
+          batch.reduce((sum, file) => sum + Number(file.size || 0), 0)
+        );
+        let uploadedBytesBefore = 0;
+        let uploadedFilesBefore = 0;
+
+        resetUploadLive(files.length, totalSize);
 
         for (let i = 0; i < batches.length; i++) {
-          await uploadBatch(jobId, batches[i], i, batches.length);
+          await uploadBatch(
+            jobId,
+            batches[i],
+            i,
+            batches.length,
+            uploadedBytesBefore,
+            uploadedFilesBefore,
+            totalSize,
+            files.length
+          );
+
+          uploadedBytesBefore += batchByteSizes[i];
+          uploadedFilesBefore += batches[i].length;
+
+          updateUploadLive({
+            totalFiles: files.length,
+            totalBytes: totalSize,
+            completedFiles: uploadedFilesBefore,
+            currentBatchFiles: 0,
+            currentBatchLoaded: 1,
+            uploadedBytes: uploadedBytesBefore,
+            batchIndex: i,
+            totalBatches: batches.length,
+            attempt: 1
+          });
         }
+
+        finishUploadLive(files.length, totalSize);
 
         if (progressFill) progressFill.style.width = "100%";
         if (progressLabel) progressLabel.textContent = "Verificando subida...";
@@ -7179,6 +7471,9 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         const msg = error.message || "Error durante la subida";
         jobStatusEl.textContent = msg;
         if (progressFill) progressFill.classList.add("error");
+        if (uploadLiveFill) uploadLiveFill.classList.add("error");
+        if (uploadLiveTitle) uploadLiveTitle.textContent = "Subida interrumpida";
+        if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = msg;
         if (progressLabel) progressLabel.textContent = "Subida fallida";
         if (progressPercent) progressPercent.textContent = "Error";
         await showInfoModal(
