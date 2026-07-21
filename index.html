@@ -5664,52 +5664,96 @@ if (map) {
     }
 
     async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches) {
-      return new Promise((resolve, reject) => {
-        const form = new FormData();
-        batchFiles.forEach((file) => form.append("photos", file));
+      const maxAttempts = 4;
+      let lastError = null;
 
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
-        const uploadUserId = getStoredUser()?.id;
-        if (uploadUserId) xhr.setRequestHeader("x-user-id", String(uploadUserId));
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          return await new Promise((resolve, reject) => {
+            const form = new FormData();
+            batchFiles.forEach((file) => form.append("photos", file));
 
-        xhr.upload.onprogress = function (e) {
-          if (e.lengthComputable) {
-            const batchPercent = e.loaded / e.total;
-            const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
-            const rounded = Math.round(overallPercent);
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `${API_BASE}/jobs/${jobId}/upload`, true);
+            xhr.timeout = 10 * 60 * 1000;
 
-            if (progressFill) progressFill.style.width = `${rounded}%`;
-            if (progressLabel) progressLabel.textContent = `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`;
-            if (progressPercent) progressPercent.textContent = `${rounded}%`;
+            const uploadUserId = getStoredUser()?.id;
+            if (uploadUserId) xhr.setRequestHeader("x-user-id", String(uploadUserId));
+
+            xhr.upload.onprogress = function (e) {
+              if (e.lengthComputable) {
+                const batchPercent = e.loaded / e.total;
+                const overallPercent = ((batchIndex + batchPercent) / totalBatches) * 100;
+                const rounded = Math.round(overallPercent);
+
+                if (progressFill) progressFill.style.width = `${rounded}%`;
+                if (progressLabel) {
+                  progressLabel.textContent = attempt === 1
+                    ? `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`
+                    : `Reintentando lote ${batchIndex + 1} de ${totalBatches} (${attempt}/${maxAttempts})...`;
+                }
+                if (progressPercent) progressPercent.textContent = `${rounded}%`;
+              }
+            };
+
+            xhr.onload = function () {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                let data = {};
+                try { data = JSON.parse(xhr.responseText || "{}"); } catch (_) {}
+
+                if (data && data.ok === false) {
+                  reject(new Error(data.message || data.error || `Error subiendo lote ${batchIndex + 1}`));
+                  return;
+                }
+
+                resolve(data);
+                return;
+              }
+
+              let msg = `Error subiendo lote ${batchIndex + 1}: ${xhr.status}`;
+              try {
+                const data = JSON.parse(xhr.responseText || "{}");
+                msg = data.message || data.error || msg;
+              } catch (_) {}
+
+              reject(new Error(msg));
+            };
+
+            xhr.onerror = function () {
+              reject(new Error(`Error de red en lote ${batchIndex + 1}`));
+            };
+
+            xhr.ontimeout = function () {
+              reject(new Error(`Tiempo de espera agotado en lote ${batchIndex + 1}`));
+            };
+
+            xhr.send(form);
+          });
+        } catch (error) {
+          lastError = error;
+
+          if (attempt >= maxAttempts) break;
+
+          const waitSeconds = attempt * 5;
+
+          if (progressLabel) {
+            progressLabel.textContent =
+              `Problema de red en lote ${batchIndex + 1}. Reintentando en ${waitSeconds} s...`;
           }
-        };
 
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            let data = {};
-            try { data = JSON.parse(xhr.responseText || "{}"); } catch (_) {}
-            if (data && data.ok === false) {
-              reject(new Error(data.message || data.error || `Error subiendo lote ${batchIndex + 1}`));
-              return;
-            }
-            resolve(data);
-          } else {
-            let msg = `Error subiendo lote ${batchIndex + 1}: ${xhr.status}`;
-            try {
-              const data = JSON.parse(xhr.responseText || "{}");
-              msg = data.message || data.error || msg;
-            } catch (_) {}
-            reject(new Error(msg));
+          if (jobStatusEl) {
+            jobStatusEl.textContent =
+              `La conexión se interrumpió durante el lote ${batchIndex + 1}. ` +
+              `La subida continúa automáticamente; no cierre esta página.`;
           }
-        };
 
-        xhr.onerror = function () {
-          reject(new Error(`Error de red en lote ${batchIndex + 1}`));
-        };
+          await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+        }
+      }
 
-        xhr.send(form);
-      });
+      throw new Error(
+        `${lastError?.message || `Error subiendo lote ${batchIndex + 1}`} tras ${maxAttempts} intentos`
+      );
     }
 
     async function submitJob(jobId, selectedQualityMode) {
@@ -7142,7 +7186,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           "El procesado no se iniciará.",
           msg.includes("Subida incompleta") ? msg : `${msg}
 
-Revise la conexión y vuelva a subir el proyecto completo.`,
+La web ya ha intentado continuar la subida automáticamente varias veces. Revise la conexión y vuelva a iniciar el proyecto.`,
           "error"
         );
       }
