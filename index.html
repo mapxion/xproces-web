@@ -1836,7 +1836,7 @@
     .invoice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .invoice-form-field{display:grid;gap:5px}.invoice-form-field.full{grid-column:1/-1}
     .invoice-form-field label{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase}
-    .invoice-form-field input{width:100%;min-height:42px;border:1px solid var(--border);border-radius:12px;padding:0 11px;background:#fff;color:var(--text);font-size:14px}
+    .invoice-form-field input,.invoice-form-field select{width:100%;min-height:42px;border:1px solid var(--border);border-radius:12px;padding:0 11px;background:#fff;color:var(--text);font-size:14px}
     @media(max-width:760px){.invoice-form-grid{grid-template-columns:1fr}.invoice-form-field.full{grid-column:auto}}
 
     .job-empty {
@@ -2121,6 +2121,16 @@
     }
 
 
+
+    /* XPROCES: anuncio Telegram en la portada pública */
+    .xproces-public-telegram{margin-bottom:16px;}
+    .xproces-public-telegram-notice{display:flex;align-items:center;gap:18px;max-width:1050px;margin:0 auto;padding:18px 20px;border:1px solid rgba(42,171,238,.22);border-radius:18px;background:rgba(42,171,238,.045);}
+    .xproces-public-telegram-icon{flex:0 0 auto;font-size:34px;line-height:1;}
+    .xproces-public-telegram-copy{min-width:0;}
+    .xproces-public-telegram-kicker{margin-bottom:5px;color:#1688bd;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;}
+    .xproces-public-telegram-copy h2{margin:0 0 6px;color:var(--text);font-size:20px;line-height:1.2;}
+    .xproces-public-telegram-copy p{margin:0;color:var(--muted);font-size:13px;line-height:1.5;font-weight:700;}
+    @media(max-width:760px){.xproces-public-telegram-notice{align-items:flex-start;padding:16px}.xproces-public-telegram-icon{font-size:28px}.xproces-public-telegram-copy h2{font-size:18px}}
 
     /* XPROCES: ejemplo de resultados de una urbanizacion */
     .xproces-example-panel {
@@ -2479,6 +2489,19 @@
 
   </div>
 </div>  
+
+<div class="panel xproces-public-telegram" id="publicTelegramPanel">
+  <div class="panel-inner" style="padding:22px 26px;">
+    <div class="xproces-public-telegram-notice">
+      <div class="xproces-public-telegram-icon">✈️</div>
+      <div class="xproces-public-telegram-copy">
+        <div class="xproces-public-telegram-kicker">Disponible al registrarte</div>
+        <h2>Telegram integrado en XProces</h2>
+        <p>Al crear tu cuenta podrás acceder a una comunidad para resolver consultas y activar avisos privados para seguir el estado de tus trabajos.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="panel xproces-example-panel" id="examplePanel">
   <div class="panel-inner" style="padding:26px;">
@@ -4335,14 +4358,16 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     
     function updateLandingVisibility() {
   const landing = document.getElementById("landingPanel");
+  const publicTelegram = document.getElementById("publicTelegramPanel");
   const example = document.getElementById("examplePanel");
 
-  if (!landing && !example) return;
+  if (!landing && !publicTelegram && !example) return;
 
   const user = getStoredUser();
   const publicDisplay = (user && user.email) ? "none" : "";
 
   if (landing) landing.style.display = publicDisplay;
+  if (publicTelegram) publicTelegram.style.display = publicDisplay;
   if (example) example.style.display = publicDisplay;
 }
 
@@ -4499,12 +4524,16 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           <div class="invoice-form-grid">
             <div class="invoice-form-field full"><label>Empresa o nombre completo</label><input id="pendingInvoiceCompanyName" value="${escapeHtml(saved.company_name || currentUser?.name || "")}"></div>
             <div class="invoice-form-field"><label>NIF / CIF / NIE</label><input id="pendingInvoiceTaxId" value="${escapeHtml(saved.tax_id || "")}"></div>
-            <div class="invoice-form-field"><label>Correo de facturación</label><input id="pendingInvoiceEmail" type="email" value="${escapeHtml(saved.email || currentUser?.email || "")}"></div>
+            <div class="invoice-form-field"><label>Correo de facturación</label><input id="pendingInvoiceEmail" type="email" value="${escapeHtml(saved.email || "")}"></div>
             <div class="invoice-form-field full"><label>Dirección fiscal</label><input id="pendingInvoiceAddress" value="${escapeHtml(saved.address || "")}"></div>
             <div class="invoice-form-field"><label>Código postal</label><input id="pendingInvoicePostalCode" value="${escapeHtml(saved.postal_code || "")}"></div>
             <div class="invoice-form-field"><label>Población</label><input id="pendingInvoiceCity" value="${escapeHtml(saved.city || "")}"></div>
             <div class="invoice-form-field"><label>Provincia</label><input id="pendingInvoiceProvince" value="${escapeHtml(saved.province || "")}"></div>
-            <div class="invoice-form-field"><label>País</label><input id="pendingInvoiceCountry" value="${escapeHtml(saved.country || "España")}"></div>
+            <div class="invoice-form-field"><label>País</label>
+              <select id="pendingInvoiceCountry">
+                ${["España","Portugal","Francia","Italia","Alemania","Bélgica","Países Bajos","Luxemburgo","Irlanda","Austria","Polonia","República Checa","Eslovaquia","Hungría","Rumanía","Bulgaria","Croacia","Eslovenia","Grecia","Chipre","Malta","Dinamarca","Suecia","Finlandia","Estonia","Letonia","Lituania","Noruega","Suiza","Reino Unido","Andorra","Estados Unidos","México","Argentina","Chile","Colombia","Perú","Brasil","Marruecos","Otro"].map(country => `<option value="${country}" ${String(saved.country || "España") === country ? "selected" : ""}>${country}</option>`).join("")}
+              </select>
+            </div>
           </div>`,
         confirmText: "Guardar solicitud",
         cancelText: "Cancelar",
@@ -4567,18 +4596,22 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         subtitle: `Trabajo: ${job?.project_name || job?.id || ""}`,
         body: `
           <div class="modal-note" style="margin-bottom:12px;">
-            La factura será preparada manualmente por INTELSI TELECOMUNICACIONES, S.L.
-            y enviada al correo indicado.
+            Introduzca los datos fiscales del cliente que solicita la factura.
+            La factura se enviará al correo indicado.
           </div>
           <div class="invoice-form-grid">
             <div class="invoice-form-field full"><label>Empresa o nombre completo</label><input id="invoiceCompanyName" value="${escapeHtml(job?.invoice_company_name || user?.name || "")}"></div>
             <div class="invoice-form-field"><label>NIF / CIF / NIE</label><input id="invoiceTaxId" value="${escapeHtml(job?.invoice_tax_id || "")}"></div>
-            <div class="invoice-form-field"><label>Correo de facturación</label><input id="invoiceEmail" type="email" value="${escapeHtml(job?.invoice_email || user?.email || "")}"></div>
+            <div class="invoice-form-field"><label>Correo de facturación</label><input id="invoiceEmail" type="email" value="${escapeHtml(job?.invoice_email || "")}"></div>
             <div class="invoice-form-field full"><label>Dirección fiscal</label><input id="invoiceAddress" value="${escapeHtml(job?.invoice_address || "")}"></div>
             <div class="invoice-form-field"><label>Código postal</label><input id="invoicePostalCode" value="${escapeHtml(job?.invoice_postal_code || "")}"></div>
             <div class="invoice-form-field"><label>Población</label><input id="invoiceCity" value="${escapeHtml(job?.invoice_city || "")}"></div>
             <div class="invoice-form-field"><label>Provincia</label><input id="invoiceProvince" value="${escapeHtml(job?.invoice_province || "")}"></div>
-            <div class="invoice-form-field"><label>País</label><input id="invoiceCountry" value="${escapeHtml(job?.invoice_country || "España")}"></div>
+            <div class="invoice-form-field"><label>País</label>
+              <select id="invoiceCountry">
+                ${["España","Portugal","Francia","Italia","Alemania","Bélgica","Países Bajos","Luxemburgo","Irlanda","Austria","Polonia","República Checa","Eslovaquia","Hungría","Rumanía","Bulgaria","Croacia","Eslovenia","Grecia","Chipre","Malta","Dinamarca","Suecia","Finlandia","Estonia","Letonia","Lituania","Noruega","Suiza","Reino Unido","Andorra","Estados Unidos","México","Argentina","Chile","Colombia","Perú","Brasil","Marruecos","Otro"].map(country => `<option value="${country}" ${String(job?.invoice_country || "España") === country ? "selected" : ""}>${country}</option>`).join("")}
+              </select>
+            </div>
           </div>`,
         confirmText: requested ? "Guardar cambios" : "Enviar solicitud",
         cancelText: "Cancelar",
@@ -4616,7 +4649,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         await showInfoModal(
           "Factura solicitada",
           "La solicitud se ha guardado correctamente.",
-          "INTELSI TELECOMUNICACIONES, S.L. preparará la factura y la enviará al correo indicado."
+          "La factura se preparará manualmente y se enviará al correo indicado."
         );
         await syncStoredJobsFromServer();
       } catch (error) {
