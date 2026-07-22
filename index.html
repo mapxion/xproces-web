@@ -4494,8 +4494,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         subtitle: "La solicitud se enviará automáticamente después de confirmar el pago.",
         body: `
           <div class="modal-note" style="margin-bottom:12px;">
-            La factura será preparada manualmente por INTELSI TELECOMUNICACIONES, S.L.
-            y enviada al correo indicado.
+            La factura será enviada al correo indicado.
           </div>
           <div class="invoice-form-grid">
             <div class="invoice-form-field full"><label>Empresa o nombre completo</label><input id="pendingInvoiceCompanyName" value="${escapeHtml(saved.company_name || currentUser?.name || "")}"></div>
