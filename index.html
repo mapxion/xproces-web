@@ -2339,6 +2339,26 @@
       border-color: rgba(122,171,57,0.45);
       cursor: default;
     }
+    .output-item.xproces-separate-order::after {
+      content: "Pedido aparte";
+      position: absolute;
+      top: -9px;
+      right: -10px;
+      min-height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #d49a11;
+      color: #fff;
+      font-size: 8px;
+      line-height: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 2;
+    }
+
     .output-item.xproces-auto-included::after {
       content: "Incluido";
       position: absolute;
@@ -2799,7 +2819,7 @@
                           <div class="output-item"><button class="output-btn" type="button" data-output="orthomosaic_jpg">Ortomosaico JPG</button><div class="output-tooltip"><strong>Ortomosaico JPG</strong>Versión más ligera del ortomosaico, buena para consulta rápida.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="dem_tif">DSM</button><div class="output-tooltip"><strong>DSM</strong>Modelo digital de superficie para topografía y cartografía.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="dtm_tif">DTM</button><div class="output-tooltip"><strong>DTM</strong>Modelo digital del terreno.</div></div>
-                          <div class="output-item"><button class="output-btn" type="button" data-output="contours_dxf">Curvas de nivel</button><div class="output-tooltip"><strong>Curvas de nivel</strong>Entrega de curvas para trabajo topográfico.</div></div>
+                          <div class="output-item xproces-separate-order"><button class="output-btn" type="button" data-output="contours_dxf">Curvas de nivel</button><div class="output-tooltip"><strong>Curvas de nivel</strong>Entrega opcional solicitada por separado para trabajo topográfico.</div></div>
                           <div class="output-item"><button class="output-btn" type="button" data-output="pdf_report">Informe PDF</button><div class="output-tooltip"><strong>Informe PDF</strong>Resumen del proyecto y del procesado para documentación y entrega.</div></div>
                         </div>
                       </div>
