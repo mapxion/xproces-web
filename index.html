@@ -98,51 +98,41 @@
       border-radius: 12px;
     }
 
-    /* Telegram en el área privada de trabajo */
-    .xproces-work-telegram {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 2px 0;
+    .xproces-preview-banner {
+      display:none;
+      position:sticky;
+      top:0;
+      z-index:9998;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      padding:10px 14px;
+      border:1px solid #b9d7f2;
+      border-radius:14px;
+      background:#eef6ff;
+      color:#245b8f;
+      font-size:13px;
+      font-weight:800;
+      box-shadow:0 8px 22px rgba(36,91,143,.10);
     }
-
-    .xproces-work-telegram.show {
-      display: flex;
+    .xproces-preview-banner.show { display:flex; }
+    .xproces-preview-exit {
+      min-height:32px;
+      padding:0 12px;
+      border:1px solid #9fc5e8;
+      border-radius:10px;
+      background:#fff;
+      color:#245b8f;
+      font-weight:900;
+      cursor:pointer;
     }
-
-    .xproces-work-telegram-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      padding: 0 15px;
-      border: 1px solid rgba(42,171,238,.34);
-      border-radius: 13px;
-      background: #fff;
-      color: #167faf;
-      font-size: 13px;
-      font-weight: 900;
-      text-decoration: none;
-      cursor: pointer;
-      transition: .18s ease;
-    }
-
-    .xproces-work-telegram-btn:hover {
-      background: rgba(42,171,238,.07);
-      border-color: rgba(42,171,238,.52);
-    }
-
-    #xptgProfileBtn,
-    .xptg-top-btn {
-      display: none !important;
-    }
-
-    @media (max-width: 760px) {
-      .xproces-work-telegram-btn {
-        width: 100%;
-      }
+    body.xproces-preview-mode #drop,
+    body.xproces-preview-mode #uploadBtn,
+    body.xproces-preview-mode #invoiceQuoteCard,
+    body.xproces-preview-mode #authActions,
+    body.xproces-preview-mode .upload-actions {
+      display:none !important;
     }
 
     .user-pill {
@@ -2442,6 +2432,10 @@
 </head>
 <body>
   <div class="app">
+    <div class="xproces-preview-banner" id="xprocesPreviewBanner">
+      <span id="xprocesPreviewText">Vista como cliente — solo lectura</span>
+      <button class="xproces-preview-exit" id="xprocesPreviewExit" type="button">Salir de la vista</button>
+    </div>
     <div class="topbar">
       <div class="brand">
         <div class="brand-copy">
@@ -2454,11 +2448,6 @@
         <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
         <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
       </div>
-    </div>
-
-    <div class="xproces-work-telegram" id="workTelegramBar">
-      <button class="xproces-work-telegram-btn" id="workTelegramNotificationsBtn" type="button">Notificaciones Telegram</button>
-      <a class="xproces-work-telegram-btn" href="https://t.me/+9UL6gcS_wys2NmIx" target="_blank" rel="noopener noreferrer">Comunidad Telegram</a>
     </div>
 
     <div class="layout" id="mainLayout">
@@ -4510,6 +4499,9 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
     function getStoredUser() {
       try {
+        const previewRaw = sessionStorage.getItem("xproces_preview_user");
+        if (previewRaw) return JSON.parse(previewRaw);
+
         const raw = localStorage.getItem("xproces_user");
         return raw ? JSON.parse(raw) : null;
       } catch (_) {
@@ -4517,11 +4509,22 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       }
     }
 
+    function isClientPreviewMode() {
+      return Boolean(sessionStorage.getItem("xproces_preview_user"));
+    }
+
     function setStoredUser(user) {
       localStorage.setItem("xproces_user", JSON.stringify(user));
     }
 
     function clearStoredUser() {
+      if (isClientPreviewMode()) {
+        sessionStorage.removeItem("xproces_preview_user");
+        sessionStorage.removeItem("xproces_preview_job_id");
+        sessionStorage.removeItem("xproces_preview_expires_at");
+        window.location.href = "/";
+        return;
+      }
       localStorage.removeItem("xproces_user");
     }
     
@@ -4583,8 +4586,6 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   updateLandingVisibility();
 
   const user = getStoredUser();
-  const workTelegramBar = document.getElementById("workTelegramBar");
-  workTelegramBar?.classList.toggle("show", Boolean(user?.email));
 
       if (!user || !user.email) {
         topbarActions.innerHTML = `
@@ -8452,35 +8453,91 @@ document.addEventListener("click", async function(event) {
     })();
   </script>
 
-  <!-- XProces: modulo independiente de Telegram para usuarios -->
-  <script src="/xproces-telegram.js"></script>
   <script>
     (() => {
-      const notificationsBtn = document.getElementById("workTelegramNotificationsBtn");
-      if (!notificationsBtn) return;
+      const PREVIEW_USER_KEY = "xproces_preview_user";
 
-      notificationsBtn.addEventListener("click", () => {
-        const openTelegramPanel = () => {
-          const moduleButton =
-            document.getElementById("xptgProfileBtn") ||
-            document.getElementById("xptgServicesNotify");
+      function updatePreviewUi() {
+        const raw = sessionStorage.getItem(PREVIEW_USER_KEY);
+        const banner = document.getElementById("xprocesPreviewBanner");
+        if (!raw) {
+          document.body.classList.remove("xproces-preview-mode");
+          banner?.classList.remove("show");
+          return;
+        }
 
-          if (!moduleButton) return false;
-          moduleButton.click();
-          return true;
-        };
+        let user = null;
+        try { user = JSON.parse(raw); } catch (_) {}
+        document.body.classList.add("xproces-preview-mode");
+        banner?.classList.add("show");
 
-        if (openTelegramPanel()) return;
+        const text = document.getElementById("xprocesPreviewText");
+        if (text) {
+          text.textContent = `Vista como cliente: ${user?.name || user?.email || "Usuario"} — solo lectura`;
+        }
 
-        const retryUntil = Date.now() + 2000;
-        const retry = setInterval(() => {
-          if (openTelegramPanel() || Date.now() >= retryUntil) {
-            clearInterval(retry);
+        document.querySelectorAll(
+          "#uploadBtn,#invoiceQuoteBtn,#payBtn,[data-action='delete'],[data-action='cancel']"
+        ).forEach((element) => {
+          element.disabled = true;
+          element.style.display = "none";
+        });
+      }
+
+      async function initializeClientPreview() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("client_preview");
+
+        if (token) {
+          try {
+            const response = await fetch(
+              `${API_BASE}/admin/client-preview/session?token=${encodeURIComponent(token)}`,
+              { cache: "no-store" }
+            );
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok || !data.user) {
+              throw new Error(data.message || "La vista temporal no es válida.");
+            }
+
+            sessionStorage.setItem(PREVIEW_USER_KEY, JSON.stringify(data.user));
+            sessionStorage.setItem("xproces_preview_job_id", String(data.job_id || ""));
+            sessionStorage.setItem("xproces_preview_expires_at", String(data.expires_at || ""));
+
+            params.delete("client_preview");
+            const cleanQuery = params.toString();
+            history.replaceState({}, "", `${location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}${location.hash || ""}`);
+          } catch (error) {
+            alert(error?.message || "No se pudo abrir la vista como cliente.");
+            sessionStorage.removeItem(PREVIEW_USER_KEY);
           }
-        }, 100);
+        }
+
+        updatePreviewUi();
+
+        if (sessionStorage.getItem(PREVIEW_USER_KEY)) {
+          try {
+            renderTopbarUser();
+            await renderStoredJobs();
+          } catch (error) {
+            console.error("No se pudo reconstruir la vista del cliente", error);
+          }
+        }
+      }
+
+      document.getElementById("xprocesPreviewExit")?.addEventListener("click", () => {
+        sessionStorage.removeItem(PREVIEW_USER_KEY);
+        sessionStorage.removeItem("xproces_preview_job_id");
+        sessionStorage.removeItem("xproces_preview_expires_at");
+        window.close();
+        setTimeout(() => { window.location.href = "/"; }, 100);
       });
+
+      initializeClientPreview();
     })();
   </script>
+
+  <!-- XProces: modulo independiente de Telegram para usuarios -->
+  <script src="/xproces-telegram.js"></script>
 
 </body>
 </html>
