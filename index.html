@@ -7622,16 +7622,26 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           updateProcessStages(job);
           renderStoredJobs();
 
-          if (status === "queued" || status === "running") {
+          const liveUiStatus = normalizeJobStatus(job);
+          const showLiveTracking = ["created", "queued", "running", "receiving"].includes(liveUiStatus.key);
+
+          if (showLiveTracking) {
             const eta = await getJobEta(job.id);
 
             if (eta && eta.ok) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            jobStatusEl.innerHTML = window.XProcesLogRenderer
-              ? window.XProcesLogRenderer.render(job, logText, eta)
-              : renderLiveProcessSummary(job, logText, eta);
+            let liveHtml = "";
+            if (window.XProcesLogRenderer?.render) {
+              try {
+                liveHtml = String(window.XProcesLogRenderer.render(job, logText, eta) || "").trim();
+              } catch (rendererError) {
+                console.warn("XProcesLogRenderer no pudo mostrar el seguimiento:", rendererError);
+              }
+            }
+
+            jobStatusEl.innerHTML = liveHtml || renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -8009,7 +8019,15 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
+        jobStatusEl.innerHTML = renderLiveProcessSummary({
+          id: jobId,
+          status: "queued",
+          stage: "queued",
+          progress: 0,
+          photos_count: files.length,
+          quality: selectedQualityModeForJob,
+          outputs_requested: getSelectedOutputs()
+        }, "", null);
         if (progressLabel) progressLabel.textContent = "En cola...";
         if (progressPercent) progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
