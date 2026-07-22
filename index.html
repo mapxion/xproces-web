@@ -5804,7 +5804,8 @@ if (map) {
   tams_export: getSelectedProjectType() === "tams" || isTamsPresetSelected(),
   expected_photos_count: files.length,
   expected_total_bytes: Number(totalSize || 0),
-  pricing_quote: lastPreview?.pricing_quote || null
+  pricing_quote: lastPreview?.pricing_quote || null,
+  invite_exempt: getStoredUser()?.auth_type === "invite"
 })
       });
 
@@ -7335,6 +7336,10 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const timeText = preview.estimated_human || "No disponible";
       const priceText = `${preview.price} €`;
+      const isInviteUser = currentUser?.auth_type === "invite";
+      const paymentNotice = isInviteUser
+        ? `El precio se muestra solo como referencia. Al acceder con un código invitado, este procesado no tendrá coste y comenzará directamente al confirmar.`
+        : `Al confirmar, se abrirá PayPal. Cuando el pago quede confirmado, comenzará automáticamente la subida de las fotografías y el trabajo entrará en cola para su procesado.`;
 
       const ok = await openModal({
         title: "Confirmar procesado",
@@ -7376,7 +7381,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             </div>
             <div class="modal-card full">
               <div class="modal-note">
-                Al confirmar, se abrirá PayPal. Cuando el pago quede confirmado, comenzará automáticamente la subida de las fotografías y el trabajo entrará en cola para su procesado.
+                ${paymentNotice}
               </div>
             </div>
           </div>
@@ -7426,15 +7431,17 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         const createdJob = await createJob(selectedQualityModeForJob);
         const jobId = createdJob.id;
 
-        const paymentOk = await openPayPalCheckout(jobId, Number(createdJob.price ?? preview.price ?? 0), pendingProjectName);
-        if (!paymentOk) {
-          await showInfoModal(
-            "Pago cancelado",
-            "No se ha realizado ningún cargo ni ha comenzado la subida.",
-            "Puede volver a pulsar Iniciar proyecto cuando quiera intentarlo de nuevo.",
-            "warning"
-          );
-          return;
+        if (!isInviteUser) {
+          const paymentOk = await openPayPalCheckout(jobId, Number(createdJob.price ?? preview.price ?? 0), pendingProjectName);
+          if (!paymentOk) {
+            await showInfoModal(
+              "Pago cancelado",
+              "No se ha realizado ningún cargo ni ha comenzado la subida.",
+              "Puede volver a pulsar Iniciar proyecto cuando quiera intentarlo de nuevo.",
+              "warning"
+            );
+            return;
+          }
         }
 
         renderStoredJobs();
@@ -7447,9 +7454,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           progressFill.classList.remove("error");
           progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         }
-        if (progressLabel) progressLabel.textContent = "Pago confirmado. Preparando subida...";
+        if (progressLabel) progressLabel.textContent = isInviteUser
+          ? "Código invitado validado. Preparando subida..."
+          : "Pago confirmado. Preparando subida...";
         if (progressPercent) progressPercent.textContent = "0%";
-        jobStatusEl.textContent = "Pago confirmado. Preparando subida de fotografías...";
+        jobStatusEl.textContent = isInviteUser
+          ? "Procesado sin coste. Preparando subida de fotografías..."
+          : "Pago confirmado. Preparando subida de fotografías...";
 
         if (projectTitle) { projectTitle.style.display = "block"; projectTitle.textContent = "Proyecto: " + (pendingProjectName || "Sin nombre"); }
 
