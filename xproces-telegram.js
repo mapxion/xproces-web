@@ -135,6 +135,17 @@
       .xptg-inline-cta.show{display:flex}
       .xptg-inline-copy strong{display:block;color:var(--text);font-size:13px}
       .xptg-inline-copy span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+      .xptg-services-card{display:none;margin-top:14px;padding:16px;border:1px solid rgba(42,171,238,.22);border-radius:18px;background:rgba(42,171,238,.035)}
+      .xptg-services-card.show{display:block}
+      .xptg-services-title{font-size:16px;font-weight:900;color:var(--text);margin-bottom:5px;text-align:center}
+      .xptg-services-intro{margin:0 auto 14px;max-width:860px;color:var(--muted);font-size:13px;line-height:1.5;text-align:center}
+      .xptg-services-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      .xptg-service{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--border);border-radius:15px;background:#fff}
+      .xptg-service-copy{min-width:0}
+      .xptg-service-copy strong{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+      .xptg-service-copy span{display:block;color:var(--muted);font-size:12px;line-height:1.45}
+      .xptg-service-action{flex:0 0 auto;text-decoration:none;white-space:nowrap}
+      @media(max-width:760px){.xptg-services-grid{grid-template-columns:1fr}.xptg-service{align-items:flex-start;flex-direction:column}.xptg-service-action{width:100%;text-align:center}}
       @media(max-width:650px){.xptg-head,.xptg-body{padding-left:15px;padding-right:15px}.xptg-inline-cta{align-items:flex-start;flex-direction:column}.xptg-actions .xptg-btn{width:100%}.xptg-code{align-items:flex-start;flex-direction:column}}
     `;
     document.head.appendChild(style);
@@ -446,45 +457,51 @@
   }
 
   function injectProfileButton() {
-    const actions = document.getElementById("topbarActions");
-    const user = getUser();
-    if (!actions) return;
-    const existing = document.getElementById("xptgProfileBtn");
-    if (!isRegisteredUser(user)) {
-      existing?.remove();
-      return;
-    }
-    if (existing) return;
-    const logout = document.getElementById("logoutBtn");
-    if (!logout) return;
-    const button = document.createElement("button");
-    button.id = "xptgProfileBtn";
-    button.type = "button";
-    button.className = "btn btn-secondary xptg-top-btn";
-    button.textContent = "Notificaciones Telegram";
-    button.addEventListener("click", openProfile);
-    actions.insertBefore(button, logout);
+    const existing = document.getElementById("xptgProfileButton");
+    if (existing) existing.remove();
   }
 
   function injectInlineCta() {
-    if (document.getElementById("xptgInlineCta")) return;
-    const statusBox = document.querySelector(".xproces-live-card, #statusPanel, .job-status-box");
-    if (!statusBox) return;
-    const cta = document.createElement("div");
-    cta.id = "xptgInlineCta";
-    cta.className = "xptg-inline-cta";
-    cta.innerHTML = `
-      <div class="xptg-inline-copy"><strong>📲 Recibe un aviso cuando termine</strong><span>Puedes cerrar la web y seguir el trabajo desde Telegram.</span></div>
-      <button class="xptg-btn primary" id="xptgInlineButton" type="button">Activar Telegram</button>`;
-    statusBox.appendChild(cta);
-    document.getElementById("xptgInlineButton")?.addEventListener("click", openProfile);
+    const pricingPanel = document.getElementById("pricingPanel");
+    if (!pricingPanel) return;
+
+    let card = document.getElementById("xptgServicesCard");
+    if (!card) {
+      card = document.createElement("section");
+      card.id = "xptgServicesCard";
+      card.className = "xptg-services-card";
+      card.innerHTML = `
+        <div class="xptg-services-title">Telegram XProces</div>
+        <p class="xptg-services-intro">Puedes recibir avisos privados sobre tus trabajos o unirte a la comunidad para resolver dudas y compartir experiencias.</p>
+        <div class="xptg-services-grid">
+          <div class="xptg-service">
+            <div class="xptg-service-copy">
+              <strong>🔔 Notificaciones privadas</strong>
+              <span>Recibe avisos cuando el trabajo sea recibido, empiece, termine o necesite revisión. Solo los verás tú.</span>
+            </div>
+            <button class="xptg-btn primary xptg-service-action" id="xptgServicesNotify" type="button">Configurar avisos</button>
+          </div>
+          <div class="xptg-service">
+            <div class="xptg-service-copy">
+              <strong>💬 Comunidad XProces</strong>
+              <span>Grupo para dudas, sugerencias, drones, toma de datos, fotogrametría y resultados.</span>
+            </div>
+            <a class="xptg-btn primary xptg-service-action" href="https://t.me/+9UL6gcS_wys2NmIx" target="_blank" rel="noopener noreferrer">Entrar en la comunidad</a>
+          </div>
+        </div>`;
+      pricingPanel.insertAdjacentElement("afterend", card);
+      document.getElementById("xptgServicesNotify")?.addEventListener("click", openProfile);
+    }
+
+    const user = getUser();
+    const pricingVisible = pricingPanel.style.display !== "none" && !pricingPanel.hidden;
+    card.classList.toggle("show", Boolean(user?.email && getUserId(user) && pricingVisible));
   }
 
   function updateInlineCta(connected = false) {
-    const cta = document.getElementById("xptgInlineCta");
-    const user = getUser();
-    if (!cta) return;
-    cta.classList.toggle("show", isRegisteredUser(user) && !connected);
+    injectInlineCta();
+    const button = document.getElementById("xptgServicesNotify");
+    if (button) button.textContent = connected ? "Gestionar avisos" : "Configurar avisos";
   }
 
   function monitorUi() {
@@ -528,61 +545,4 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
   else init();
-})();
-
-/* XProces - acceso visible a Comunidad Telegram */
-(() => {
-  "use strict";
-  const COMMUNITY_URL = "https://t.me/+9UL6gcS_wys2NmIx";
-
-  function injectCommunityButton() {
-    const actions = document.getElementById("topbarActions");
-    if (!actions || document.getElementById("xptgCommunityBtn")) return;
-
-    const button = document.createElement("a");
-    button.id = "xptgCommunityBtn";
-    button.className = "btn btn-secondary xptg-top-btn";
-    button.href = COMMUNITY_URL;
-    button.target = "_blank";
-    button.rel = "noopener noreferrer";
-    button.textContent = "Comunidad Telegram";
-    button.title = "Comunidad XProces: ayuda, sugerencias, drones, toma de datos y procesado";
-
-    const firstButton = actions.querySelector("button, a");
-    if (firstButton) actions.insertBefore(button, firstButton);
-    else actions.appendChild(button);
-  }
-
-  function injectCommunityCard() {
-    if (document.getElementById("xptgCommunityCard")) return;
-    const app = document.querySelector(".app");
-    const topbar = document.querySelector(".topbar");
-    if (!app || !topbar) return;
-
-    const card = document.createElement("section");
-    card.id = "xptgCommunityCard";
-    card.style.cssText = "display:none;background:#fff;border:1px solid #dde5df;border-radius:18px;padding:16px 18px;box-shadow:0 10px 30px rgba(24,33,29,.08);";
-    card.innerHTML = `
-      <div style="display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-        <div style="min-width:240px;flex:1">
-          <div style="font-size:17px;font-weight:900;color:#18211d;margin-bottom:5px">Comunidad XProces</div>
-          <div style="font-size:13px;line-height:1.45;color:#6f7d75">Ayuda entre usuarios y administrador, sugerencias, drones, toma de datos, fotogrametría, nubes de puntos, ortofotos, DSM, DTM y modelos 3D.</div>
-        </div>
-        <a href="${COMMUNITY_URL}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="text-decoration:none;white-space:nowrap">Unirme a la comunidad</a>
-      </div>`;
-    topbar.insertAdjacentElement("afterend", card);
-  }
-
-  function ensureCommunity() {
-    injectCommunityButton();
-    injectCommunityCard();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensureCommunity, { once: true });
-  } else {
-    ensureCommunity();
-  }
-
-  new MutationObserver(ensureCommunity).observe(document.documentElement, { childList: true, subtree: true });
 })();
