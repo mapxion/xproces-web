@@ -389,6 +389,23 @@
 .small-btn-danger:hover {
   background: #ffecec;
 }
+
+.small-btn-preview {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:8px 12px;
+  border-radius:12px;
+  background:#eef6ff;
+  color:#2467a8;
+  border:1px solid #cfe2f5;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.small-btn-preview:hover { background:#e2f0ff; }
     
     .small-btn.disabled {
       pointer-events: none;
@@ -1998,7 +2015,8 @@ function translateStage(stage) {
                 Descargar
               </a>
             </td>
-           <td style="display:flex; gap:6px;">
+           <td style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="small-btn-preview" onclick="viewAsClient('${job.id}')">Ver como cliente</button>
             ${
               ["created", "receiving", "queued", "tams_pending_download"].includes(String(job.status || "").toLowerCase())
                 ? `<button class="small-btn" onclick="prioritizeJob('${job.id}')">⬆ Prioridad</button>`
@@ -2008,13 +2026,42 @@ function translateStage(stage) {
             ${
               ["created", "receiving", "queued", "running", "tams_pending_download", "tams_downloading"].includes(String(job.status || "").toLowerCase())
                 ? `<button class="small-btn-danger" onclick="cancelJob('${job.id}')">Cancelar</button>`
-                : "—"
+                : ""
             }
           </td>
           </tr>
         `;
       }).join("");
       syncHorizontalScroll();
+    }
+
+    async function viewAsClient(id) {
+      const previewWindow = window.open("about:blank", "_blank");
+      if (previewWindow) {
+        previewWindow.document.write("<p style='font-family:Arial;padding:20px'>Preparando vista como cliente...</p>");
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/admin/jobs/${encodeURIComponent(id)}/client-preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok || !data.preview_url) {
+          throw new Error(data.message || data.error || `Error ${response.status}`);
+        }
+
+        if (previewWindow) {
+          previewWindow.location.replace(data.preview_url);
+        } else {
+          window.open(data.preview_url, "_blank", "noopener");
+        }
+      } catch (error) {
+        if (previewWindow) previewWindow.close();
+        console.error("viewAsClient error", error);
+        alert(`No se pudo abrir la vista como cliente: ${error?.message || error}`);
+      }
     }
 
     async function cancelJob(id) {
