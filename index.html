@@ -661,7 +661,7 @@
 
     .price-time-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
   align-items: stretch;
 }
@@ -693,6 +693,34 @@
   font-weight: 900;
   color: var(--ok);
 }
+
+    .invoice-quote-card {
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .invoice-quote-card:hover {
+      background:rgba(34,163,74,.13);
+      border-color:rgba(34,163,74,.48);
+    }
+    .invoice-quote-card.disabled {
+      cursor:not-allowed;
+      opacity:.60;
+    }
+    .invoice-quote-action {
+      border:0;
+      background:transparent;
+      padding:0;
+      color:var(--ok);
+      font-size:22px;
+      line-height:1.15;
+      font-weight:900;
+      cursor:inherit;
+    }
+    .invoice-quote-note {
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+    }
 
     .selected-quality-row {
       display: none !important;
@@ -2032,15 +2060,17 @@
     .project-type-card.active{border-color:rgba(122,171,57,.75);background:rgba(122,171,57,.08);}
     .project-type-card-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:5px;text-transform:uppercase;}
     .project-type-card-text{font-size:12px;line-height:1.35;color:var(--muted);font-weight:700;}
-    .xproces-coming-soon{position:relative !important;cursor:not-allowed !important;opacity:.68;}
+    .xproces-coming-soon{position:relative !important;cursor:not-allowed !important;opacity:.68;margin-top:18px;}
     .xproces-coming-soon:hover{border-color:var(--border) !important;background:#fff !important;transform:none !important;box-shadow:none !important;}
     .xproces-coming-soon::after{
-      content:"Próximamente";position:absolute;top:-9px;right:-7px;min-height:18px;padding:0 7px;
+      content:"Próximamente";position:absolute;top:-20px;right:0;min-height:18px;padding:0 8px;
       border-radius:999px;background:#d49a11;color:#fff;font-size:8px;line-height:18px;font-weight:900;
       text-transform:uppercase;letter-spacing:.04em;pointer-events:none;white-space:nowrap;
     }
-    .output-item.xproces-coming-soon{display:inline-flex;opacity:.68;}
+    .output-item.xproces-coming-soon{display:inline-flex;opacity:.68;margin:20px 10px 0;}
     .output-item.xproces-coming-soon .output-btn{cursor:not-allowed;color:var(--muted);background:#f5f7f5;}
+    .outputs-group{row-gap:18px;}
+    .project-type-card.xproces-coming-soon{margin-top:20px;}
     .tams-fields-wrap{display:none;margin-top:10px;border:1px solid var(--border);background:rgba(255,255,255,.86);border-radius:18px;padding:14px;}
     .tams-fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .tams-field.full{grid-column:1/-1;}
@@ -2794,6 +2824,12 @@
                               <div class="price-card-value" id="etaBig">Sin calcular</div>
                             </div>
 
+                            <div class="price-card invoice-quote-card" id="invoiceQuoteCard">
+                              <div class="price-card-label">Factura</div>
+                              <button class="invoice-quote-action" id="invoiceQuoteBtn" type="button">Solicitar factura</button>
+                              <div class="invoice-quote-note" id="invoiceQuoteNote">Se enviará después del pago</div>
+                            </div>
+
                             <div class="price-card">
                               <div class="price-card-label">Precio estimado</div>
                               <div class="price-card-value" id="priceBig">0 €</div>
@@ -3014,6 +3050,7 @@ function stripNullCharsDeep(value) {
     let latestExifSummary = {};
     let latestMissionType = "Sin detectar";
     let pendingProjectName = "";
+    let pendingInvoiceData = null;
     let selectedHistoryJobId = "";
 
     const mainLayout = document.getElementById("mainLayout");
@@ -3241,6 +3278,9 @@ function stripNullCharsDeep(value) {
     const processDownloadBtn = document.getElementById("processDownloadBtn");
 
     const pricingPanel = document.getElementById("pricingPanel");
+    const invoiceQuoteCard = document.getElementById("invoiceQuoteCard");
+    const invoiceQuoteBtn = document.getElementById("invoiceQuoteBtn");
+    const invoiceQuoteNote = document.getElementById("invoiceQuoteNote");
     const processPanel = document.getElementById("processPanel");
     const mapWrap = document.getElementById("mapWrap");
     const qualityModeInput = document.getElementById("qualityMode");
@@ -3358,6 +3398,21 @@ function stripNullCharsDeep(value) {
       if (outputsWrap) outputsWrap.style.display = isAuto && files.length ? "flex" : "none";
       if (outputModeWrap) outputModeWrap.style.display = "none";
       if (pricingPanel) pricingPanel.style.display = isAuto && files.length ? "block" : "none";
+
+      const currentBillingUser = getStoredUser();
+      const billingDisabled = currentBillingUser?.auth_type === "invite";
+      invoiceQuoteCard?.classList.toggle("disabled", billingDisabled);
+      if (invoiceQuoteBtn) {
+        invoiceQuoteBtn.disabled = billingDisabled;
+        invoiceQuoteBtn.textContent = billingDisabled
+          ? "Sin coste"
+          : (pendingInvoiceData ? "Factura solicitada" : "Solicitar factura");
+      }
+      if (invoiceQuoteNote) {
+        invoiceQuoteNote.textContent = billingDisabled
+          ? "No se genera factura"
+          : (pendingInvoiceData ? "Se enviará al confirmar el pago" : "Se enviará después del pago");
+      }
       if (uploadBtn) uploadBtn.textContent = isTams ? "Enviar proyecto TAMS" : "Iniciar procesado";
       if (jobStatusEl && files.length) {
         if (isTams) jobStatusEl.textContent = "Proyecto TAMS: pendiente de enviar. No se calculará precio ni calidad.";
@@ -4417,6 +4472,91 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         name: user?.name || user?.username || user?.email || "",
         email: user?.email || ""
       };
+    }
+
+    async function openPendingInvoiceModal() {
+      const currentUser = getStoredUser() || {};
+      const isInvite = currentUser?.auth_type === "invite";
+
+      if (isInvite) {
+        await showInfoModal(
+          "Factura no disponible",
+          "Los procesados realizados con código invitado no tienen coste.",
+          "Al no existir un pago, no se genera factura de venta.",
+          "warning"
+        );
+        return;
+      }
+
+      const saved = pendingInvoiceData || {};
+      const ok = await openModal({
+        title: "Solicitar factura",
+        subtitle: "La solicitud se enviará automáticamente después de confirmar el pago.",
+        body: `
+          <div class="modal-note" style="margin-bottom:12px;">
+            La factura será preparada manualmente por INTELSI TELECOMUNICACIONES, S.L.
+            y enviada al correo indicado.
+          </div>
+          <div class="invoice-form-grid">
+            <div class="invoice-form-field full"><label>Empresa o nombre completo</label><input id="pendingInvoiceCompanyName" value="${escapeHtml(saved.company_name || currentUser?.name || "")}"></div>
+            <div class="invoice-form-field"><label>NIF / CIF / NIE</label><input id="pendingInvoiceTaxId" value="${escapeHtml(saved.tax_id || "")}"></div>
+            <div class="invoice-form-field"><label>Correo de facturación</label><input id="pendingInvoiceEmail" type="email" value="${escapeHtml(saved.email || currentUser?.email || "")}"></div>
+            <div class="invoice-form-field full"><label>Dirección fiscal</label><input id="pendingInvoiceAddress" value="${escapeHtml(saved.address || "")}"></div>
+            <div class="invoice-form-field"><label>Código postal</label><input id="pendingInvoicePostalCode" value="${escapeHtml(saved.postal_code || "")}"></div>
+            <div class="invoice-form-field"><label>Población</label><input id="pendingInvoiceCity" value="${escapeHtml(saved.city || "")}"></div>
+            <div class="invoice-form-field"><label>Provincia</label><input id="pendingInvoiceProvince" value="${escapeHtml(saved.province || "")}"></div>
+            <div class="invoice-form-field"><label>País</label><input id="pendingInvoiceCountry" value="${escapeHtml(saved.country || "España")}"></div>
+          </div>`,
+        confirmText: "Guardar solicitud",
+        cancelText: "Cancelar",
+        showCancel: true
+      });
+
+      if (!ok) return;
+
+      const payload = {
+        company_name: document.getElementById("pendingInvoiceCompanyName")?.value?.trim(),
+        tax_id: document.getElementById("pendingInvoiceTaxId")?.value?.trim(),
+        email: document.getElementById("pendingInvoiceEmail")?.value?.trim(),
+        address: document.getElementById("pendingInvoiceAddress")?.value?.trim(),
+        postal_code: document.getElementById("pendingInvoicePostalCode")?.value?.trim(),
+        city: document.getElementById("pendingInvoiceCity")?.value?.trim(),
+        province: document.getElementById("pendingInvoiceProvince")?.value?.trim(),
+        country: document.getElementById("pendingInvoiceCountry")?.value?.trim()
+      };
+
+      if (Object.values(payload).some(value => !String(value || "").trim())) {
+        await showInfoModal("Faltan datos", "Complete el formulario fiscal.", "Todos los campos son obligatorios.", "warning");
+        return;
+      }
+
+      pendingInvoiceData = payload;
+      if (invoiceQuoteBtn) invoiceQuoteBtn.textContent = "Factura solicitada";
+      if (invoiceQuoteNote) invoiceQuoteNote.textContent = "Se enviará al confirmar el pago";
+      invoiceQuoteCard?.classList.add("selected");
+    }
+
+    async function submitPendingInvoiceRequest(jobId) {
+      if (!pendingInvoiceData || !jobId) return;
+
+      const currentUser = getStoredUser();
+      const response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}/invoice-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": currentUser?.id || ""
+        },
+        body: JSON.stringify(pendingInvoiceData)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "El pago se confirmó, pero no se pudo registrar la solicitud de factura.");
+      }
+
+      pendingInvoiceData = null;
+      if (invoiceQuoteBtn) invoiceQuoteBtn.textContent = "Factura solicitada";
+      if (invoiceQuoteNote) invoiceQuoteNote.textContent = "Solicitud enviada correctamente";
     }
 
     async function openInvoiceRequestModal(job) {
@@ -5865,6 +6005,18 @@ if (map) {
       if (ok) {
         clearSelectedFilesOnly();
       }
+    });
+
+    invoiceQuoteBtn?.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      await openPendingInvoiceModal();
+    });
+
+    invoiceQuoteCard?.addEventListener("click", async (event) => {
+      if (event.target === invoiceQuoteBtn) return;
+      event.preventDefault();
+      await openPendingInvoiceModal();
     });
 
     uploadBtn.addEventListener("click", async () => {
@@ -7549,6 +7701,19 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
               "warning"
             );
             return;
+          }
+
+          if (pendingInvoiceData) {
+            try {
+              await submitPendingInvoiceRequest(jobId);
+            } catch (invoiceError) {
+              await showInfoModal(
+                "Pago confirmado",
+                "El trabajo continuará normalmente.",
+                invoiceError?.message || "No se pudo registrar la solicitud de factura. Podrá solicitarla después desde el historial.",
+                "warning"
+              );
+            }
           }
         }
 
