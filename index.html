@@ -4271,7 +4271,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       authCode.value = "";
 
       if (authNameWrap) {
-        authNameWrap.style.display = mode === "register" ? "block" : "none";
+        authNameWrap.style.display = (mode === "register" || mode === "invite") ? "block" : "none";
       }
 
       authPasswordWrap.style.display = mode === "invite" ? "none" : "block";
@@ -4567,7 +4567,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         return;
       }
 
-      if (authMode === "register" && !name) {
+      if ((authMode === "register" || authMode === "invite") && !name) {
         await showInfoModal(
           "Falta el nombre o empresa",
           "Debe identificar a la persona o empresa.",
@@ -4607,7 +4607,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           payload = { email, password, name };
         } else if (authMode === "invite") {
           endpoint = `${API_BASE}/auth/invite-login`;
-          payload = { email, code };
+          payload = { email, name, code };
         } else {
           endpoint = `${API_BASE}/auth/login`;
           payload = { email, password };
