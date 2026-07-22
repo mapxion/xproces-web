@@ -6908,20 +6908,15 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const photosText = photosCount > 0 ? String(photosCount) : "Fotografías procesadas";
 
-      const xprocesJobMeta = job?.exif_summary?._xproces || {};
       const jobRequestedRaw = Array.isArray(job?.outputs_requested)
         ? job.outputs_requested
-        : Array.isArray(xprocesJobMeta?.outputs_requested)
-          ? xprocesJobMeta.outputs_requested
-          : typeof job?.outputs_requested === "string"
-            ? job.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
-            : typeof xprocesJobMeta?.outputs_requested === "string"
-              ? xprocesJobMeta.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
-              : [];
+        : typeof job?.outputs_requested === "string"
+          ? job.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
+          : [];
 
-      const requestedRaw = jobRequestedRaw.length
-        ? jobRequestedRaw
-        : parsed.requestedOutputs;
+      const requestedRaw = parsed.requestedOutputs.length
+        ? parsed.requestedOutputs
+        : jobRequestedRaw;
 
       const requestedLabels = requestedRaw.map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
 
@@ -6980,11 +6975,25 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         warningLines.length = 0;
       }
 
+      const completedBatchOutputs = [
+        "Nube de puntos LAS",
+        "Modelo 3D OBJ",
+        "Modelo teselado 3TZ",
+        "Ortofoto GeoTIFF",
+        "MDE GeoTIFF",
+        "MDE color GeoTIFF",
+        "Texturas JPG",
+        "Informe PDF",
+        "Datos de referencia"
+      ];
+
       const generatedText = generatedLabels.length
-        ? [...new Set(generatedLabels)].join(" · ")
-        : requestedLabels.length
-          ? [...new Set(requestedLabels)].join(" · ")
-          : "No disponible";
+        ? generatedLabels.join(" · ")
+        : completed
+          ? completedBatchOutputs.join(" · ")
+          : requestedLabels.length
+            ? requestedLabels.join(" · ")
+            : "No disponible";
 
       const alignedFallback =
         Number(job?.aligned_cameras || 0) > 0
@@ -7384,60 +7393,9 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       const historyProcessIndex = detectHighestProcessPhaseIndex(logText);
       const highestReachedProcessIndex = Math.max(currentProcessIndex, historyProcessIndex);
 
-      const processJobMeta = job?.exif_summary?._xproces || {};
-      const jobRequestedOutputs = Array.isArray(job?.outputs_requested)
-        ? job.outputs_requested
-        : Array.isArray(processJobMeta?.outputs_requested)
-          ? processJobMeta.outputs_requested
-          : typeof job?.outputs_requested === "string"
-            ? job.outputs_requested.split(",").map((item) => item.trim()).filter(Boolean)
-            : typeof processJobMeta?.outputs_requested === "string"
-              ? processJobMeta.outputs_requested.split(",").map((item) => item.trim()).filter(Boolean)
-              : [];
-
-      const requestedProcessKeys = new Set(
-        (jobRequestedOutputs.length ? jobRequestedOutputs : parsed.requestedOutputs)
-          .map((item) => normalizeOutputKey(item))
-          .filter(Boolean)
-      );
-
-      const wantsPointCloud = [...requestedProcessKeys].some((key) =>
-        ["las", "laz", "e57", "ply", "pts", "dem_tif", "dtm_tif", "contours_dxf", "orthomosaic_tif", "orthomosaic_jpg"].includes(key)
-      );
-      const wantsModel = [...requestedProcessKeys].some((key) =>
-        ["mesh_obj", "mesh_fbx", "mesh_stl", "mesh_dae", "mesh_3ds", "mesh_wrl", "mesh_ply", "mesh_u3d", "glb", "textures", "tiled_model"].includes(key)
-      );
-      const wantsTexture = [...requestedProcessKeys].some((key) =>
-        ["textures", "glb", "tiled_model"].includes(key)
-      );
-      const wantsTiled = requestedProcessKeys.has("tiled_model");
-      const wantsDem = [...requestedProcessKeys].some((key) =>
-        ["dem_tif", "dtm_tif", "contours_dxf", "orthomosaic_tif", "orthomosaic_jpg"].includes(key)
-      );
-      const wantsOrtho = requestedProcessKeys.has("orthomosaic_tif") || requestedProcessKeys.has("orthomosaic_jpg");
-
-      const allowedProcessKeys = new Set(["matching", "aligning", "depth", "delivery"]);
-      if (wantsModel) allowedProcessKeys.add("model");
-      if (wantsTexture) {
-        allowedProcessKeys.add("uv");
-        allowedProcessKeys.add("texture");
-      }
-      if (wantsTiled) allowedProcessKeys.add("tiled");
-      if (wantsPointCloud) allowedProcessKeys.add("pointcloud");
-      if (wantsDem) allowedProcessKeys.add("dem");
-      if (wantsOrtho) allowedProcessKeys.add("ortho");
-
-      if (
-        requestedProcessKeys.size === 1 &&
-        (requestedProcessKeys.has("las") || requestedProcessKeys.has("laz"))
-      ) {
-        allowedProcessKeys.clear();
-        ["matching", "aligning", "depth", "pointcloud", "delivery"].forEach((key) => allowedProcessKeys.add(key));
-      }
-
-      const completedProcesses = processPhaseOrder
-        .filter(([key], index) => allowedProcessKeys.has(key) && index < highestReachedProcessIndex)
-        .map(([, label]) => label);
+      const completedProcesses = highestReachedProcessIndex >= 0
+        ? processPhaseOrder.slice(0, highestReachedProcessIndex).map(([, label]) => label)
+        : [];
 
       const deliveryContext = String(logText || "") + "\n" + String(job?.message || "");
       const deliveryStarted = highestReachedProcessIndex >= (phaseIndexByKey.get("delivery") ?? 999);
@@ -7622,26 +7580,16 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           updateProcessStages(job);
           renderStoredJobs();
 
-          const liveUiStatus = normalizeJobStatus(job);
-          const showLiveTracking = ["created", "queued", "running", "receiving"].includes(liveUiStatus.key);
-
-          if (showLiveTracking) {
+          if (status === "queued" || status === "running") {
             const eta = await getJobEta(job.id);
 
             if (eta && eta.ok) {
               etaBig.textContent = eta.total_estimated_human || "No disponible";
             }
 
-            let liveHtml = "";
-            if (window.XProcesLogRenderer?.render) {
-              try {
-                liveHtml = String(window.XProcesLogRenderer.render(job, logText, eta) || "").trim();
-              } catch (rendererError) {
-                console.warn("XProcesLogRenderer no pudo mostrar el seguimiento:", rendererError);
-              }
-            }
-
-            jobStatusEl.innerHTML = liveHtml || renderLiveProcessSummary(job, logText, eta);
+            jobStatusEl.innerHTML = window.XProcesLogRenderer
+              ? window.XProcesLogRenderer.render(job, logText, eta)
+              : renderLiveProcessSummary(job, logText, eta);
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
@@ -8019,15 +7967,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
-        jobStatusEl.innerHTML = renderLiveProcessSummary({
-          id: jobId,
-          status: "queued",
-          stage: "queued",
-          progress: 0,
-          photos_count: files.length,
-          quality: selectedQualityModeForJob,
-          outputs_requested: getSelectedOutputs()
-        }, "", null);
+        jobStatusEl.textContent = "Estado: En cola\nCalculando tiempo restante...";
         if (progressLabel) progressLabel.textContent = "En cola...";
         if (progressPercent) progressPercent.textContent = "0%";
         if (datasetPanel) datasetPanel.style.display = "none";
