@@ -2077,8 +2077,10 @@
     .tams-fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .tams-field.full{grid-column:1/-1;}
     .tams-field label{display:block;font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-    .tams-field input,.tams-field textarea{width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px 12px;font-size:14px;color:var(--text);font-family:Arial,sans-serif;}
+    .tams-field input,.tams-field textarea,.tams-field select{width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px 12px;font-size:14px;color:var(--text);font-family:Arial,sans-serif;}
     .tams-field textarea{min-height:76px;resize:vertical;}
+    .tams-field-help{display:block;margin-top:5px;color:#365F9C;font-size:11px;font-weight:800;}
+    .tams-field-highlight{padding:10px;border:1px solid rgba(54,95,156,.22);border-radius:14px;background:rgba(54,95,156,.045);}
     .tams-info{margin-top:10px;font-size:13px;line-height:1.4;color:var(--muted);font-weight:700;text-align:center;}
     @media(max-width:760px){.project-type-grid,.tams-fields-grid{grid-template-columns:1fr;}}
 
@@ -2708,9 +2710,33 @@
                 <div class="tams-fields-wrap" id="tamsFieldsWrap">
                   <div class="tams-fields-grid">
                     <div class="tams-field"><label>Nombre emplazamiento</label><input id="tamsSiteName" type="text" placeholder="Ej: CATR4688A"></div>
-                    <div class="tams-field"><label>Operador</label><input id="tamsOperator" type="text" placeholder="Ej: Vodafone, Orange, Cellnex..."></div>
-                    <div class="tams-field full"><label>Dirección</label><input id="tamsAddress" type="text" placeholder="Dirección o referencia del emplazamiento"></div>
-                    <div class="tams-field full"><label>Observaciones</label><textarea id="tamsNotes" placeholder=""></textarea></div>
+                    <div class="tams-field tams-field-highlight">
+                      <label>Num. de empresa colaboradora</label>
+                      <input id="tamsOperator" type="text" placeholder="Introduzca el número de empresa colaboradora">
+                      <span class="tams-field-help">Número de empresa colaboradora</span>
+                    </div>
+                    <div class="tams-field tams-field-highlight">
+                      <label>País</label>
+                      <select id="tamsCountry">
+                        <option value="">Seleccione un país</option>
+                        <option value="España">España</option>
+                        <option value="Francia">Francia</option>
+                        <option value="Italia">Italia</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Bolivia">Bolivia</option>
+                        <option value="Brasil">Brasil</option>
+                        <option value="Chile">Chile</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Ecuador">Ecuador</option>
+                        <option value="Paraguay">Paraguay</option>
+                        <option value="Perú">Perú</option>
+                        <option value="Uruguay">Uruguay</option>
+                        <option value="Venezuela">Venezuela</option>
+                      </select>
+                      <span class="tams-field-help">País del emplazamiento</span>
+                    </div>
+                    <div class="tams-field"><label>Dirección</label><input id="tamsAddress" type="text" placeholder="Dirección o referencia del emplazamiento"></div>
+                    <div class="tams-field full"><label>Observaciones</label><textarea id="tamsNotes" placeholder="Información adicional del emplazamiento"></textarea></div>
                   </div>
                   <div class="tams-info">Solo para el Proyecto TAMSsoftware.</div>
                 </div>
@@ -3491,13 +3517,25 @@ function stripNullCharsDeep(value) {
     }
 
 
+    function getMissingTamsFields() {
+      const fields = [
+        ["Nombre del emplazamiento", document.getElementById("tamsSiteName")?.value],
+        ["Núm. de empresa colaboradora", document.getElementById("tamsOperator")?.value],
+        ["País", document.getElementById("tamsCountry")?.value],
+        ["Dirección", document.getElementById("tamsAddress")?.value],
+        ["Observaciones", document.getElementById("tamsNotes")?.value]
+      ];
+      return fields.filter(([, value]) => !String(value || "").trim()).map(([label]) => label);
+    }
+
     function updateStartButtonState() {
       if (!uploadBtn) return;
       const type = getSelectedProjectType();
       const hasFiles = files.length > 0;
       const hasQuality = type === "tams" || !!getSelectedQualityMode();
       const hasOutputs = type === "tams" || getSelectedOutputs().length > 0;
-      const ready = hasFiles && datasetCanUpload && !!type && hasQuality && hasOutputs;
+      const hasTamsData = type !== "tams" || getMissingTamsFields().length === 0;
+      const ready = hasFiles && datasetCanUpload && !!type && hasQuality && hasOutputs && hasTamsData;
       uploadBtn.disabled = !ready;
 
       if (jobStatusEl && hasFiles) {
@@ -3506,7 +3544,7 @@ function stripNullCharsDeep(value) {
         } else if (type === "tams") {
           jobStatusEl.textContent = ready
             ? "Proyecto TAMS listo para enviar. No entrará en procesado."
-            : "Proyecto TAMS: complete los datos y envíe las fotos.";
+            : "Proyecto TAMS: revise que todos los campos estén rellenados.";
         } else if (!getSelectedQualityMode()) {
           jobStatusEl.textContent = "Seleccione una calidad de procesado.";
         } else if (!getSelectedOutputs().length) {
@@ -3518,8 +3556,81 @@ function stripNullCharsDeep(value) {
     }
 
 
+    function buildTamsCountryOptions(selectedValue = "") {
+      const countries = [
+        "España", "Francia", "Italia",
+        "Argentina", "Bolivia", "Brasil", "Chile", "Colombia",
+        "Ecuador", "Paraguay", "Perú", "Uruguay", "Venezuela"
+      ];
+      return [`<option value="">Seleccione un país</option>`]
+        .concat(countries.map((country) => {
+          const selected = selectedValue === country ? " selected" : "";
+          return `<option value="${escapeHtml(country)}"${selected}>${escapeHtml(country)}</option>`;
+        }))
+        .join("");
+    }
+
+    async function openTamsDetailsModal() {
+      const currentOperator = document.getElementById("tamsOperator")?.value?.trim() || "";
+      const currentCountry = document.getElementById("tamsCountry")?.value?.trim() || "";
+
+      const modalPromise = openModal({
+        title: "Datos TAMS",
+        subtitle: "Complete los datos principales del colaborador",
+        body: `
+          <div class="modal-grid">
+            <div class="modal-card">
+              <div class="modal-label">Num. de empresa colaboradora</div>
+              <input id="tamsModalOperator" type="text" value="${escapeHtml(currentOperator)}" placeholder="Introduzca el número de empresa colaboradora" style="width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px 12px;font-size:14px;color:var(--text);font-family:Arial,sans-serif;">
+              <div class="modal-note" style="margin-top:10px;">Número de empresa colaboradora</div>
+            </div>
+            <div class="modal-card">
+              <div class="modal-label">País</div>
+              <select id="tamsModalCountry" style="width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px 12px;font-size:14px;color:var(--text);font-family:Arial,sans-serif;">
+                ${buildTamsCountryOptions(currentCountry)}
+              </select>
+              <div class="modal-note" style="margin-top:10px;">País del emplazamiento</div>
+            </div>
+          </div>
+        `,
+        confirmText: "Guardar",
+        cancelText: "Cerrar",
+        showCancel: true
+      });
+
+      setTimeout(() => {
+        document.getElementById("tamsModalOperator")?.focus();
+      }, 30);
+
+      const confirmed = await modalPromise;
+      if (!confirmed) return;
+
+      const modalOperator = document.getElementById("tamsModalOperator")?.value?.trim() || "";
+      const modalCountry = document.getElementById("tamsModalCountry")?.value?.trim() || "";
+
+      const operatorInput = document.getElementById("tamsOperator");
+      const countrySelect = document.getElementById("tamsCountry");
+
+      if (operatorInput) operatorInput.value = modalOperator;
+      if (countrySelect) countrySelect.value = modalCountry;
+
+      updateStartButtonState();
+    }
+
     document.querySelectorAll(".project-type-card").forEach((btn) => {
-      btn.addEventListener("click", () => setSelectedProjectType(btn.dataset.projectType || ""));
+      btn.addEventListener("click", async () => {
+        const type = btn.dataset.projectType || "";
+        setSelectedProjectType(type);
+        if (type === "tams") {
+          await openTamsDetailsModal();
+        }
+      });
+    });
+
+    ["tamsSiteName", "tamsOperator", "tamsCountry", "tamsAddress", "tamsNotes"].forEach((id) => {
+      const field = document.getElementById(id);
+      field?.addEventListener("input", updateStartButtonState);
+      field?.addEventListener("change", updateStartButtonState);
     });
 
     function getSelectedOutputMode() {
@@ -3687,6 +3798,7 @@ function getSelectedQualityMode() {
         tams: {
           site_name: document.getElementById("tamsSiteName")?.value?.trim() || "",
           operator: document.getElementById("tamsOperator")?.value?.trim() || "",
+          country: document.getElementById("tamsCountry")?.value?.trim() || "",
           address: document.getElementById("tamsAddress")?.value?.trim() || "",
           notes: document.getElementById("tamsNotes")?.value?.trim() || ""
         },
@@ -7622,8 +7734,23 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       }
 
       lastPreview = preview;
-      const selectedQualityModeForJob = getSelectedQualityMode();
-      if (!["fast", "normal", "full"].includes(selectedQualityModeForJob)) {
+
+      const isTamsProject = getSelectedProjectType() === "tams";
+      if (isTamsProject) {
+        const missingTamsFields = getMissingTamsFields();
+        if (missingTamsFields.length) {
+          await showInfoModal(
+            "Complete los datos TAMS",
+            "Faltan datos del emplazamiento",
+            `Revise que todos los campos estén rellenados. Faltan: ${missingTamsFields.join(", ")}.`,
+            "warning"
+          );
+          return;
+        }
+      }
+
+      const selectedQualityModeForJob = isTamsProject ? "normal" : getSelectedQualityMode();
+      if (!isTamsProject && !["fast", "normal", "full"].includes(selectedQualityModeForJob)) {
         await showInfoModal(
           "Seleccione una calidad",
           "Calidad de procesado no válida",
