@@ -39,7 +39,7 @@
   }
 
   function isRegisteredUser(user = getUser()) {
-    return Boolean(user?.email && user?.auth_type !== "invite");
+    return Boolean(user?.email && getUserId(user));
   }
 
   function requestHeaders(user = getUser()) {
@@ -326,7 +326,7 @@
     const user = getUser();
     if (!isRegisteredUser(user) || !getUserId(user)) {
       renderDisconnected();
-      showFeedback("info", "Inicia sesión con una cuenta registrada para conectar Telegram.");
+      showFeedback("info", "Inicia sesión para conectar las notificaciones de Telegram.");
       return;
     }
     if (!silent) renderLoading();
