@@ -1799,6 +1799,18 @@
       line-height: 1.4;
     }
 
+    .invoice-request-btn {
+      display:inline-flex;align-items:center;justify-content:center;min-height:36px;
+      padding:8px 12px;border-radius:12px;background:#fff;color:#7aab39;
+      border:1px solid rgba(122,171,57,.38);font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .invoice-request-btn:disabled{cursor:default;opacity:.65}
+    .invoice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .invoice-form-field{display:grid;gap:5px}.invoice-form-field.full{grid-column:1/-1}
+    .invoice-form-field label{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase}
+    .invoice-form-field input{width:100%;min-height:42px;border:1px solid var(--border);border-radius:12px;padding:0 11px;background:#fff;color:var(--text);font-size:14px}
+    @media(max-width:760px){.invoice-form-grid{grid-template-columns:1fr}.invoice-form-field.full{grid-column:auto}}
+
     .job-empty {
       color: var(--muted);
       font-size: 14px;
@@ -4198,6 +4210,9 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
             <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn xproces-download-link" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
+            ${String(job.payment_status || "").toLowerCase() === "paid" && Number(job.payment_amount ?? job.price ?? 0) > 0
+              ? `<div class="job-card-meta" style="margin-top:8px;"><button class="invoice-request-btn xproces-invoice-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" ${String(job.invoice_status || "").toLowerCase() === "issued" ? "disabled" : ""}>${String(job.invoice_status || "").toLowerCase() === "issued" ? `Factura emitida · ${escapeHtml(job.invoice_number || "")}` : String(job.invoice_status || "").toLowerCase() === "requested" ? "Factura solicitada" : "Solicitar factura"}</button></div>`
+              : ""}
             ${canRecover ? `<div class="job-card-meta" style="margin-top:8px;"><button class="process-download-btn xproces-recovery-card-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" style="min-height:36px; padding:8px 12px; font-size:13px;">Solicitar recuperación</button></div>` : ""}
           `;
 
@@ -4207,6 +4222,14 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
               event.preventDefault();
               event.stopPropagation();
               openRecoveryModal(job);
+              return;
+            }
+
+            const invoiceBtn = event.target.closest(".xproces-invoice-btn");
+            if (invoiceBtn) {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!invoiceBtn.disabled) await openInvoiceRequestModal(job);
               return;
             }
 
@@ -4394,6 +4417,72 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         name: user?.name || user?.username || user?.email || "",
         email: user?.email || ""
       };
+    }
+
+    async function openInvoiceRequestModal(job) {
+      const user = getStoredUser() || {};
+      const requested = String(job?.invoice_status || "").toLowerCase() === "requested";
+
+      const ok = await openModal({
+        title: requested ? "Actualizar datos de factura" : "Solicitar factura",
+        subtitle: `Trabajo: ${job?.project_name || job?.id || ""}`,
+        body: `
+          <div class="modal-note" style="margin-bottom:12px;">
+            La factura será preparada manualmente por INTELSI TELECOMUNICACIONES, S.L.
+            y enviada al correo indicado.
+          </div>
+          <div class="invoice-form-grid">
+            <div class="invoice-form-field full"><label>Empresa o nombre completo</label><input id="invoiceCompanyName" value="${escapeHtml(job?.invoice_company_name || user?.name || "")}"></div>
+            <div class="invoice-form-field"><label>NIF / CIF / NIE</label><input id="invoiceTaxId" value="${escapeHtml(job?.invoice_tax_id || "")}"></div>
+            <div class="invoice-form-field"><label>Correo de facturación</label><input id="invoiceEmail" type="email" value="${escapeHtml(job?.invoice_email || user?.email || "")}"></div>
+            <div class="invoice-form-field full"><label>Dirección fiscal</label><input id="invoiceAddress" value="${escapeHtml(job?.invoice_address || "")}"></div>
+            <div class="invoice-form-field"><label>Código postal</label><input id="invoicePostalCode" value="${escapeHtml(job?.invoice_postal_code || "")}"></div>
+            <div class="invoice-form-field"><label>Población</label><input id="invoiceCity" value="${escapeHtml(job?.invoice_city || "")}"></div>
+            <div class="invoice-form-field"><label>Provincia</label><input id="invoiceProvince" value="${escapeHtml(job?.invoice_province || "")}"></div>
+            <div class="invoice-form-field"><label>País</label><input id="invoiceCountry" value="${escapeHtml(job?.invoice_country || "España")}"></div>
+          </div>`,
+        confirmText: requested ? "Guardar cambios" : "Enviar solicitud",
+        cancelText: "Cancelar",
+        showCancel: true
+      });
+
+      if (!ok) return;
+
+      const payload = {
+        company_name: document.getElementById("invoiceCompanyName")?.value?.trim(),
+        tax_id: document.getElementById("invoiceTaxId")?.value?.trim(),
+        email: document.getElementById("invoiceEmail")?.value?.trim(),
+        address: document.getElementById("invoiceAddress")?.value?.trim(),
+        postal_code: document.getElementById("invoicePostalCode")?.value?.trim(),
+        city: document.getElementById("invoiceCity")?.value?.trim(),
+        province: document.getElementById("invoiceProvince")?.value?.trim(),
+        country: document.getElementById("invoiceCountry")?.value?.trim()
+      };
+
+      if (Object.values(payload).some(v => !String(v || "").trim())) {
+        await showInfoModal("Faltan datos", "Complete el formulario fiscal.", "Todos los campos son obligatorios.", "warning");
+        return;
+      }
+
+      try {
+        const currentUser = getStoredUser();
+        const response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(job.id)}/invoice-request`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json","x-user-id":currentUser?.id || ""},
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) throw new Error(data.message || "No se pudo solicitar la factura.");
+
+        await showInfoModal(
+          "Factura solicitada",
+          "La solicitud se ha guardado correctamente.",
+          "INTELSI TELECOMUNICACIONES, S.L. preparará la factura y la enviará al correo indicado."
+        );
+        await syncStoredJobsFromServer();
+      } catch (error) {
+        await showInfoModal("No se pudo solicitar", "Revise los datos e inténtelo de nuevo.", escapeHtml(error?.message || String(error)), "error");
+      }
     }
 
     function openRecoveryModal(job) {
