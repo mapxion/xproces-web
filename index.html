@@ -6908,15 +6908,20 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       const photosText = photosCount > 0 ? String(photosCount) : "Fotografías procesadas";
 
+      const xprocesJobMeta = job?.exif_summary?._xproces || {};
       const jobRequestedRaw = Array.isArray(job?.outputs_requested)
         ? job.outputs_requested
-        : typeof job?.outputs_requested === "string"
-          ? job.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
-          : [];
+        : Array.isArray(xprocesJobMeta?.outputs_requested)
+          ? xprocesJobMeta.outputs_requested
+          : typeof job?.outputs_requested === "string"
+            ? job.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
+            : typeof xprocesJobMeta?.outputs_requested === "string"
+              ? xprocesJobMeta.outputs_requested.split(",").map((x) => x.trim()).filter(Boolean)
+              : [];
 
-      const requestedRaw = parsed.requestedOutputs.length
-        ? parsed.requestedOutputs
-        : jobRequestedRaw;
+      const requestedRaw = jobRequestedRaw.length
+        ? jobRequestedRaw
+        : parsed.requestedOutputs;
 
       const requestedLabels = requestedRaw.map((item) => formatOutputLabel(String(item).trim().toLowerCase()));
 
@@ -7379,9 +7384,60 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       const historyProcessIndex = detectHighestProcessPhaseIndex(logText);
       const highestReachedProcessIndex = Math.max(currentProcessIndex, historyProcessIndex);
 
-      const completedProcesses = highestReachedProcessIndex >= 0
-        ? processPhaseOrder.slice(0, highestReachedProcessIndex).map(([, label]) => label)
-        : [];
+      const processJobMeta = job?.exif_summary?._xproces || {};
+      const jobRequestedOutputs = Array.isArray(job?.outputs_requested)
+        ? job.outputs_requested
+        : Array.isArray(processJobMeta?.outputs_requested)
+          ? processJobMeta.outputs_requested
+          : typeof job?.outputs_requested === "string"
+            ? job.outputs_requested.split(",").map((item) => item.trim()).filter(Boolean)
+            : typeof processJobMeta?.outputs_requested === "string"
+              ? processJobMeta.outputs_requested.split(",").map((item) => item.trim()).filter(Boolean)
+              : [];
+
+      const requestedProcessKeys = new Set(
+        (jobRequestedOutputs.length ? jobRequestedOutputs : parsed.requestedOutputs)
+          .map((item) => normalizeOutputKey(item))
+          .filter(Boolean)
+      );
+
+      const wantsPointCloud = [...requestedProcessKeys].some((key) =>
+        ["las", "laz", "e57", "ply", "pts", "dem_tif", "dtm_tif", "contours_dxf", "orthomosaic_tif", "orthomosaic_jpg"].includes(key)
+      );
+      const wantsModel = [...requestedProcessKeys].some((key) =>
+        ["mesh_obj", "mesh_fbx", "mesh_stl", "mesh_dae", "mesh_3ds", "mesh_wrl", "mesh_ply", "mesh_u3d", "glb", "textures", "tiled_model"].includes(key)
+      );
+      const wantsTexture = [...requestedProcessKeys].some((key) =>
+        ["textures", "glb", "tiled_model"].includes(key)
+      );
+      const wantsTiled = requestedProcessKeys.has("tiled_model");
+      const wantsDem = [...requestedProcessKeys].some((key) =>
+        ["dem_tif", "dtm_tif", "contours_dxf", "orthomosaic_tif", "orthomosaic_jpg"].includes(key)
+      );
+      const wantsOrtho = requestedProcessKeys.has("orthomosaic_tif") || requestedProcessKeys.has("orthomosaic_jpg");
+
+      const allowedProcessKeys = new Set(["matching", "aligning", "depth", "delivery"]);
+      if (wantsModel) allowedProcessKeys.add("model");
+      if (wantsTexture) {
+        allowedProcessKeys.add("uv");
+        allowedProcessKeys.add("texture");
+      }
+      if (wantsTiled) allowedProcessKeys.add("tiled");
+      if (wantsPointCloud) allowedProcessKeys.add("pointcloud");
+      if (wantsDem) allowedProcessKeys.add("dem");
+      if (wantsOrtho) allowedProcessKeys.add("ortho");
+
+      if (
+        requestedProcessKeys.size === 1 &&
+        (requestedProcessKeys.has("las") || requestedProcessKeys.has("laz"))
+      ) {
+        allowedProcessKeys.clear();
+        ["matching", "aligning", "depth", "pointcloud", "delivery"].forEach((key) => allowedProcessKeys.add(key));
+      }
+
+      const completedProcesses = processPhaseOrder
+        .filter(([key], index) => allowedProcessKeys.has(key) && index < highestReachedProcessIndex)
+        .map(([, label]) => label);
 
       const deliveryContext = String(logText || "") + "\n" + String(job?.message || "");
       const deliveryStarted = highestReachedProcessIndex >= (phaseIndexByKey.get("delivery") ?? 999);
