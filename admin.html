@@ -576,6 +576,7 @@
       <button class="admin-nav-btn active" data-admin-tab="dashboard">Dashboard</button>
       <button class="admin-nav-btn" data-admin-tab="jobs">Trabajos</button>
       <button class="admin-nav-btn" data-admin-tab="payments">Pagos</button>
+      <button class="admin-nav-btn" data-admin-tab="invoices">Facturas</button>
       <button class="admin-nav-btn" data-admin-tab="users">Usuarios</button>
       <button class="admin-nav-btn" data-admin-tab="codes">Códigos</button>
       <button class="admin-nav-btn" data-admin-tab="stats">Estadísticas</button>
@@ -836,6 +837,17 @@
         <div class="users-table-wrap"><table class="users-table" style="min-width:1800px">
           <thead><tr><th>Resultado global</th><th>Proyecto</th><th>Cliente</th><th>Importe</th><th>Pago PayPal</th><th>Trazabilidad con fechas y horas</th><th>Order ID</th><th>Capture ID</th><th>Descargas</th></tr></thead>
           <tbody id="paymentsTableBody"><tr><td colspan="9" class="muted">Cargando...</td></tr></tbody>
+        </table></div>
+      </div></div>
+    </div>
+
+    <div class="admin-section" data-admin-section="invoices">
+      <div class="panel"><div class="panel-inner">
+        <h2 class="panel-title">Solicitudes de factura</h2>
+        <div class="admin-note" style="margin:0 0 14px;">Solicitudes enviadas por clientes con pagos confirmados. Al emitirla manualmente, indique el número y márquela como emitida.</div>
+        <div class="users-table-wrap"><table class="users-table" style="min-width:1500px;">
+          <thead><tr><th>Estado</th><th>Proyecto</th><th>Datos fiscales</th><th>Dirección</th><th>Correo</th><th>Importe</th><th>Solicitada</th><th>Número factura</th><th>Acción</th></tr></thead>
+          <tbody id="invoicesTableBody"><tr><td colspan="9" class="muted">Cargando...</td></tr></tbody>
         </table></div>
       </div></div>
     </div>
@@ -1127,6 +1139,7 @@
     const configPhotoPrices = document.getElementById("configPhotoPrices");
     const configOutputPrices = document.getElementById("configOutputPrices");
     const paymentsTableBody = document.getElementById("paymentsTableBody");
+    const invoicesTableBody = document.getElementById("invoicesTableBody");
     const paymentSearchInput = document.getElementById("paymentSearchInput");
     const paymentStatusFilter = document.getElementById("paymentStatusFilter");
     const deliveryStatusFilter = document.getElementById("deliveryStatusFilter");
@@ -1442,6 +1455,54 @@ function translateStage(stage) {
         if (ps && normalizedPaymentStatus(job) !== ps) return false;
         if (ds && deliveryState(job) !== ds) return false;
         return true;
+      });
+    }
+
+    function renderInvoices() {
+      const rows = jobsCache.filter(job => ["requested","issued"].includes(String(job.invoice_status || "").toLowerCase()));
+      if (!rows.length) {
+        invoicesTableBody.innerHTML = '<tr><td colspan="9" class="muted">No hay solicitudes de factura.</td></tr>';
+        return;
+      }
+
+      invoicesTableBody.innerHTML = rows.map(job => {
+        const issued = String(job.invoice_status || "").toLowerCase() === "issued";
+        const address = [job.invoice_address,job.invoice_postal_code,job.invoice_city,job.invoice_province,job.invoice_country].filter(Boolean).join(", ");
+        return `<tr>
+          <td><span class="badge ${issued ? "badge-ok" : "badge-warning"}">${issued ? "Emitida" : "Solicitada"}</span></td>
+          <td><strong>${escapeHtml(job.project_name || "—")}</strong><div class="mono muted">${escapeHtml(job.id || "")}</div></td>
+          <td><strong>${escapeHtml(job.invoice_company_name || "—")}</strong><br><span class="mono">${escapeHtml(job.invoice_tax_id || "—")}</span></td>
+          <td>${escapeHtml(address || "—")}</td>
+          <td>${escapeHtml(job.invoice_email || "—")}</td>
+          <td><strong>${formatMoney(job.payment_amount ?? job.price)}</strong></td>
+          <td>${formatDate(job.invoice_requested_at)}</td>
+          <td>${issued ? `<strong>${escapeHtml(job.invoice_number || "—")}</strong><br><span class="muted">${formatDate(job.invoice_issued_at)}</span>` : `<input class="invoice-number-input" data-job-id="${escapeHtml(job.id || "")}" placeholder="XP-2026-000001" style="min-height:38px;border:1px solid var(--border);border-radius:10px;padding:0 9px;">`}</td>
+          <td>${issued ? '<span class="muted">Completada</span>' : `<button class="small-btn invoice-issued-btn" type="button" data-job-id="${escapeHtml(job.id || "")}">Marcar emitida</button>`}</td>
+        </tr>`;
+      }).join("");
+
+      invoicesTableBody.querySelectorAll(".invoice-issued-btn").forEach(button => {
+        button.addEventListener("click", async () => {
+          const jobId = button.dataset.jobId;
+          const input = [...invoicesTableBody.querySelectorAll(".invoice-number-input")].find(x => x.dataset.jobId === jobId);
+          const invoiceNumber = String(input?.value || "").trim();
+          if (!invoiceNumber) { alert("Indica el número de factura."); input?.focus(); return; }
+          button.disabled = true;
+          try {
+            const response = await fetch(`${API_BASE}/admin/jobs/${encodeURIComponent(jobId)}/invoice-issued`, {
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({invoice_number:invoiceNumber})
+            });
+            const data = await response.json().catch(()=>({}));
+            if (!response.ok || !data.ok) throw new Error(data.message || "No se pudo actualizar.");
+            await loadJobs();
+          } catch (error) {
+            alert(error?.message || String(error));
+          } finally {
+            button.disabled = false;
+          }
+        });
       });
     }
 
@@ -1891,6 +1952,7 @@ function translateStage(stage) {
       const rows = getFilteredJobs();
       renderStats(jobsCache);
       renderPayments();
+      renderInvoices();
 
       if (!rows.length) {
         jobsTableBody.innerHTML = `
