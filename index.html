@@ -98,6 +98,53 @@
       border-radius: 12px;
     }
 
+    /* Telegram en el área privada de trabajo */
+    .xproces-work-telegram {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 2px 0;
+    }
+
+    .xproces-work-telegram.show {
+      display: flex;
+    }
+
+    .xproces-work-telegram-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 15px;
+      border: 1px solid rgba(42,171,238,.34);
+      border-radius: 13px;
+      background: #fff;
+      color: #167faf;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .xproces-work-telegram-btn:hover {
+      background: rgba(42,171,238,.07);
+      border-color: rgba(42,171,238,.52);
+    }
+
+    #xptgProfileBtn,
+    .xptg-top-btn {
+      display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .xproces-work-telegram-btn {
+        width: 100%;
+      }
+    }
+
     .user-pill {
       display: inline-flex;
       align-items: center;
@@ -2409,6 +2456,11 @@
       </div>
     </div>
 
+    <div class="xproces-work-telegram" id="workTelegramBar">
+      <button class="xproces-work-telegram-btn" id="workTelegramNotificationsBtn" type="button">Notificaciones Telegram</button>
+      <a class="xproces-work-telegram-btn" href="https://t.me/+9UL6gcS_wys2NmIx" target="_blank" rel="noopener noreferrer">Comunidad Telegram</a>
+    </div>
+
     <div class="layout" id="mainLayout">
       <div class="left-stack">
       <div class="panel" id="uploadPanel">
@@ -4531,6 +4583,8 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   updateLandingVisibility();
 
   const user = getStoredUser();
+  const workTelegramBar = document.getElementById("workTelegramBar");
+  workTelegramBar?.classList.toggle("show", Boolean(user?.email));
 
       if (!user || !user.email) {
         topbarActions.innerHTML = `
@@ -8400,6 +8454,33 @@ document.addEventListener("click", async function(event) {
 
   <!-- XProces: modulo independiente de Telegram para usuarios -->
   <script src="/xproces-telegram.js"></script>
+  <script>
+    (() => {
+      const notificationsBtn = document.getElementById("workTelegramNotificationsBtn");
+      if (!notificationsBtn) return;
+
+      notificationsBtn.addEventListener("click", () => {
+        const openTelegramPanel = () => {
+          const moduleButton =
+            document.getElementById("xptgProfileBtn") ||
+            document.getElementById("xptgServicesNotify");
+
+          if (!moduleButton) return false;
+          moduleButton.click();
+          return true;
+        };
+
+        if (openTelegramPanel()) return;
+
+        const retryUntil = Date.now() + 2000;
+        const retry = setInterval(() => {
+          if (openTelegramPanel() || Date.now() >= retryUntil) {
+            clearInterval(retry);
+          }
+        }, 100);
+      });
+    })();
+  </script>
 
 </body>
 </html>
