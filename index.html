@@ -2429,6 +2429,51 @@
 
     gtag('config', 'G-1FV4TSWPXP');
   </script>
+
+<style id="xprocesMainViewStyles">
+  body.xproces-home-view #uploadPanel,
+  body.xproces-home-view #datasetPanel,
+  body.xproces-home-view .right-stack {
+    display: none !important;
+  }
+
+  body.xproces-home-view #mainLayout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body.xproces-home-view .left-stack {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.xproces-private-view #landingPanel,
+  body.xproces-private-view #customProcessingPanel,
+  body.xproces-private-view #publicTelegramPanel,
+  body.xproces-private-view #examplePanel {
+    display: none !important;
+  }
+
+  .xproces-nav-btn.is-active {
+    background: #7aab39 !important;
+    border-color: #7aab39 !important;
+    color: #fff !important;
+    box-shadow: 0 7px 18px rgba(122,171,57,0.22);
+  }
+
+  @media (max-width: 760px) {
+    .topbar-actions {
+      gap: 7px;
+    }
+
+    .xproces-nav-btn {
+      min-height: 38px;
+      padding-left: 11px;
+      padding-right: 11px;
+      font-size: 12px;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div class="app">
@@ -4589,20 +4634,62 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       localStorage.removeItem("xproces_user");
     }
     
+    function getMainView() {
+      const user = getStoredUser();
+      if (!user || !user.email) return "home";
+
+      const stored = sessionStorage.getItem("xproces_main_view");
+      return stored === "home" ? "home" : "private";
+    }
+
+    function setMainView(view, options = {}) {
+      const user = getStoredUser();
+      const nextView = (view === "home" || !user || !user.email) ? "home" : "private";
+
+      if (user && user.email) {
+        sessionStorage.setItem("xproces_main_view", nextView);
+      } else {
+        sessionStorage.removeItem("xproces_main_view");
+      }
+
+      document.body.classList.toggle("xproces-home-view", nextView === "home");
+      document.body.classList.toggle("xproces-private-view", nextView === "private");
+
+      updateLandingVisibility();
+      updateTopbarNavigationState();
+
+      if (options.scroll !== false) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
     function updateLandingVisibility() {
-  const landing = document.getElementById("landingPanel");
-  const publicTelegram = document.getElementById("publicTelegramPanel");
-  const example = document.getElementById("examplePanel");
+      const publicIds = [
+        "landingPanel",
+        "customProcessingPanel",
+        "publicTelegramPanel",
+        "examplePanel"
+      ];
 
-  if (!landing && !publicTelegram && !example) return;
+      const showPublic = getMainView() === "home";
 
-  const user = getStoredUser();
-  const publicDisplay = (user && user.email) ? "none" : "";
+      publicIds.forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = showPublic ? "" : "none";
+      });
 
-  if (landing) landing.style.display = publicDisplay;
-  if (publicTelegram) publicTelegram.style.display = publicDisplay;
-  if (example) example.style.display = publicDisplay;
-}
+      document.body.classList.toggle("xproces-home-view", showPublic);
+      document.body.classList.toggle("xproces-private-view", !showPublic);
+    }
+
+    function updateTopbarNavigationState() {
+      const view = getMainView();
+      const homeButton = document.getElementById("homeViewBtn");
+      const privateButton = document.getElementById("privateViewBtn");
+
+      if (homeButton) homeButton.classList.toggle("is-active", view === "home");
+      if (privateButton) privateButton.classList.toggle("is-active", view === "private");
+    }
 
     function openAuthModal(mode = "login") {
       authMode = mode;
@@ -4664,21 +4751,34 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       const userType = user.auth_type === "invite" ? "Invitado" : "Usuario";
 
       topbarActions.innerHTML = `
+        <button class="btn btn-secondary xproces-nav-btn" id="homeViewBtn" type="button">Página principal</button>
+        <button class="btn btn-secondary xproces-nav-btn" id="privateViewBtn" type="button">Área privada</button>
         <div class="user-pill">${userType} · ${user.name || "Usuario"} · ${user.email}</div>
         <button class="btn btn-secondary" id="logoutBtn" type="button">Salir</button>
       `;
 
+      document.getElementById("homeViewBtn").addEventListener("click", () => {
+        setMainView("home");
+      });
+
+      document.getElementById("privateViewBtn").addEventListener("click", () => {
+        setMainView("private");
+      });
+
       document.getElementById("logoutBtn").addEventListener("click", () => {
         stopPolling();
         clearStoredUser();
+        sessionStorage.removeItem("xproces_main_view");
         clearStoredJobs();
         clearSavedSelectedHistoryJobId();
         resetAll();
         renderTopbarUser();
         renderStoredJobs();
         closeAuthModal();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setMainView("home");
       });
+
+      updateTopbarNavigationState();
     }
 
     function formatBytes(bytes) {
@@ -5139,7 +5239,9 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         }
 
         setStoredUser(data.user);
+        sessionStorage.setItem("xproces_main_view", "private");
         renderTopbarUser();
+        setMainView("private", { scroll: false });
         renderStoredJobs();
         closeAuthModal();
       } catch (error) {
@@ -8428,6 +8530,7 @@ No inicie otro proyecto ni repita el pago. Actualice la página o consulte Mis t
       resetAll();
 renderStoredJobs();
 renderTopbarUser();
+setMainView(getMainView(), { scroll: false });
 syncStoredUserToForm();
 
 setTimeout(async () => {
