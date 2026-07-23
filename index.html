@@ -6532,6 +6532,43 @@ if (map) {
       );
     }
 
+    const ACCEPTED_JOB_STATUSES = new Set([
+      "queued",
+      "running",
+      "done",
+      "completed",
+      "tams_pending_download",
+      "tams_downloaded"
+    ]);
+
+    function normalizeJobStatusValue(status) {
+      return String(status || "").trim().toLowerCase();
+    }
+
+    function isAcceptedJobStatus(status) {
+      return ACCEPTED_JOB_STATUSES.has(normalizeJobStatusValue(status));
+    }
+
+    function waitMs(milliseconds) {
+      return new Promise((resolve) => setTimeout(resolve, milliseconds));
+    }
+
+    async function readResponsePayload(response) {
+      const text = await response.text().catch(() => "");
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch (_) {
+        return { message: text };
+      }
+    }
+
+    function makeWorkflowError(message, details = {}) {
+      const error = new Error(message);
+      Object.assign(error, details);
+      return error;
+    }
+
     async function submitJob(jobId, selectedQualityMode) {
       console.log("[XPROCES] quality_mode enviado al submit:", selectedQualityMode);
       const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
@@ -6548,34 +6585,207 @@ if (map) {
         })
       });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`No se pudo enviar el job a procesado (${response.status}) ${text}`);
+      const data = await readResponsePayload(response);
+
+      if (response.ok && data.ok !== false) {
+        return data;
       }
 
-      return response.json();
+      // Compatibilidad defensiva con una API anterior: si /submit devuelve
+      // job_locked porque otra petición o el watchdog ya lo puso en cola,
+      // comprobamos el estado real antes de mostrar un error al cliente.
+      if (response.status === 409 && data.error === "job_locked") {
+        const currentJob = await getJob(jobId).catch(() => null);
+        if (currentJob && isAcceptedJobStatus(currentJob.status)) {
+          return {
+            ok: true,
+            already_submitted: true,
+            status: normalizeJobStatusValue(currentJob.status),
+            jobId
+          };
+        }
+      }
+
+      throw makeWorkflowError(
+        data.message || data.error || `No se pudo enviar el job a procesado (${response.status})`,
+        {
+          code: data.error || "submit_failed",
+          httpStatus: response.status,
+          responseData: data
+        }
+      );
     }
 
-    async function completeUpload(jobId) {
-      const response = await fetch(`${API_BASE}/jobs/${jobId}/complete-upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          expected_photos_count: files.length,
-          expected_total_bytes: Number(totalSize || 0)
-        })
-      });
+    async function completeUpload(jobId, options = {}) {
+      const maxAttempts = Math.max(1, Number(options.maxAttempts || 6));
+      const retryDelays = [1200, 2000, 3000, 4500, 6500, 8000];
+      let lastError = null;
+      let lastData = null;
 
-      const data = await response.json().catch(() => ({}));
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        let response;
+        let data = {};
 
-      if (!response.ok || !data.ok || !data.ready) {
+        try {
+          response = await fetch(`${API_BASE}/jobs/${jobId}/complete-upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              expected_photos_count: files.length,
+              expected_total_bytes: Number(totalSize || 0)
+            })
+          });
+
+          data = await readResponsePayload(response);
+          lastData = data;
+        } catch (networkError) {
+          lastError = makeWorkflowError(
+            networkError?.message || "No se pudo confirmar la subida con el servidor.",
+            {
+              code: "complete_upload_network_error",
+              retryable: true,
+              cause: networkError
+            }
+          );
+
+          if (attempt < maxAttempts) {
+            const delay = retryDelays[Math.min(attempt - 1, retryDelays.length - 1)];
+            if (progressLabel) {
+              progressLabel.textContent = `Confirmando subida con el servidor (${attempt}/${maxAttempts})...`;
+            }
+            await waitMs(delay);
+            continue;
+          }
+          break;
+        }
+
+        if (response.ok && data.ok !== false && data.ready) {
+          return data;
+        }
+
+        if (isAcceptedJobStatus(data.status)) {
+          return {
+            ...data,
+            ok: true,
+            ready: true,
+            already_submitted: true
+          };
+        }
+
+        const retryable =
+          response.status === 202 ||
+          response.status === 429 ||
+          response.status >= 500 ||
+          data.error === "upload_waiting" ||
+          data.error === "complete-upload error" ||
+          data.error === "upload_bytes_mismatch";
+
         const expected = data.expectedPhotos || files.length;
         const received = data.realCount ?? data.uploadedPhotos ?? 0;
-        const message = data.message || `Subida incompleta: esperadas ${expected} fotos, recibidas ${received}. El procesado no se iniciará.`;
-        throw new Error(message);
+        const message =
+          data.message ||
+          `Subida incompleta: esperadas ${expected} fotos, recibidas ${received}.`;
+
+        lastError = makeWorkflowError(message, {
+          code: data.error || "complete_upload_failed",
+          httpStatus: response.status,
+          responseData: data,
+          retryable
+        });
+
+        if (retryable && attempt < maxAttempts) {
+          const delay = retryDelays[Math.min(attempt - 1, retryDelays.length - 1)];
+          if (progressLabel) {
+            progressLabel.textContent =
+              data.error === "upload_waiting"
+                ? `Esperando confirmación del servidor (${attempt}/${maxAttempts})...`
+                : `Verificando integridad de la subida (${attempt}/${maxAttempts})...`;
+          }
+          if (jobStatusEl && message) {
+            jobStatusEl.textContent = message;
+          }
+          await waitMs(delay);
+          continue;
+        }
+
+        break;
       }
 
-      return data;
+      // Última comprobación contra el estado autoritativo. Si el trabajo ya
+      // está en cola/procesando o el servidor refleja exactamente las fotos y
+      // bytes enviados, no convertimos un timeout de respuesta en un falso fallo.
+      const currentJob = await getJob(jobId).catch(() => null);
+
+      if (currentJob && isAcceptedJobStatus(currentJob.status)) {
+        return {
+          ok: true,
+          ready: true,
+          already_submitted: true,
+          status: normalizeJobStatusValue(currentJob.status),
+          realCount: Number(currentJob.photos_count || files.length),
+          realBytes: Number(currentJob.input_total_bytes || totalSize)
+        };
+      }
+
+      const currentStatus = normalizeJobStatusValue(currentJob?.status);
+      const serverCount = Number(currentJob?.photos_count || 0);
+      const serverBytes = Number(currentJob?.input_total_bytes || 0);
+      const countMatches = serverCount >= files.length;
+      const bytesMatch = Number(totalSize || 0) <= 0 || serverBytes === Number(totalSize || 0);
+
+      if (currentStatus === "receiving" && countMatches && bytesMatch) {
+        return {
+          ok: true,
+          ready: true,
+          status: "receiving",
+          verified_by_job_state: true,
+          realCount: serverCount,
+          realBytes: serverBytes
+        };
+      }
+
+      throw lastError || makeWorkflowError(
+        lastData?.message || "No se pudo confirmar la subida completa.",
+        {
+          code: lastData?.error || "complete_upload_failed",
+          responseData: lastData
+        }
+      );
+    }
+
+    async function reconcileUploadOutcome(jobId, selectedQualityMode) {
+      let currentJob = await getJob(jobId).catch(() => null);
+
+      if (currentJob && isAcceptedJobStatus(currentJob.status)) {
+        return { confirmed: true, pending: false, job: currentJob };
+      }
+
+      const status = normalizeJobStatusValue(currentJob?.status);
+      const serverCount = Number(currentJob?.photos_count || 0);
+      const serverBytes = Number(currentJob?.input_total_bytes || 0);
+      const countMatches = serverCount >= files.length;
+      const bytesMatch = Number(totalSize || 0) <= 0 || serverBytes === Number(totalSize || 0);
+
+      if (status === "receiving" && countMatches && bytesMatch) {
+        try {
+          await completeUpload(jobId, { maxAttempts: 3 });
+          await submitJob(jobId, selectedQualityMode);
+        } catch (recoveryError) {
+          console.warn("[XPROCES] Confirmación final pendiente:", recoveryError);
+        }
+
+        currentJob = await getJob(jobId).catch(() => currentJob);
+
+        if (currentJob && isAcceptedJobStatus(currentJob.status)) {
+          return { confirmed: true, pending: false, job: currentJob };
+        }
+
+        // Los archivos completos ya están en el servidor. El watchdog seguro
+        // terminará de encolarlo si la respuesta final vuelve a perderse.
+        return { confirmed: true, pending: true, job: currentJob };
+      }
+
+      return { confirmed: false, pending: false, job: currentJob };
     }
 
     async function getJob(jobId) {
@@ -7902,13 +8112,18 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       pendingProjectName = projectNameValue;
 
+      let activeJobId = null;
+      let workflowPhase = "creating";
+
       try {
         stopPolling();
         hideDownloadButton();
 
         console.log("[XPROCES] quality_mode seleccionado:", selectedQualityModeForJob);
         const createdJob = await createJob(selectedQualityModeForJob);
-        const jobId = createdJob.id;
+        activeJobId = createdJob.id;
+        const jobId = activeJobId;
+        workflowPhase = "payment";
 
         if (!isInviteUser) {
           const paymentOk = await openPayPalCheckout(jobId, Number(createdJob.price ?? preview.price ?? 0), pendingProjectName);
@@ -7936,6 +8151,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           }
         }
 
+        workflowPhase = "uploading";
         renderStoredJobs();
         if (processStageWrap) processStageWrap.style.display = "grid";
         resetStageClasses();
@@ -8008,6 +8224,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         if (progressLabel) progressLabel.textContent = "Verificando subida...";
         if (progressPercent) progressPercent.textContent = "100%";
         jobStatusEl.textContent = `Verificando subida completa: ${files.length} fotos esperadas...`;
+        workflowPhase = "verifying";
 
         const uploadCheck = await completeUpload(jobId);
         const realCount = uploadCheck.realCount || files.length;
@@ -8017,8 +8234,10 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
         if (progressLabel) progressLabel.textContent = "Subida completada";
         jobStatusEl.textContent = `Subida verificada: ${realCount}/${files.length} fotos. Enviando a procesado...`;
+        workflowPhase = "submitting";
 
         await submitJob(jobId, selectedQualityModeForJob);
+        workflowPhase = "queued";
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
@@ -8029,21 +8248,118 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         startPolling(jobId);
       } catch (error) {
         console.error(error);
-        const msg = error.message || "Error durante la subida";
-        jobStatusEl.textContent = msg;
-        if (progressFill) progressFill.classList.add("error");
-        if (uploadLiveFill) uploadLiveFill.classList.add("error");
-        if (uploadLiveTitle) uploadLiveTitle.textContent = "Subida interrumpida";
-        if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = msg;
-        if (progressLabel) progressLabel.textContent = "Subida fallida";
-        if (progressPercent) progressPercent.textContent = "Error";
-        await showInfoModal(
-          "Subida incompleta",
-          "El procesado no se iniciará.",
-          msg.includes("Subida incompleta") ? msg : `${msg}
 
-La web ya ha intentado continuar la subida automáticamente varias veces. Revise la conexión y vuelva a iniciar el proyecto.`,
-          "error"
+        const msg = error?.message || "Error durante la subida";
+        const uploadRelatedPhase = ["uploading", "verifying", "submitting"].includes(workflowPhase);
+        let reconciliation = null;
+
+        if (activeJobId && uploadRelatedPhase) {
+          reconciliation = await reconcileUploadOutcome(
+            activeJobId,
+            selectedQualityModeForJob
+          ).catch(() => null);
+        }
+
+        if (reconciliation?.confirmed) {
+          const currentStatus = normalizeJobStatusValue(reconciliation.job?.status);
+          const pendingConfirmation = reconciliation.pending || currentStatus === "receiving";
+
+          if (progressFill) {
+            progressFill.classList.remove("error");
+            progressFill.style.width = pendingConfirmation ? "100%" : "0%";
+            progressFill.style.background = "";
+          }
+          if (uploadLiveFill) uploadLiveFill.classList.remove("error");
+          if (uploadLiveTitle) uploadLiveTitle.textContent = "Subida recibida";
+          if (uploadLiveSubtitle) {
+            uploadLiveSubtitle.textContent = pendingConfirmation
+              ? "Las fotografías están completas en el servidor. Confirmando la entrada en cola..."
+              : "El trabajo ya está en cola o en procesado.";
+          }
+          if (progressLabel) {
+            progressLabel.textContent = pendingConfirmation
+              ? "Confirmando inicio del procesado..."
+              : "En cola...";
+          }
+          if (progressPercent) progressPercent.textContent = pendingConfirmation ? "100%" : "0%";
+          if (jobStatusEl) {
+            jobStatusEl.textContent = pendingConfirmation
+              ? "Subida recibida correctamente. Confirmando el inicio del procesado..."
+              : "Subida recibida correctamente. El trabajo continúa con normalidad.";
+          }
+          if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
+
+          startPolling(activeJobId);
+          return;
+        }
+
+        const reconciledJobStatus = normalizeJobStatusValue(reconciliation?.job?.status);
+        const reconciledPhotos = Number(reconciliation?.job?.photos_count || 0);
+        const reconciledBytes = Number(reconciliation?.job?.input_total_bytes || 0);
+        const serverConfirmedIncomplete =
+          !!reconciliation?.job &&
+          ["created", "receiving"].includes(reconciledJobStatus) &&
+          (
+            reconciledPhotos < files.length ||
+            (Number(totalSize || 0) > 0 && reconciledBytes !== Number(totalSize || 0))
+          );
+
+        const explicitIncomplete =
+          ["invalid_uploaded_files", "upload_bytes_mismatch", "upload_incomplete", "no_input_files"]
+            .includes(String(error?.code || "")) ||
+          /subida (incompleta|inválida|invalida)|archivo\(s\) corrupto/i.test(msg) ||
+          serverConfirmedIncomplete;
+
+        if (explicitIncomplete) {
+          if (jobStatusEl) jobStatusEl.textContent = msg;
+          if (progressFill) progressFill.classList.add("error");
+          if (uploadLiveFill) uploadLiveFill.classList.add("error");
+          if (uploadLiveTitle) uploadLiveTitle.textContent = "Subida incompleta";
+          if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = msg;
+          if (progressLabel) progressLabel.textContent = "Subida incompleta";
+          if (progressPercent) progressPercent.textContent = "Error";
+
+          const serverDetail = serverConfirmedIncomplete
+            ? `\n\nEl servidor tiene ${reconciledPhotos}/${files.length} fotos y ${formatBytes(reconciledBytes)}/${formatBytes(totalSize)}.`
+            : "";
+
+          await showInfoModal(
+            "Subida incompleta",
+            "Faltan archivos o la comprobación de integridad no coincide.",
+            `${msg}${serverDetail}
+
+No inicie otro proyecto ni repita el pago. Actualice Mis trabajos y, si continúa incompleto, contacte con soporte indicando el job ${activeJobId || ""}.`,
+            "error"
+          );
+          return;
+        }
+
+        // Un timeout del navegador no demuestra que el servidor haya fallado.
+        // No invitamos a crear otro proyecto, porque podría duplicar el trabajo
+        // o el pago. El historial mostrará el estado real al recargar.
+        if (progressFill) progressFill.classList.remove("error");
+        if (uploadLiveFill) uploadLiveFill.classList.remove("error");
+        if (uploadLiveTitle) uploadLiveTitle.textContent = "Comprobando estado";
+        if (uploadLiveSubtitle) uploadLiveSubtitle.textContent = msg;
+        if (progressLabel) progressLabel.textContent = "No se pudo confirmar el estado";
+        if (progressPercent) progressPercent.textContent = "—";
+        if (jobStatusEl) {
+          jobStatusEl.textContent =
+            "No se ha podido confirmar la respuesta final del servidor. " +
+            "No inicie otro proyecto todavía; actualice Mis trabajos para consultar el estado real.";
+        }
+
+        if (activeJobId) {
+          startPolling(activeJobId);
+        }
+
+        await showInfoModal(
+          "No se pudo confirmar el estado",
+          "El servidor puede haber recibido correctamente el trabajo.",
+          `${msg}
+
+No inicie otro proyecto ni repita el pago. Actualice la página o consulte Mis trabajos. Si aparece En cola o Procesando, el trabajo continúa correctamente.`,
+          "warning"
         );
       }
     }
