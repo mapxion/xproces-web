@@ -8668,29 +8668,51 @@ document.addEventListener("click", async function(event) {
 
   event.preventDefault();
 
-  try {
-    var response = await fetch(link.href, { cache: "no-store" });
-    var contentType = response.headers.get("content-type") || "";
+  var originalText = link.textContent;
+  link.style.pointerEvents = "none";
+  link.setAttribute("aria-busy", "true");
+  link.textContent = "Comprobando descarga...";
 
-    if (contentType.indexOf("application/json") >= 0) {
-      var data = await response.json().catch(function(){ return {}; });
-      if (data && data.error === "outputs_not_available") {
+  try {
+    var url = new URL(link.href, window.location.href);
+    var statusUrl = url.pathname.replace(/\/download$/, "/download-status");
+    var response = await fetch(statusUrl, {
+      method: "GET",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+    var data = await response.json().catch(function(){ return {}; });
+
+    if (!response.ok || data.ok === false || data.available !== true) {
+      if (data && data.error === "results_not_ready") {
+        alert(data.message || "Los resultados todavía se están preparando.");
+        return;
+      }
+
+      if (data && (data.error === "outputs_not_available" || data.error === "outputs_invalid")) {
         if (typeof xprocesShowZipMissingError === "function") {
           await xprocesShowZipMissingError();
         } else {
-          alert("El trabajo es fallido: no se ha generado el paquete final de descarga.");
+          alert(data.message || "El paquete final no está disponible.");
         }
         return;
       }
+
+      throw new Error(data.message || "No se pudo comprobar la descarga.");
     }
 
-    window.location.href = link.href;
+    // Una sola petición real al ZIP. No usamos fetch() sobre /download,
+    // porque eso descargaría el archivo completo en segundo plano.
+    window.location.assign(link.href);
   } catch (error) {
-    if (typeof xprocesShowZipMissingError === "function") {
-      await xprocesShowZipMissingError();
-    } else {
-      alert("No se pudo descargar el paquete final.");
-    }
+    console.error("download precheck error", error);
+    alert("No se pudo iniciar la descarga. Revise la conexión y vuelva a intentarlo.");
+  } finally {
+    window.setTimeout(function() {
+      link.style.pointerEvents = "";
+      link.removeAttribute("aria-busy");
+      link.textContent = originalText;
+    }, 1500);
   }
 }, true);
 
