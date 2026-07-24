@@ -4140,11 +4140,19 @@ function getSelectedQualityMode() {
   }
 
   if (failedStatuses.includes(status) || failedStatuses.includes(stage) || error) {
+    const deliveryFailure =
+      stage === "delivery_failed" ||
+      stage === "zip_upload_failed" ||
+      stage === "download_expired" ||
+      /outputs?_not_available|paquete final|zip final|entrega|descarga/i.test(error) ||
+      /outputs?_not_available|paquete final|zip final|entrega|descarga/i.test(String(job?.message || ""));
+
     return {
-      key: "failed",
+      key: deliveryFailure ? "delivery_failed" : "failed",
       label: status === "cancelled" || status === "canceled" ? "Cancelado" : "Fallido",
       className: "error",
-      canDownload: false
+      canDownload: false,
+      canRecover: deliveryFailure
     };
   }
 
@@ -4345,12 +4353,13 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             <div class="process-summary-section" style="grid-column:1/-1;">
               <div class="process-summary-section-title">Entrega</div>
               <div class="process-summary-list">
-                <div class="warn">Fallido: no se ha generado el paquete final de descarga.</div>
+                <div class="warn">El paquete final no está disponible para descarga.</div>
+                <div class="muted">Pulse “Solicitar recuperación” para pedir una nueva activación.</div>
               </div>
             </div>
           </div>
         `;
-        hideDownloadButton();
+        showRecoveryButton(job);
         return;
       }
 
@@ -4999,7 +5008,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         return;
       }
 
-      alert("No disponible para descarga directa. Contacte con soporte: soportetams@intelsi.es");
+      alert("La descarga ya no está activa. Solicite su reactivación y le enviaremos un nuevo enlace: soportetams@intelsi.es");
     }
 
     function showRecoveryButton(job) {
@@ -5021,7 +5030,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     function showDownloadButton(job) {
       const uiStatus = normalizeJobStatus(job);
 
-      if (uiStatus.canRecover) {
+      if (uiStatus.canRecover || uiStatus.key === "delivery_failed") {
         showRecoveryButton(job);
         return;
       }
@@ -6999,7 +7008,7 @@ if (map) {
         await showInfoModal(
           "Entrega no disponible",
           "El procesado no se pudo entregar correctamente.",
-          "No se ha generado el paquete final de descarga. Para el cliente este trabajo se considera fallido.",
+          "El procesado terminó, pero el paquete final no está disponible para descarga. Puede solicitar su recuperación.",
           "error"
         );
       } else {
@@ -8689,7 +8698,7 @@ document.addEventListener("click", async function(event) {
         return;
       }
 
-      if (data && (data.error === "outputs_not_available" || data.error === "outputs_invalid")) {
+      if (data && (data.error === "outputs_not_available" || data.error === "outputs_invalid" || data.error === "outputs_expired")) {
         if (typeof xprocesShowZipMissingError === "function") {
           await xprocesShowZipMissingError();
         } else {
