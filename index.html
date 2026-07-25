@@ -3233,6 +3233,7 @@ function stripNullCharsDeep(value) {
 
 
     const BATCH_SIZE = 3;
+    const UPLOAD_CONCURRENCY = 3; // velocidad con carga controlada
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
     const PREVIEW_DEBOUNCE_MS = 400;
@@ -6712,143 +6713,171 @@ if (map) {
     async function uploadAllBatchesResumable(jobId) {
       const maxRecoveryCycles = 12;
       let recoveryCycle = 0;
-      let lastKnownServerCount = -1;
 
       resetUploadLive(files.length, totalSize);
 
-      while (recoveryCycle < maxRecoveryCycles) {
-        const currentJob = await getJob(jobId).catch(() => null);
-        const serverCount = Math.max(
-          0,
-          Math.min(files.length, Number(currentJob?.photos_count || 0))
+      const currentJob = await getJob(jobId).catch(() => null);
+      const serverCount = Math.max(
+        0,
+        Math.min(files.length, Number(currentJob?.photos_count || 0))
+      );
+
+      if (serverCount >= files.length) {
+        finishUploadLive(files.length, totalSize);
+        return {
+          uploadedFiles: files.length,
+          uploadedBytes: totalSize,
+          resumed: false
+        };
+      }
+
+      const pendingFiles = files.slice(serverCount);
+      const batches = chunkArray(pendingFiles, BATCH_SIZE);
+      const uploadedBytesAtServer = files
+        .slice(0, serverCount)
+        .reduce((sum, file) => sum + Number(file.size || 0), 0);
+
+      const batchTasks = [];
+      let prefixBytes = uploadedBytesAtServer;
+      let prefixFiles = serverCount;
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        const batchBytes = batch.reduce(
+          (sum, file) => sum + Number(file.size || 0),
+          0
         );
 
-        if (serverCount >= files.length) {
+        batchTasks.push({
+          batch,
+          batchIndex: i,
+          uploadedBytesBefore: prefixBytes,
+          uploadedFilesBefore: prefixFiles,
+          batchBytes,
+          completed: false
+        });
+
+        prefixBytes += batchBytes;
+        prefixFiles += batch.length;
+      }
+
+      if (serverCount > 0) {
+        if (progressLabel) {
+          progressLabel.textContent =
+            `Reanudando desde ${serverCount}/${files.length} fotografías...`;
+        }
+        if (jobStatusEl) {
+          jobStatusEl.textContent =
+            `El servidor conserva ${serverCount}/${files.length} fotos. ` +
+            `Se enviarán únicamente las pendientes.`;
+        }
+      }
+
+      while (recoveryCycle < maxRecoveryCycles) {
+        const pendingTasks = batchTasks.filter((task) => !task.completed);
+
+        if (!pendingTasks.length) {
           finishUploadLive(files.length, totalSize);
           return {
             uploadedFiles: files.length,
             uploadedBytes: totalSize,
-            resumed: recoveryCycle > 0
+            resumed: serverCount > 0 || recoveryCycle > 0
           };
         }
 
-        const pendingFiles = files.slice(serverCount);
-        const batches = chunkArray(pendingFiles, BATCH_SIZE);
-        const uploadedBytesAtServer = files
-          .slice(0, serverCount)
-          .reduce((sum, file) => sum + Number(file.size || 0), 0);
+        let failedThisCycle = 0;
 
-        let uploadedBytesBefore = uploadedBytesAtServer;
-        let uploadedFilesBefore = serverCount;
+        for (let offset = 0; offset < pendingTasks.length; offset += UPLOAD_CONCURRENCY) {
+          const wave = pendingTasks.slice(offset, offset + UPLOAD_CONCURRENCY);
 
-        if (recoveryCycle > 0) {
-          const pendingCount = files.length - serverCount;
           if (progressLabel) {
+            const completedBatches = batchTasks.filter((task) => task.completed).length;
             progressLabel.textContent =
-              `Reanudando subida: faltan ${pendingCount} fotografías...`;
-          }
-          if (jobStatusEl) {
-            jobStatusEl.textContent =
-              `La conexión se interrumpió. El servidor conserva ${serverCount}/${files.length} fotos. ` +
-              `Reanudando automáticamente desde la siguiente fotografía...`;
-          }
-          if (uploadLiveTitle) uploadLiveTitle.textContent = "Reanudando subida";
-          if (uploadLiveSubtitle) {
-            uploadLiveSubtitle.textContent =
-              `${serverCount} fotos ya están guardadas. No se volverán a enviar.`;
-          }
-        }
-
-        try {
-          for (let i = 0; i < batches.length; i++) {
-            await uploadBatch(
-              jobId,
-              batches[i],
-              i,
-              batches.length,
-              uploadedBytesBefore,
-              uploadedFilesBefore,
-              totalSize,
-              files.length
-            );
-
-            const batchBytes = batches[i].reduce(
-              (sum, file) => sum + Number(file.size || 0),
-              0
-            );
-            uploadedBytesBefore += batchBytes;
-            uploadedFilesBefore += batches[i].length;
-
-            updateUploadLive({
-              totalFiles: files.length,
-              totalBytes: totalSize,
-              completedFiles: uploadedFilesBefore,
-              currentBatchFiles: 0,
-              currentBatchLoaded: 1,
-              uploadedBytes: uploadedBytesBefore,
-              batchIndex: i,
-              totalBatches: batches.length,
-              attempt: 1
-            });
+              `Subiendo en paralelo: ${completedBatches}/${batchTasks.length} lotes completados...`;
           }
 
-          finishUploadLive(files.length, totalSize);
-          return {
-            uploadedFiles: files.length,
-            uploadedBytes: totalSize,
-            resumed: recoveryCycle > 0
-          };
-        } catch (uploadError) {
-          recoveryCycle += 1;
-
-          const refreshedJob = await getJob(jobId).catch(() => null);
-          const refreshedCount = Math.max(
-            0,
-            Math.min(files.length, Number(refreshedJob?.photos_count || 0))
+          const results = await Promise.allSettled(
+            wave.map((task) =>
+              uploadBatch(
+                jobId,
+                task.batch,
+                task.batchIndex,
+                batches.length,
+                task.uploadedBytesBefore,
+                task.uploadedFilesBefore,
+                totalSize,
+                files.length
+              )
+            )
           );
 
-          console.warn("[XPROCES] Subida interrumpida; se intentará reanudar", {
-            recoveryCycle,
-            serverCount: refreshedCount,
-            error: uploadError?.message || String(uploadError)
+          results.forEach((result, index) => {
+            const task = wave[index];
+            if (result.status === "fulfilled") {
+              task.completed = true;
+            } else {
+              failedThisCycle += 1;
+              console.warn("[XPROCES] Lote pendiente tras reintentos", {
+                batchIndex: task.batchIndex,
+                error: result.reason?.message || String(result.reason)
+              });
+            }
           });
 
-          if (refreshedCount >= files.length) {
-            finishUploadLive(files.length, totalSize);
-            return {
-              uploadedFiles: files.length,
-              uploadedBytes: totalSize,
-              resumed: true
-            };
-          }
+          const completedTasks = batchTasks.filter((task) => task.completed);
+          const completedFiles =
+            serverCount +
+            completedTasks.reduce((sum, task) => sum + task.batch.length, 0);
+          const completedBytes =
+            uploadedBytesAtServer +
+            completedTasks.reduce((sum, task) => sum + task.batchBytes, 0);
 
-          if (progressLabel) {
-            progressLabel.textContent =
-              `Conexión interrumpida. Reintentando desde ${refreshedCount}/${files.length}...`;
-          }
-          if (jobStatusEl) {
-            jobStatusEl.textContent =
-              `La subida se ha detenido temporalmente. ` +
-              `Se reanudará automáticamente sin repetir las fotos ya recibidas.`;
-          }
-
-          const madeProgress = refreshedCount > lastKnownServerCount;
-          lastKnownServerCount = refreshedCount;
-          const waitSeconds = madeProgress
-            ? Math.min(8, 2 + recoveryCycle)
-            : Math.min(20, 5 + recoveryCycle * 2);
-
-          await waitMs(waitSeconds * 1000);
+          updateUploadLive({
+            totalFiles: files.length,
+            totalBytes: totalSize,
+            completedFiles,
+            currentBatchFiles: 0,
+            currentBatchLoaded: 1,
+            uploadedBytes: completedBytes,
+            batchIndex: completedTasks.length,
+            totalBatches: batchTasks.length,
+            attempt: recoveryCycle + 1
+          });
         }
+
+        if (failedThisCycle === 0) {
+          finishUploadLive(files.length, totalSize);
+          return {
+            uploadedFiles: files.length,
+            uploadedBytes: totalSize,
+            resumed: serverCount > 0 || recoveryCycle > 0
+          };
+        }
+
+        recoveryCycle += 1;
+        const remaining = batchTasks.filter((task) => !task.completed).length;
+        const waitSeconds = Math.min(20, 3 + recoveryCycle * 2);
+
+        if (progressLabel) {
+          progressLabel.textContent =
+            `${remaining} lotes pendientes. Reintentando en ${waitSeconds} s...`;
+        }
+        if (jobStatusEl) {
+          jobStatusEl.textContent =
+            `La subida continúa de forma segura. Los lotes completados no se repiten; ` +
+            `solo se reintentan los que han fallado.`;
+        }
+
+        await waitMs(waitSeconds * 1000);
       }
 
       const finalJob = await getJob(jobId).catch(() => null);
       const finalCount = Number(finalJob?.photos_count || 0);
       throw makeWorkflowError(
-        `La subida no pudo reanudarse después de varios intentos. ` +
+        `La subida no pudo completarse después de varios intentos. ` +
         `El servidor conserva ${finalCount}/${files.length} fotos.`,
         {
-          code: "upload_resume_exhausted",
+          code: "upload_parallel_resume_exhausted",
           retryable: true,
           serverCount: finalCount
         }
