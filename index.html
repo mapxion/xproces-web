@@ -3325,6 +3325,8 @@ function stripNullCharsDeep(value) {
     let uploadLiveLastAt = 0;
     let uploadLiveLastBytes = 0;
     let uploadLiveSmoothedSpeed = 0;
+    let uploadLiveStartedAt = 0;
+    let uploadLiveInitialBytes = 0;
 
     function formatUploadDuration(seconds) {
       const value = Math.max(0, Math.round(Number(seconds || 0)));
@@ -3338,8 +3340,10 @@ function stripNullCharsDeep(value) {
     }
 
     function resetUploadLive(totalFiles, totalBytes) {
-      uploadLiveLastAt = performance.now();
+      uploadLiveStartedAt = performance.now();
+      uploadLiveLastAt = uploadLiveStartedAt;
       uploadLiveLastBytes = 0;
+      uploadLiveInitialBytes = 0;
       uploadLiveSmoothedSpeed = 0;
 
       if (uploadLivePanel) uploadLivePanel.classList.add("show");
@@ -3419,16 +3423,17 @@ function stripNullCharsDeep(value) {
       attempt = 1
     }) {
       const now = performance.now();
-      const deltaSeconds = Math.max(0.001, (now - uploadLiveLastAt) / 1000);
-      const deltaBytes = Math.max(0, uploadedBytes - uploadLiveLastBytes);
-      const instantSpeed = deltaBytes / deltaSeconds;
 
-      if (instantSpeed > 0) {
-        uploadLiveSmoothedSpeed = uploadLiveSmoothedSpeed > 0
-          ? (uploadLiveSmoothedSpeed * 0.75) + (instantSpeed * 0.25)
-          : instantSpeed;
-      }
+      // Cálculo real, sin márgenes inventados:
+      // velocidad media = bytes realmente enviados / tiempo transcurrido
+      // tiempo restante = bytes pendientes / velocidad media
+      if (!uploadLiveStartedAt) uploadLiveStartedAt = now;
 
+      const elapsedSeconds = Math.max(0.001, (now - uploadLiveStartedAt) / 1000);
+      const transferredBytes = Math.max(0, uploadedBytes - uploadLiveInitialBytes);
+      const measuredSpeed = transferredBytes / elapsedSeconds;
+
+      uploadLiveSmoothedSpeed = measuredSpeed;
       uploadLiveLastAt = now;
       uploadLiveLastBytes = uploadedBytes;
 
@@ -3439,7 +3444,11 @@ function stripNullCharsDeep(value) {
         : 0;
       const visibleCompletedFiles = Math.min(totalFiles, completedFiles + filesInCurrentBatch);
       const remainingBytes = Math.max(0, totalBytes - uploadedBytes);
-      const etaSeconds = uploadLiveSmoothedSpeed > 0 ? remainingBytes / uploadLiveSmoothedSpeed : null;
+
+      const etaSeconds =
+        measuredSpeed > 0 && elapsedSeconds >= 3
+          ? remainingBytes / measuredSpeed
+          : null;
 
       if (uploadLivePanel) uploadLivePanel.classList.add("show");
       if (uploadLiveSpeedLabel) uploadLiveSpeedLabel.textContent = "Velocidad actual";
