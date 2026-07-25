@@ -5007,7 +5007,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           "La solicitud se ha guardado correctamente.",
           "La factura se preparará manualmente y se enviará al correo indicado."
         );
-        await syncStoredJobsFromServer();
+        await renderStoredJobs();
       } catch (error) {
         await showInfoModal("No se pudo solicitar", "Revise los datos e inténtelo de nuevo.", escapeHtml(error?.message || String(error)), "error");
       }
