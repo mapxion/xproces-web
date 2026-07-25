@@ -7983,8 +7983,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         ? Math.max(0, Math.floor((Date.now() - startDate.getTime()) / 1000))
         : Number(job?.total_seconds || job?.processing_seconds || 0);
 
-      const estimatedTotal = estimateTotalSecondsFromProfile(qualityText, photosText, progress, elapsedSeconds, eta);
-      const remainingSeconds = Math.max(0, Math.round(estimatedTotal - elapsedSeconds));
+      // El servidor ya devuelve el tiempo RESTANTE calculado por fase actual
+      // más las fases pendientes. No se vuelve a restar el tiempo transcurrido.
+      const serverRemaining = Number(
+        eta?.own_remaining_service_seconds ??
+        eta?.total_estimated_seconds ??
+        0
+      );
+      const remainingSeconds = Math.max(0, Math.round(serverRemaining));
       const finishText = remainingSeconds > 0 ? formatClockTimeFromSeconds(remainingSeconds) : "finalizando";
       const elapsedText = elapsedSeconds > 0 ? formatDurationSeconds(elapsedSeconds) : "Calculando";
       const remainingText = remainingSeconds > 0 ? formatEtaText(remainingSeconds) : "Finalizando";
@@ -8165,11 +8171,11 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       if (job.status === "running") {
         const remaining = Math.max(
           0,
-          Number(eta.total_estimated_seconds || 0) - Number(job.total_seconds || 0)
+          Number(eta.own_remaining_service_seconds ?? eta.total_estimated_seconds ?? 0)
         );
 
         const remainingText =
-          remaining > 0 ? formatEtaText(remaining) : eta.total_estimated_human;
+          remaining > 0 ? formatEtaText(remaining) : "Finalizando";
 
         return `Job ${job.id}\nEstado: procesando\n${job.message || "Procesando proyecto"}\nTiempo restante estimado: ${remainingText}`;
       }
