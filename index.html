@@ -3233,6 +3233,157 @@ function stripNullCharsDeep(value) {
 
 
     const BATCH_SIZE = 3;
+
+    const ACTIVE_UPLOAD_LOCK_PREFIX = "xproces_active_upload_";
+
+
+
+    function getActiveUploadLockKey() {
+
+      const user = getStoredUser();
+
+      return `${ACTIVE_UPLOAD_LOCK_PREFIX}${String(user?.id || user?.email || "anonymous")}`;
+
+    }
+
+
+
+    function getActiveUploadLock() {
+
+      try {
+
+        const raw = localStorage.getItem(getActiveUploadLockKey());
+
+        return raw ? JSON.parse(raw) : null;
+
+      } catch (_) {
+
+        return null;
+
+      }
+
+    }
+
+
+
+    function setActiveUploadLock(jobId, expectedPhotos, expectedBytes) {
+
+      try {
+
+        localStorage.setItem(getActiveUploadLockKey(), JSON.stringify({
+
+          job_id: String(jobId || ""),
+
+          expected_photos: Number(expectedPhotos || 0),
+
+          expected_bytes: Number(expectedBytes || 0),
+
+          created_at: new Date().toISOString()
+
+        }));
+
+      } catch (_) {}
+
+    }
+
+
+
+    function clearActiveUploadLock(jobId = null) {
+
+      try {
+
+        const current = getActiveUploadLock();
+
+        if (jobId && current?.job_id && String(current.job_id) !== String(jobId)) return;
+
+        localStorage.removeItem(getActiveUploadLockKey());
+
+      } catch (_) {}
+
+    }
+
+
+
+    async function checkActiveUploadLock() {
+
+      const lock = getActiveUploadLock();
+
+      if (!lock?.job_id) return null;
+
+
+
+      const job = await getJob(lock.job_id).catch(() => null);
+
+      const status = String(job?.status || "").toLowerCase();
+
+
+
+      if (!job || ["queued", "running", "done", "failed", "cancelled"].includes(status)) {
+
+        clearActiveUploadLock(lock.job_id);
+
+        return null;
+
+      }
+
+
+
+      if (["created", "receiving"].includes(status)) {
+
+        return { ...lock, job, status };
+
+      }
+
+
+
+      clearActiveUploadLock(lock.job_id);
+
+      return null;
+
+    }
+
+
+
+    async function preventSecondUploadInBrowser() {
+
+      const active = await checkActiveUploadLock();
+
+      if (!active) return false;
+
+
+
+      const received = Number(active.job?.photos_count || 0);
+
+      const expected = Number(active.expected_photos || active.job?.exif_summary?._xproces?.totalPhotos || 0);
+
+      const projectName = active.job?.project_name || active.job?.id || "trabajo activo";
+
+
+
+      await showInfoModal(
+
+        "Subida en curso",
+
+        "No se iniciará otro proyecto en este navegador.",
+
+        `El proyecto ${projectName} sigue subiendo fotografías${expected ? ` (${received}/${expected})` : ""}.
+
+
+
+Espere a que termine la subida. Otros clientes y otros navegadores pueden subir trabajos al mismo tiempo sin afectar a este proyecto.`,
+
+        "warning"
+
+      );
+
+
+
+      if (active.job) await openJobFromHistory(active.job).catch(() => null);
+
+      return true;
+
+    }
+
     const UPLOAD_CONCURRENCY = 3; // velocidad con carga controlada
     const POLL_INTERVAL_MS = 3000;
     const DATASET_SAMPLE_SIZE = 8;
@@ -6411,6 +6562,7 @@ if (map) {
 
     uploadBtn.addEventListener("click", async () => {
       if (uploadBtn.textContent === "Iniciar nuevo proyecto") {
+        if (await preventSecondUploadInBrowser()) return;
         resetAll();
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -8346,6 +8498,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
     async function upload() {
 
+        if (await preventSecondUploadInBrowser()) return;
+
         const currentUser = getStoredUser();
 
         if (!currentUser || !currentUser.email) {
@@ -8566,6 +8720,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         }
 
         workflowPhase = "uploading";
+        setActiveUploadLock(jobId, files.length, Number(totalSize || 0));
         renderStoredJobs();
         if (processStageWrap) processStageWrap.style.display = "grid";
         resetStageClasses();
@@ -8615,6 +8770,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
         await submitJob(jobId, selectedQualityModeForJob);
         workflowPhase = "queued";
+        clearActiveUploadLock(jobId);
         if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
         if (datasetPanel) datasetPanel.style.display = "none";
 
@@ -8664,6 +8820,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
               ? "Subida recibida correctamente. Confirmando el inicio del procesado..."
               : "Subida recibida correctamente. El trabajo continúa con normalidad.";
           }
+          if (!pendingConfirmation) clearActiveUploadLock(activeJobId);
           if (uploadBtn) uploadBtn.textContent = "Iniciar nuevo proyecto";
 
           startPolling(activeJobId);
@@ -8770,6 +8927,11 @@ setTimeout(async () => {
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
 
     if (activeJob) {
+      if (String(activeJob.status || "").toLowerCase() === "receiving") {
+        const expectedPhotos = Number(activeJob?.exif_summary?._xproces?.totalPhotos || activeJob?.photos_count || 0);
+        const expectedBytes = Number(activeJob?.exif_summary?._xproces?.totalBytes || activeJob?.input_total_bytes || 0);
+        setActiveUploadLock(activeJob.id, expectedPhotos, expectedBytes);
+      }
       selectedHistoryJobId = String(activeJob.id || "");
       saveSelectedHistoryJobId(selectedHistoryJobId);
       await openJobFromHistory(activeJob);
