@@ -4112,6 +4112,10 @@ function getSelectedQualityMode() {
       return String(stage || "").trim() || "Sin fase";
     }
 
+    function translateStatus(status) {
+      return formatJobListStatus(status);
+    }
+
     function normalizeJobStatus(job) {
   const status = String(job?.status || "").toLowerCase();
   const stage = String(job?.stage || job?.phase || "").toLowerCase();
@@ -6704,6 +6708,153 @@ if (map) {
       );
     }
 
+
+    async function uploadAllBatchesResumable(jobId) {
+      const maxRecoveryCycles = 12;
+      let recoveryCycle = 0;
+      let lastKnownServerCount = -1;
+
+      resetUploadLive(files.length, totalSize);
+
+      while (recoveryCycle < maxRecoveryCycles) {
+        const currentJob = await getJob(jobId).catch(() => null);
+        const serverCount = Math.max(
+          0,
+          Math.min(files.length, Number(currentJob?.photos_count || 0))
+        );
+
+        if (serverCount >= files.length) {
+          finishUploadLive(files.length, totalSize);
+          return {
+            uploadedFiles: files.length,
+            uploadedBytes: totalSize,
+            resumed: recoveryCycle > 0
+          };
+        }
+
+        const pendingFiles = files.slice(serverCount);
+        const batches = chunkArray(pendingFiles, BATCH_SIZE);
+        const uploadedBytesAtServer = files
+          .slice(0, serverCount)
+          .reduce((sum, file) => sum + Number(file.size || 0), 0);
+
+        let uploadedBytesBefore = uploadedBytesAtServer;
+        let uploadedFilesBefore = serverCount;
+
+        if (recoveryCycle > 0) {
+          const pendingCount = files.length - serverCount;
+          if (progressLabel) {
+            progressLabel.textContent =
+              `Reanudando subida: faltan ${pendingCount} fotografías...`;
+          }
+          if (jobStatusEl) {
+            jobStatusEl.textContent =
+              `La conexión se interrumpió. El servidor conserva ${serverCount}/${files.length} fotos. ` +
+              `Reanudando automáticamente desde la siguiente fotografía...`;
+          }
+          if (uploadLiveTitle) uploadLiveTitle.textContent = "Reanudando subida";
+          if (uploadLiveSubtitle) {
+            uploadLiveSubtitle.textContent =
+              `${serverCount} fotos ya están guardadas. No se volverán a enviar.`;
+          }
+        }
+
+        try {
+          for (let i = 0; i < batches.length; i++) {
+            await uploadBatch(
+              jobId,
+              batches[i],
+              i,
+              batches.length,
+              uploadedBytesBefore,
+              uploadedFilesBefore,
+              totalSize,
+              files.length
+            );
+
+            const batchBytes = batches[i].reduce(
+              (sum, file) => sum + Number(file.size || 0),
+              0
+            );
+            uploadedBytesBefore += batchBytes;
+            uploadedFilesBefore += batches[i].length;
+
+            updateUploadLive({
+              totalFiles: files.length,
+              totalBytes: totalSize,
+              completedFiles: uploadedFilesBefore,
+              currentBatchFiles: 0,
+              currentBatchLoaded: 1,
+              uploadedBytes: uploadedBytesBefore,
+              batchIndex: i,
+              totalBatches: batches.length,
+              attempt: 1
+            });
+          }
+
+          finishUploadLive(files.length, totalSize);
+          return {
+            uploadedFiles: files.length,
+            uploadedBytes: totalSize,
+            resumed: recoveryCycle > 0
+          };
+        } catch (uploadError) {
+          recoveryCycle += 1;
+
+          const refreshedJob = await getJob(jobId).catch(() => null);
+          const refreshedCount = Math.max(
+            0,
+            Math.min(files.length, Number(refreshedJob?.photos_count || 0))
+          );
+
+          console.warn("[XPROCES] Subida interrumpida; se intentará reanudar", {
+            recoveryCycle,
+            serverCount: refreshedCount,
+            error: uploadError?.message || String(uploadError)
+          });
+
+          if (refreshedCount >= files.length) {
+            finishUploadLive(files.length, totalSize);
+            return {
+              uploadedFiles: files.length,
+              uploadedBytes: totalSize,
+              resumed: true
+            };
+          }
+
+          if (progressLabel) {
+            progressLabel.textContent =
+              `Conexión interrumpida. Reintentando desde ${refreshedCount}/${files.length}...`;
+          }
+          if (jobStatusEl) {
+            jobStatusEl.textContent =
+              `La subida se ha detenido temporalmente. ` +
+              `Se reanudará automáticamente sin repetir las fotos ya recibidas.`;
+          }
+
+          const madeProgress = refreshedCount > lastKnownServerCount;
+          lastKnownServerCount = refreshedCount;
+          const waitSeconds = madeProgress
+            ? Math.min(8, 2 + recoveryCycle)
+            : Math.min(20, 5 + recoveryCycle * 2);
+
+          await waitMs(waitSeconds * 1000);
+        }
+      }
+
+      const finalJob = await getJob(jobId).catch(() => null);
+      const finalCount = Number(finalJob?.photos_count || 0);
+      throw makeWorkflowError(
+        `La subida no pudo reanudarse después de varios intentos. ` +
+        `El servidor conserva ${finalCount}/${files.length} fotos.`,
+        {
+          code: "upload_resume_exhausted",
+          retryable: true,
+          serverCount: finalCount
+        }
+      );
+    }
+
     const ACCEPTED_JOB_STATUSES = new Set([
       "queued",
       "running",
@@ -8353,44 +8504,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
         jobStatusEl.textContent = "Preparando subida por lotes...";
 
-        const batches = chunkArray(files, BATCH_SIZE);
-        const batchByteSizes = batches.map((batch) =>
-          batch.reduce((sum, file) => sum + Number(file.size || 0), 0)
-        );
-        let uploadedBytesBefore = 0;
-        let uploadedFilesBefore = 0;
-
-        resetUploadLive(files.length, totalSize);
-
-        for (let i = 0; i < batches.length; i++) {
-          await uploadBatch(
-            jobId,
-            batches[i],
-            i,
-            batches.length,
-            uploadedBytesBefore,
-            uploadedFilesBefore,
-            totalSize,
-            files.length
-          );
-
-          uploadedBytesBefore += batchByteSizes[i];
-          uploadedFilesBefore += batches[i].length;
-
-          updateUploadLive({
-            totalFiles: files.length,
-            totalBytes: totalSize,
-            completedFiles: uploadedFilesBefore,
-            currentBatchFiles: 0,
-            currentBatchLoaded: 1,
-            uploadedBytes: uploadedBytesBefore,
-            batchIndex: i,
-            totalBatches: batches.length,
-            attempt: 1
-          });
-        }
-
-        finishUploadLive(files.length, totalSize);
+        await uploadAllBatchesResumable(jobId);
 
         if (progressFill) progressFill.style.width = "100%";
         if (progressLabel) progressLabel.textContent = "Verificando subida...";
@@ -8500,7 +8614,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             "Faltan archivos o la comprobación de integridad no coincide.",
             `${msg}${serverDetail}
 
-No inicie otro proyecto ni repita el pago. Actualice Mis trabajos y, si continúa incompleto, contacte con soporte indicando el job ${activeJobId || ""}.`,
+Las fotografías ya recibidas permanecen guardadas en el servidor. No repita el pago ni cree otro proyecto. Mantenga esta pestaña abierta para que XProces siga intentando reanudar la subida. Si finalmente no continúa, contacte con soporte indicando el job ${activeJobId || ""}.`,
             "error"
           );
           return;
