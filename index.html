@@ -6603,7 +6603,7 @@ if (map) {
       return !!modalResult;
     }
 
-    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches, uploadedBytesBefore, uploadedFilesBefore, totalUploadBytes, totalUploadFiles) {
+    async function uploadBatch(jobId, batchFiles, batchIndex, totalBatches, uploadedBytesBefore, uploadedFilesBefore, totalUploadBytes, totalUploadFiles, aggregateProgress = null) {
       const maxAttempts = 4;
       let lastError = null;
 
@@ -6621,32 +6621,43 @@ if (map) {
             if (uploadUserId) xhr.setRequestHeader("x-user-id", String(uploadUserId));
 
             xhr.upload.onprogress = function (e) {
-              if (e.lengthComputable) {
-                const uploadedBytes = Math.min(totalUploadBytes, uploadedBytesBefore + e.loaded);
-                const rounded = totalUploadBytes > 0
-                  ? Math.round((uploadedBytes / totalUploadBytes) * 100)
-                  : 0;
+              if (!e.lengthComputable) return;
 
-                if (progressFill) progressFill.style.width = `${rounded}%`;
-                if (progressLabel) {
-                  progressLabel.textContent = attempt === 1
-                    ? `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`
-                    : `Reintentando lote ${batchIndex + 1} de ${totalBatches} (${attempt}/${maxAttempts})...`;
-                }
-                if (progressPercent) progressPercent.textContent = `${rounded}%`;
-
-                updateUploadLive({
-                  totalFiles: totalUploadFiles,
-                  totalBytes: totalUploadBytes,
-                  completedFiles: uploadedFilesBefore,
-                  currentBatchFiles: batchFiles.length,
-                  currentBatchLoaded: e.total > 0 ? e.loaded / e.total : 0,
-                  uploadedBytes,
+              if (typeof aggregateProgress === "function") {
+                aggregateProgress({
                   batchIndex,
-                  totalBatches,
+                  loaded: Number(e.loaded || 0),
+                  total: Number(e.total || 0),
+                  batchFiles: batchFiles.length,
                   attempt
                 });
+                return;
               }
+
+              const uploadedBytes = Math.min(totalUploadBytes, uploadedBytesBefore + e.loaded);
+              const rounded = totalUploadBytes > 0
+                ? Math.round((uploadedBytes / totalUploadBytes) * 100)
+                : 0;
+
+              if (progressFill) progressFill.style.width = `${rounded}%`;
+              if (progressLabel) {
+                progressLabel.textContent = attempt === 1
+                  ? `Subiendo lote ${batchIndex + 1} de ${totalBatches}...`
+                  : `Reintentando lote ${batchIndex + 1} de ${totalBatches} (${attempt}/${maxAttempts})...`;
+              }
+              if (progressPercent) progressPercent.textContent = `${rounded}%`;
+
+              updateUploadLive({
+                totalFiles: totalUploadFiles,
+                totalBytes: totalUploadBytes,
+                completedFiles: uploadedFilesBefore,
+                currentBatchFiles: batchFiles.length,
+                currentBatchLoaded: e.total > 0 ? e.loaded / e.total : 0,
+                uploadedBytes,
+                batchIndex,
+                totalBatches,
+                attempt
+              });
             };
 
             xhr.onload = function () {
@@ -6761,6 +6772,44 @@ if (map) {
         prefixFiles += batch.length;
       }
 
+      let committedBytes = uploadedBytesAtServer;
+      let committedFiles = serverCount;
+      const activeLoadedBytes = new Map();
+      const activeRatios = new Map();
+
+      const refreshAggregateProgress = (meta = {}) => {
+        const activeBytes = [...activeLoadedBytes.values()]
+          .reduce((sum, value) => sum + Number(value || 0), 0);
+        const uploadedBytes = Math.min(totalSize, committedBytes + activeBytes);
+
+        const partialFiles = [...activeRatios.entries()]
+          .reduce((sum, [batchIndex, ratio]) => {
+            const task = batchTasks[batchIndex];
+            if (!task || task.completed) return sum;
+            return sum + Math.floor(task.batch.length * Math.max(0, Math.min(1, ratio)));
+          }, 0);
+
+        const visibleFiles = Math.min(files.length, committedFiles + partialFiles);
+        const rounded = totalSize > 0
+          ? Math.round((uploadedBytes / totalSize) * 100)
+          : 0;
+
+        if (progressFill) progressFill.style.width = `${rounded}%`;
+        if (progressPercent) progressPercent.textContent = `${rounded}%`;
+
+        updateUploadLive({
+          totalFiles: files.length,
+          totalBytes: totalSize,
+          completedFiles: visibleFiles,
+          currentBatchFiles: 0,
+          currentBatchLoaded: 0,
+          uploadedBytes,
+          batchIndex: Number(meta.batchIndex || 0),
+          totalBatches: batches.length,
+          attempt: Number(meta.attempt || 1)
+        });
+      };
+
       if (serverCount > 0) {
         if (progressLabel) {
           progressLabel.textContent =
@@ -6793,7 +6842,7 @@ if (map) {
           if (progressLabel) {
             const completedBatches = batchTasks.filter((task) => task.completed).length;
             progressLabel.textContent =
-              `Subiendo en paralelo: ${completedBatches}/${batchTasks.length} lotes completados...`;
+              `Subiendo ${wave.length} lotes en paralelo · ${completedBatches}/${batchTasks.length} completados`;
           }
 
           const results = await Promise.allSettled(
@@ -6806,15 +6855,28 @@ if (map) {
                 task.uploadedBytesBefore,
                 task.uploadedFilesBefore,
                 totalSize,
-                files.length
+                files.length,
+                ({ batchIndex, loaded, total, attempt }) => {
+                  const safeLoaded = Math.max(0, Math.min(task.batchBytes, Number(loaded || 0)));
+                  activeLoadedBytes.set(batchIndex, safeLoaded);
+                  activeRatios.set(batchIndex, total > 0 ? safeLoaded / total : 0);
+                  refreshAggregateProgress({ batchIndex, attempt });
+                }
               )
             )
           );
 
           results.forEach((result, index) => {
             const task = wave[index];
+            activeLoadedBytes.delete(task.batchIndex);
+            activeRatios.delete(task.batchIndex);
+
             if (result.status === "fulfilled") {
-              task.completed = true;
+              if (!task.completed) {
+                task.completed = true;
+                committedBytes = Math.min(totalSize, committedBytes + task.batchBytes);
+                committedFiles = Math.min(files.length, committedFiles + task.batch.length);
+              }
             } else {
               failedThisCycle += 1;
               console.warn("[XPROCES] Lote pendiente tras reintentos", {
@@ -6824,23 +6886,8 @@ if (map) {
             }
           });
 
-          const completedTasks = batchTasks.filter((task) => task.completed);
-          const completedFiles =
-            serverCount +
-            completedTasks.reduce((sum, task) => sum + task.batch.length, 0);
-          const completedBytes =
-            uploadedBytesAtServer +
-            completedTasks.reduce((sum, task) => sum + task.batchBytes, 0);
-
-          updateUploadLive({
-            totalFiles: files.length,
-            totalBytes: totalSize,
-            completedFiles,
-            currentBatchFiles: 0,
-            currentBatchLoaded: 1,
-            uploadedBytes: completedBytes,
-            batchIndex: completedTasks.length,
-            totalBatches: batchTasks.length,
+          refreshAggregateProgress({
+            batchIndex: wave[wave.length - 1]?.batchIndex || 0,
             attempt: recoveryCycle + 1
           });
         }
