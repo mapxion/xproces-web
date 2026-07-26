@@ -4,24 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Xproces | Procesado Fotogramétrico Profesional | Nubes de Puntos, Ortofotos y Modelos 3D</title>
+  <title>Área privada | XProces</title>
 
-  <meta name="description" content="Procesado fotogramétrico profesional online. Sube tus fotos, elige calidad y entregables y te avisamos cuando este listo.">
+  <meta name="description" content="Área privada de XProces para subir fotografías, configurar el procesado fotogramétrico y consultar el estado de los trabajos.">
+  <meta name="robots" content="noindex,follow">
 
-  <meta name="keywords" content="fotogrametría, nube de puntos, LAS, ortofoto, DSM, DTM, modelo 3D, dron, topografía, telecomunicaciones">
-
-  <meta name="robots" content="index,follow">
-
-  <link rel="canonical" href="https://xproces.com/">
+  <link rel="canonical" href="https://xproces.com/area-privada">
 
   <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
-  <meta property="og:title" content="Xproces | Procesado Fotogramétrico Profesional">
-  <meta property="og:description" content="Generación de nubes de puntos LAS, ortofotos, DSM, DTM y modelos 3D a partir de fotografías de dron.">
-  <meta property="og:url" content="https://xproces.com">
+  <meta property="og:title" content="Área privada | XProces">
+  <meta property="og:description" content="Acceso a la plataforma de procesado fotogramétrico de XProces.">
+  <meta property="og:url" content="https://xproces.com/area-privada">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://xproces.com/og-image.jpg">
 
@@ -4812,9 +4809,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     function getMainView() {
       const user = getStoredUser();
       if (!user || !user.email) return "home";
-
-      const stored = sessionStorage.getItem("xproces_main_view");
-      return stored === "home" ? "home" : "private";
+      return "private";
     }
 
     function setMainView(view, options = {}) {
@@ -4933,7 +4928,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       `;
 
       document.getElementById("homeViewBtn").addEventListener("click", () => {
-        setMainView("home");
+        window.location.href = "/";
       });
 
       document.getElementById("privateViewBtn").addEventListener("click", () => {
@@ -4950,7 +4945,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
         renderTopbarUser();
         renderStoredJobs();
         closeAuthModal();
-        setMainView("home");
+        window.location.href = "/";
       });
 
       updateTopbarNavigationState();

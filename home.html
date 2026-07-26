@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Procesado fotogramétrico online para drones | XProces</title>
+  <meta name="description" content="Sube tus fotografías de dron y recibe nubes de puntos LAS, ortofotos GeoTIFF, DSM, DTM, curvas de nivel y modelos 3D. Calcula el precio antes de procesar.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://xproces.com/">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+  <meta property="og:title" content="Procesado fotogramétrico online para drones | XProces">
+  <meta property="og:description" content="Nubes LAS, ortofotos, DSM, DTM, curvas de nivel y modelos 3D a partir de fotografías de dron.">
+  <meta property="og:url" content="https://xproces.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://xproces.com/og-image.jpg">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://xproces.com/#website",
+        "url": "https://xproces.com/",
+        "name": "XProces",
+        "alternateName": "XProces Fotogrametría",
+        "inLanguage": "es"
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://xproces.com/#organization",
+        "name": "XProces",
+        "url": "https://xproces.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://xproces.com/xproces.png476por176.png"
+        },
+        "email": "soportetams@intelsi.es"
+      },
+      {
+        "@type": "Service",
+        "@id": "https://xproces.com/#service",
+        "name": "Procesado fotogramétrico online",
+        "serviceType": "Procesado fotogramétrico de fotografías de dron",
+        "provider": { "@id": "https://xproces.com/#organization" },
+        "areaServed": "ES",
+        "url": "https://xproces.com/",
+        "description": "Generación de nubes de puntos LAS, ortofotos GeoTIFF, DSM, DTM, curvas de nivel y modelos 3D a partir de fotografías de dron."
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "¿Qué archivos puede generar XProces?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "XProces puede generar nubes de puntos LAS, ortofotos GeoTIFF, DSM, DTM, curvas de nivel, modelos 3D texturizados e informes PDF, según la configuración del proyecto."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Puedo conocer el precio antes de iniciar el trabajo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sí. La plataforma analiza el número y el tamaño de las fotografías y muestra una estimación de tiempo y precio antes de iniciar el procesado."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Puedo seguir el estado del procesado?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sí. Desde el área privada puedes consultar la etapa actual, el progreso y los archivos disponibles. También puedes activar avisos privados por Telegram."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg:#f4f6f3;
+      --panel:#ffffff;
+      --text:#18211d;
+      --muted:#66746c;
+      --accent:#7aab39;
+      --accent-dark:#5f8d28;
+      --border:#dde5df;
+      --shadow:0 18px 48px rgba(24,33,29,.09);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 8% 0%,rgba(122,171,57,.14),transparent 26%),linear-gradient(180deg,#f8faf8 0%,#eef2ee 100%);line-height:1.55}
+    a{color:inherit}
+    img{max-width:100%}
+    .container{width:min(1180px,calc(100% - 32px));margin:0 auto}
+    .site-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(221,229,223,.9)}
+    .header-inner{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .logo img{display:block;height:48px;width:auto}
+    .nav{display:flex;align-items:center;gap:18px;font-size:14px;font-weight:800}
+    .nav a{text-decoration:none;color:#445149}
+    .nav a:hover{color:var(--accent)}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:14px;text-decoration:none;font-weight:900;border:1px solid transparent;transition:.18s ease}
+    .button-primary{background:var(--accent);color:#fff;box-shadow:0 10px 24px rgba(122,171,57,.24)}
+    .button-primary:hover{background:var(--accent-dark);transform:translateY(-1px)}
+    .button-secondary{background:#fff;border-color:var(--border);color:var(--text)}
+    .button-secondary:hover{border-color:rgba(122,171,57,.55);color:var(--accent)}
+    .hero{padding:76px 0 54px}
+    .hero-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:36px;align-items:center}
+    .eyebrow{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(122,171,57,.11);border:1px solid rgba(122,171,57,.28);color:var(--accent-dark);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+    h1{margin:18px 0 16px;font-size:clamp(38px,6vw,68px);line-height:1.02;letter-spacing:-.055em}
+    .hero-copy{max-width:760px;margin:0;color:var(--muted);font-size:18px;font-weight:700}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+    .hero-points{display:flex;flex-wrap:wrap;gap:9px;margin-top:26px}
+    .chip{padding:8px 11px;border-radius:999px;background:#fff;border:1px solid var(--border);font-size:12px;font-weight:900;color:#425047}
+    .hero-card{background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+    .hero-card h2{margin:0 0 18px;font-size:22px}
+    .step{display:grid;grid-template-columns:38px 1fr;gap:13px;padding:14px 0;border-top:1px solid var(--border)}
+    .step:first-of-type{border-top:0;padding-top:0}
+    .step-number{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(122,171,57,.12);color:var(--accent-dark);font-weight:900}
+    .step strong{display:block;margin-bottom:3px}.step p{margin:0;color:var(--muted);font-size:13px}
+    section{padding:54px 0}
+    .section-head{max-width:820px;margin:0 auto 28px;text-align:center}
+    .section-head h2{margin:12px 0 10px;font-size:clamp(30px,4vw,46px);line-height:1.08;letter-spacing:-.04em}
+    .section-head p{margin:0;color:var(--muted);font-size:16px;font-weight:700}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .card{background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 10px 30px rgba(24,33,29,.05)}
+    .card h3{margin:0 0 8px;font-size:18px}.card p{margin:0;color:var(--muted);font-size:14px}
+    .process-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:rgba(122,171,57,.11);font-size:22px;margin-bottom:14px}
+    .deliverables{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .deliverable{overflow:hidden;padding:0}
+    .deliverable img{display:block;width:100%;height:190px;object-fit:cover;border-bottom:1px solid var(--border)}
+    .deliverable-copy{padding:17px}
+    .split{display:grid;grid-template-columns:minmax(300px,.95fr) minmax(0,1.05fr);gap:30px;align-items:center;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+    .split img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:18px;border:1px solid var(--border)}
+    .split h2{margin:12px 0;font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.04em}
+    .split p{color:var(--muted);font-weight:700}
+    .example-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+    .stat{text-align:center;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px}
+    .stat strong{display:block;color:var(--accent-dark);font-size:26px}.stat span{color:var(--muted);font-size:13px;font-weight:800}
+    .faq{display:grid;gap:12px;max-width:900px;margin:0 auto}
+    details{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 18px}
+    summary{cursor:pointer;font-weight:900}details p{margin:10px 0 0;color:var(--muted)}
+    .cta{padding:36px;background:linear-gradient(135deg,#6f9f35,#88b94a);border-radius:28px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px;box-shadow:0 18px 44px rgba(95,141,40,.24)}
+    .cta h2{margin:0 0 7px;font-size:32px}.cta p{margin:0;color:rgba(255,255,255,.86);font-weight:700}.cta .button{background:#fff;color:var(--accent-dark)}
+    footer{padding:34px 0 44px;color:var(--muted);font-size:13px}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid var(--border);padding-top:24px}
+    .footer-links{display:flex;gap:16px;flex-wrap:wrap}.footer-links a{text-decoration:none;font-weight:800}
+    @media(max-width:900px){.nav a:not(.button){display:none}.hero-grid,.split{grid-template-columns:1fr}.grid-3,.deliverables{grid-template-columns:1fr 1fr}.hero{padding-top:48px}}
+    @media(max-width:640px){.container{width:min(100% - 22px,1180px)}.site-header .button{padding:0 13px}.logo img{height:40px}.hero{padding:38px 0}.grid-3,.deliverables,.example-stats{grid-template-columns:1fr}.cta{padding:26px;align-items:flex-start;flex-direction:column}.footer-inner{align-items:flex-start;flex-direction:column}h1{font-size:42px}}
+  </style>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FV4TSWPXP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1FV4TSWPXP');
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="/" aria-label="XProces, página principal">
+        <img src="/xproces.png476por176.png" alt="XProces">
+      </a>
+      <nav class="nav" aria-label="Navegación principal">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#entregables">Entregables</a>
+        <a href="#a-medida">A medida</a>
+        <a class="button button-primary" href="/area-privada">Área privada</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">Fotogrametría profesional online</span>
+          <h1>Procesado fotogramétrico para fotografías de dron</h1>
+          <p class="hero-copy">Sube tus imágenes, elige la calidad y los entregables, consulta el tiempo y el precio estimados y sigue el trabajo hasta descargar los resultados.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/area-privada">Iniciar un procesamiento</a>
+            <a class="button button-secondary" href="#entregables">Ver entregables</a>
+          </div>
+          <div class="hero-points" aria-label="Formatos y resultados">
+            <span class="chip">Nube LAS</span><span class="chip">Ortofoto GeoTIFF</span><span class="chip">DSM</span><span class="chip">DTM</span><span class="chip">Modelo 3D</span><span class="chip">Curvas de nivel</span>
+          </div>
+        </div>
+        <aside class="hero-card" aria-label="Proceso de trabajo">
+          <h2>Tu proyecto en tres pasos</h2>
+          <div class="step"><div class="step-number">1</div><div><strong>Sube las fotografías</strong><p>Analizamos el conjunto, los metadatos y el tamaño del proyecto.</p></div></div>
+          <div class="step"><div class="step-number">2</div><div><strong>Configura el procesado</strong><p>Selecciona calidad, tipo de proyecto y archivos que necesitas.</p></div></div>
+          <div class="step"><div class="step-number">3</div><div><strong>Descarga los resultados</strong><p>Consulta el progreso y recibe un aviso cuando estén preparados.</p></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="como-funciona">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Cómo funciona</span>
+          <h2>Del vuelo a los archivos técnicos</h2>
+          <p>Una plataforma pensada para simplificar el procesado sin perder el control sobre la calidad y los entregables.</p>
+        </div>
+        <div class="grid-3">
+          <article class="card"><div class="process-icon">📷</div><h3>Análisis del proyecto</h3><p>Revisión automática del número de imágenes, tamaño total, resolución y datos disponibles para preparar la estimación.</p></article>
+          <article class="card"><div class="process-icon">⚙️</div><h3>Procesado controlado</h3><p>Selecciona el nivel de calidad y consulta las etapas completadas, la fase actual y el progreso del trabajo.</p></article>
+          <article class="card"><div class="process-icon">📦</div><h3>Entrega organizada</h3><p>Los archivos generados se preparan en un ZIP final para que puedas descargarlos y utilizarlos en CAD, GIS o software 3D.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="entregables">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Entregables</span>
+          <h2>Resultados para topografía, GIS, ingeniería y 3D</h2>
+          <p>Elige los productos que necesita cada proyecto. Algunos entregables requieren procesos asociados para garantizar un resultado coherente.</p>
+        </div>
+        <div class="deliverables">
+          <article class="card deliverable"><img src="/ejemplos/orto_peq.jpg" alt="Ejemplo de ortofoto georreferenciada" loading="lazy"><div class="deliverable-copy"><h3>Ortofoto GeoTIFF</h3><p>Imagen aérea corregida y georreferenciada para medición, inventario, inspección y documentación técnica.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/Nube_peq.jpg" alt="Ejemplo de nube de puntos LAS" loading="lazy"><div class="deliverable-copy"><h3>Nube de puntos LAS</h3><p>Información tridimensional compatible con herramientas CAD, GIS, topografía y análisis de infraestructuras.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/mde_peq.jpg" alt="Ejemplo de modelo digital de superficie" loading="lazy"><div class="deliverable-copy"><h3>DSM</h3><p>Modelo digital de superficie con edificios, vegetación y otros elementos visibles del terreno.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/mdetif_peq.jpg" alt="Ejemplo de modelo digital del terreno" loading="lazy"><div class="deliverable-copy"><h3>DTM</h3><p>Modelo del terreno filtrado para pendientes, drenajes, explanaciones y estudios topográficos.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/Obj_peq.jpg" alt="Ejemplo de modelo 3D texturizado" loading="lazy"><div class="deliverable-copy"><h3>Modelo 3D texturizado</h3><p>Representación visual realista para revisar cubiertas, fachadas, calles, parcelas y elementos constructivos.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/curvas_peq.jpg" alt="Ejemplo de curvas de nivel" loading="lazy"><div class="deliverable-copy"><h3>Curvas de nivel</h3><p>Geometría para planos topográficos, análisis de pendientes y documentación del relieve.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="a-medida">
+      <div class="container split">
+        <img src="/ejemplos/fotocontipoxproces.jpg" alt="Técnico supervisando un procesado fotogramétrico de XProces" loading="lazy">
+        <div>
+          <span class="eyebrow">Intervención técnica especializada</span>
+          <h2>Procesados fotogramétricos a medida</h2>
+          <p>Para proyectos que requieren criterio humano, ajustes específicos, GCP, máscaras, clasificación, correcciones de alineación o entregables personalizados.</p>
+          <div class="hero-points"><span class="chip">GCP</span><span class="chip">Máscaras</span><span class="chip">Clasificación</span><span class="chip">Limpieza manual</span><span class="chip">Entregables personalizados</span></div>
+          <div class="hero-actions"><a class="button button-primary" href="mailto:soportetams@intelsi.es?subject=Solicitud%20de%20procesado%20fotogram%C3%A9trico%20a%20medida">Solicitar procesado a medida</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ejemplo">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Ejemplo real</span>
+          <h2>Fotogrametría completa de una urbanización</h2>
+          <p>Un conjunto de fotografías de dron procesado para generar productos técnicos y visuales listos para revisión y entrega.</p>
+        </div>
+        <div class="example-stats">
+          <div class="stat"><strong>372</strong><span>fotografías</span></div>
+          <div class="stat"><strong>6+</strong><span>tipos de entregables</span></div>
+          <div class="stat"><strong>1 ZIP</strong><span>entrega final organizada</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="preguntas">
+      <div class="container">
+        <div class="section-head"><span class="eyebrow">Preguntas frecuentes</span><h2>Antes de empezar</h2></div>
+        <div class="faq">
+          <details><summary>¿Qué fotografías puedo subir?</summary><p>La plataforma admite los formatos de imagen indicados en el área privada y analiza los metadatos disponibles. Para proyectos especiales puedes solicitar un procesado supervisado.</p></details>
+          <details><summary>¿Puedo conocer el precio antes de iniciar?</summary><p>Sí. Después de cargar las imágenes y configurar el proyecto, XProces muestra una estimación de tiempo y precio antes de confirmar el trabajo.</p></details>
+          <details><summary>¿Cómo sabré que ha terminado?</summary><p>Puedes consultar el progreso desde el área privada y activar avisos privados por Telegram para recibir actualizaciones sobre tus trabajos.</p></details>
+          <details><summary>¿Puedo solicitar archivos concretos?</summary><p>Sí. Los entregables se seleccionan por proyecto. Cuando un producto necesita archivos intermedios asociados, XProces los incluye en el flujo de procesamiento aunque no todos formen parte de la descarga final.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container cta">
+        <div><h2>Prepara tu próximo proyecto</h2><p>Accede al área privada, sube las fotografías y consulta la estimación antes de procesar.</p></div>
+        <a class="button" href="/area-privada">Entrar en XProces</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>© 2026 XProces · Procesado fotogramétrico profesional</div>
+      <div class="footer-links"><a href="/area-privada">Área privada</a><a href="mailto:soportetams@intelsi.es">Contacto</a></div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,38 @@
+XPROCES — SEPARACIÓN PORTADA / APLICACIÓN
+
+ARCHIVOS PRINCIPALES
+- home.html: nueva portada pública para Google, servida en https://xproces.com/
+- index.html: aplicación actual, servida en https://xproces.com/area-privada
+- default.conf: mantiene los proxies de Telegram y define las nuevas rutas
+- Dockerfile: copia la web y carga default.conf
+
+ARCHIVOS SEO E ICONOS
+- robots.txt
+- sitemap.xml
+- favicon.ico
+- favicon-48x48.png
+- favicon-96x96.png
+- apple-touch-icon.png
+
+DESPLIEGUE
+1. Haz una copia de seguridad del repositorio web.
+2. Copia estos archivos en la raíz del repositorio web.
+3. No borres xproces-telegram.js, las imágenes, la carpeta ejemplos ni ningún otro recurso actual.
+4. Commit y despliega solamente el servicio web.
+5. Prueba:
+   https://xproces.com/
+   https://xproces.com/area-privada
+   https://xproces.com/telegram/status (con usuario debe seguir llegando a la API)
+6. Comprueba registro, inicio de sesión, subida, precios, PayPal, historial, descargas y Telegram.
+7. Cuando todo esté validado, solicita indexación de https://xproces.com/ en Search Console.
+
+CAMBIOS MÍNIMOS EN LA APLICACIÓN
+- noindex,follow
+- canonical /area-privada
+- Página principal navega a /
+- Área privada conserva la vista privada
+- al cerrar sesión vuelve a /
+- un usuario autenticado entra directamente en la vista privada
+
+IMPORTANTE
+El bloque client_preview se conserva: /?client_preview=... se redirige a /area-privada manteniendo el token.
