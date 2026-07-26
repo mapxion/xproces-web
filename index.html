@@ -2429,26 +2429,102 @@
   </script>
 
 <style id="xprocesMainViewStyles">
-  body.xproces-home-view #uploadPanel,
-  body.xproces-home-view #datasetPanel,
-  body.xproces-home-view .right-stack {
+  /* La antigua portada ya no se muestra dentro del área privada. */
+  #landingPanel,
+  #customProcessingPanel,
+  #publicTelegramPanel,
+  #examplePanel {
     display: none !important;
   }
 
-  body.xproces-home-view #mainLayout {
-    grid-template-columns: minmax(0, 1fr) !important;
+  /* Sin sesión: solo se muestra una pantalla limpia de acceso. */
+  #privateAccessGate {
+    display: none;
   }
 
-  body.xproces-home-view .left-stack {
-    width: 100%;
-    min-width: 0;
+  body.xproces-auth-view #privateAccessGate {
+    display: block;
   }
 
-  body.xproces-private-view #landingPanel,
-  body.xproces-private-view #customProcessingPanel,
-  body.xproces-private-view #publicTelegramPanel,
-  body.xproces-private-view #examplePanel {
+  body.xproces-auth-view #mainLayout {
     display: none !important;
+  }
+
+  body.xproces-private-view #privateAccessGate {
+    display: none !important;
+  }
+
+  .xproces-private-gate {
+    min-height: calc(100vh - 170px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 34px 16px;
+  }
+
+  .xproces-private-gate-card {
+    width: min(100%, 690px);
+    padding: 34px;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    background: rgba(255,255,255,.92);
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+
+  .xproces-private-gate-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 12px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(122,171,57,.28);
+    border-radius: 999px;
+    background: rgba(122,171,57,.08);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .xproces-private-gate-card h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.12;
+    letter-spacing: -.035em;
+  }
+
+  .xproces-private-gate-card p {
+    max-width: 560px;
+    margin: 14px auto 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+    font-weight: 700;
+  }
+
+  .xproces-private-gate-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .xproces-private-gate-home {
+    display: inline-block;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .xproces-private-gate-home:hover {
+    color: var(--accent);
+    text-decoration: underline;
   }
 
   .xproces-nav-btn.is-active {
@@ -2459,16 +2535,16 @@
   }
 
   @media (max-width: 760px) {
-    .topbar-actions {
-      gap: 7px;
-    }
-
+    .topbar-actions { gap: 7px; }
     .xproces-nav-btn {
       min-height: 38px;
       padding-left: 11px;
       padding-right: 11px;
       font-size: 12px;
     }
+    .xproces-private-gate { padding: 20px 0; }
+    .xproces-private-gate-card { padding: 26px 18px; }
+    .xproces-private-gate-actions .btn { width: 100%; }
   }
 </style>
 
@@ -2492,6 +2568,23 @@
         <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
       </div>
     </div>
+
+    <section class="xproces-private-gate" id="privateAccessGate" aria-labelledby="privateAccessTitle">
+      <div class="xproces-private-gate-card">
+        <div class="xproces-private-gate-kicker">Área privada</div>
+        <h1 id="privateAccessTitle">Accede para iniciar tu procesamiento</h1>
+        <p>
+          Crea una cuenta para subir tus fotografías, calcular el precio, iniciar el trabajo
+          y consultar todos tus procesados desde un único lugar.
+        </p>
+        <div class="xproces-private-gate-actions">
+          <button class="btn btn-primary" id="privateRegisterBtn" type="button">Crear cuenta</button>
+          <button class="btn btn-secondary" id="privateLoginBtn" type="button">Ya tengo cuenta</button>
+          <button class="btn btn-secondary" id="privateInviteBtn" type="button">Tengo un código invitado</button>
+        </div>
+        <a class="xproces-private-gate-home" href="/">← Volver a la página principal</a>
+      </div>
+    </section>
 
     <div class="layout" id="mainLayout">
       <div class="left-stack">
@@ -4808,22 +4901,19 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     
     function getMainView() {
       const user = getStoredUser();
-      if (!user || !user.email) return "home";
-      return "private";
+      return user && user.email ? "private" : "auth";
     }
 
     function setMainView(view, options = {}) {
-      const user = getStoredUser();
-      const nextView = (view === "home" || !user || !user.email) ? "home" : "private";
-
-      if (user && user.email) {
-        sessionStorage.setItem("xproces_main_view", nextView);
-      } else {
-        sessionStorage.removeItem("xproces_main_view");
+      if (view === "home") {
+        window.location.href = "/";
+        return;
       }
 
-      document.body.classList.toggle("xproces-home-view", nextView === "home");
+      const nextView = getMainView();
+      document.body.classList.toggle("xproces-auth-view", nextView === "auth");
       document.body.classList.toggle("xproces-private-view", nextView === "private");
+      document.body.classList.remove("xproces-home-view");
 
       updateLandingVisibility();
       updateTopbarNavigationState();
@@ -4834,31 +4924,21 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
     }
 
     function updateLandingVisibility() {
-      const publicIds = [
-        "landingPanel",
-        "customProcessingPanel",
-        "publicTelegramPanel",
-        "examplePanel"
-      ];
+      ["landingPanel", "customProcessingPanel", "publicTelegramPanel", "examplePanel"]
+        .forEach((id) => {
+          const element = document.getElementById(id);
+          if (element) element.style.display = "none";
+        });
 
-      const showPublic = getMainView() === "home";
-
-      publicIds.forEach((id) => {
-        const element = document.getElementById(id);
-        if (element) element.style.display = showPublic ? "" : "none";
-      });
-
-      document.body.classList.toggle("xproces-home-view", showPublic);
-      document.body.classList.toggle("xproces-private-view", !showPublic);
+      const authenticated = getMainView() === "private";
+      document.body.classList.toggle("xproces-auth-view", !authenticated);
+      document.body.classList.toggle("xproces-private-view", authenticated);
+      document.body.classList.remove("xproces-home-view");
     }
 
     function updateTopbarNavigationState() {
-      const view = getMainView();
-      const homeButton = document.getElementById("homeViewBtn");
       const privateButton = document.getElementById("privateViewBtn");
-
-      if (homeButton) homeButton.classList.toggle("is-active", view === "home");
-      if (privateButton) privateButton.classList.toggle("is-active", view === "private");
+      if (privateButton) privateButton.classList.add("is-active");
     }
 
     function openAuthModal(mode = "login") {
@@ -4907,11 +4987,13 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
       if (!user || !user.email) {
         topbarActions.innerHTML = `
+          <button class="btn btn-secondary" id="publicHomeBtn" type="button">Página principal</button>
           <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
           <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
           <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
         `;
 
+        document.getElementById("publicHomeBtn").addEventListener("click", () => { window.location.href = "/"; });
         document.getElementById("loginBtn").addEventListener("click", () => openAuthModal("login"));
         document.getElementById("registerBtn").addEventListener("click", () => openAuthModal("register"));
         document.getElementById("inviteBtn").addEventListener("click", () => openAuthModal("invite"));
@@ -5410,6 +5492,9 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
 
         setStoredUser(data.user);
         sessionStorage.setItem("xproces_main_view", "private");
+        if (window.location.pathname !== "/area-privada" || window.location.search) {
+          history.replaceState({}, "", "/area-privada");
+        }
         renderTopbarUser();
         setMainView("private", { scroll: false });
         renderStoredJobs();
@@ -8894,11 +8979,25 @@ No inicie otro proyecto ni repita el pago. Actualice la página o consulte Mis t
       }
     }
 
-      resetAll();
+      document.getElementById("privateRegisterBtn")?.addEventListener("click", () => openAuthModal("register"));
+document.getElementById("privateLoginBtn")?.addEventListener("click", () => openAuthModal("login"));
+document.getElementById("privateInviteBtn")?.addEventListener("click", () => openAuthModal("invite"));
+
+resetAll();
 renderStoredJobs();
 renderTopbarUser();
 setMainView(getMainView(), { scroll: false });
 syncStoredUserToForm();
+
+(() => {
+  const user = getStoredUser();
+  if (user && user.email) return;
+
+  const requestedMode = new URLSearchParams(window.location.search).get("auth");
+  if (["register", "login", "invite"].includes(requestedMode)) {
+    setTimeout(() => openAuthModal(requestedMode), 0);
+  }
+})();
 
 setTimeout(async () => {
   try {
