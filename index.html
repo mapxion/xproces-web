@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="xproces-build" content="area-privada-v2-20260726" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Área privada | XProces</title>
@@ -2549,7 +2550,7 @@
 </style>
 
 </head>
-<body>
+<body class="xproces-auth-view" data-xproces-build="area-privada-v2-20260726">
   <div class="app">
     <div class="xproces-preview-banner" id="xprocesPreviewBanner">
       <span id="xprocesPreviewText">Vista como cliente — solo lectura</span>
@@ -2563,6 +2564,7 @@
         </div>
       </div>
       <div class="topbar-actions" id="topbarActions">
+        <button class="btn btn-secondary" id="publicHomeBtn" type="button" onclick="window.location.href='/'">Página principal</button>
         <button class="btn btn-secondary" id="loginBtn" type="button">Iniciar sesión</button>
         <button class="btn btn-primary" id="registerBtn" type="button">Registrarse</button>
         <button class="btn btn-secondary" id="inviteBtn" type="button">Código invitado</button>
@@ -8978,6 +8980,8 @@ No inicie otro proyecto ni repita el pago. Actualice la página o consulte Mis t
         );
       }
     }
+
+      console.info("XProces build: area-privada-v2-20260726");
 
       document.getElementById("privateRegisterBtn")?.addEventListener("click", () => openAuthModal("register"));
 document.getElementById("privateLoginBtn")?.addEventListener("click", () => openAuthModal("login"));
