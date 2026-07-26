@@ -63,7 +63,7 @@
             "name": "¿Qué archivos puede generar XProces?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "XProces puede generar nubes de puntos LAS, ortofotos GeoTIFF, DSM, DTM, curvas de nivel, modelos 3D texturizados e informes PDF, según la configuración del proyecto."
+              "text": "XProces entrega resultados generados mediante Agisoft Metashape, como nube de puntos LAS, ortofoto GeoTIFF, DSM, DTM, curvas de nivel DXF, modelo 3D OBJ con sus texturas e informe PDF, según la configuración del proyecto."
             }
           },
           {
@@ -147,7 +147,11 @@
     .split img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:18px;border:1px solid var(--border)}
     .split h2{margin:12px 0;font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.04em}
     .split p{color:var(--muted);font-weight:700}
-    .example-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+    .example-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 24px}
+    .example-output-note{margin-top:22px;padding:18px;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:20px;text-align:center}
+    .example-output-note h3{margin:0 0 8px;font-size:18px}
+    .example-output-note p{margin:0;color:var(--muted);font-size:14px;font-weight:700}
+    .example-output-note .hero-points{justify-content:center;margin-top:14px}
     .stat{text-align:center;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px}
     .stat strong{display:block;color:var(--accent-dark);font-size:26px}.stat span{color:var(--muted);font-size:13px;font-weight:800}
     .faq{display:grid;gap:12px;max-width:900px;margin:0 auto}
@@ -178,7 +182,7 @@
       </a>
       <nav class="nav" aria-label="Navegación principal">
         <a href="#como-funciona">Cómo funciona</a>
-        <a href="#entregables">Entregables</a>
+        <a href="#ejemplo-real">Ejemplo real</a>
         <a href="#a-medida">A medida</a>
         <a class="button button-primary" href="/area-privada">Área privada</a>
       </nav>
@@ -194,10 +198,10 @@
           <p class="hero-copy">Sube tus imágenes, elige la calidad y los entregables, consulta el tiempo y el precio estimados y sigue el trabajo hasta descargar los resultados.</p>
           <div class="hero-actions">
             <a class="button button-primary" href="/area-privada">Iniciar un procesamiento</a>
-            <a class="button button-secondary" href="#entregables">Ver entregables</a>
+            <a class="button button-secondary" href="#ejemplo-real">Ver ejemplo real</a>
           </div>
           <div class="hero-points" aria-label="Formatos y resultados">
-            <span class="chip">Nube LAS</span><span class="chip">Ortofoto GeoTIFF</span><span class="chip">DSM</span><span class="chip">DTM</span><span class="chip">Modelo 3D</span><span class="chip">Curvas de nivel</span>
+            <span class="chip">Nube LAS</span><span class="chip">Ortofoto GeoTIFF</span><span class="chip">DSM</span><span class="chip">DTM</span><span class="chip">Modelo 3D OBJ y texturas</span><span class="chip">Curvas DXF</span><span class="chip">Informe PDF</span>
           </div>
         </div>
         <aside class="hero-card" aria-label="Proceso de trabajo">
@@ -224,20 +228,38 @@
       </div>
     </section>
 
-    <section id="entregables">
+    <section id="ejemplo-real">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow">Entregables</span>
-          <h2>Resultados para topografía, GIS, ingeniería y 3D</h2>
-          <p>Elige los productos que necesita cada proyecto. Algunos entregables requieren procesos asociados para garantizar un resultado coherente.</p>
+          <span class="eyebrow">Ejemplo real</span>
+          <h2>Fotogrametría completa de una urbanización</h2>
+          <p>Las imágenes siguientes pertenecen al mismo proyecto real: 372 fotografías de dron procesadas en calidad Rápida, con un tiempo total aproximado de 40 minutos y un precio de 9 €.</p>
         </div>
+
+        <div class="example-stats" aria-label="Datos del proyecto real">
+          <div class="stat"><strong>372</strong><span>fotografías</span></div>
+          <div class="stat"><strong>Rápida</strong><span>calidad seleccionada</span></div>
+          <div class="stat"><strong>40 minutos</strong><span>tiempo total aproximado</span></div>
+          <div class="stat"><strong>9 €</strong><span>precio total del proyecto</span></div>
+          <div class="stat"><strong>6</strong><span>resultados mostrados</span></div>
+          <div class="stat"><strong>1 ZIP</strong><span>entrega final organizada</span></div>
+        </div>
+
         <div class="deliverables">
-          <article class="card deliverable"><img src="/ejemplos/orto_peq.jpg" alt="Ejemplo de ortofoto georreferenciada" loading="lazy"><div class="deliverable-copy"><h3>Ortofoto GeoTIFF</h3><p>Imagen aérea corregida y georreferenciada para medición, inventario, inspección y documentación técnica.</p></div></article>
-          <article class="card deliverable"><img src="/ejemplos/Nube_peq.jpg" alt="Ejemplo de nube de puntos LAS" loading="lazy"><div class="deliverable-copy"><h3>Nube de puntos LAS</h3><p>Información tridimensional compatible con herramientas CAD, GIS, topografía y análisis de infraestructuras.</p></div></article>
-          <article class="card deliverable"><img src="/ejemplos/mde_peq.jpg" alt="Ejemplo de modelo digital de superficie" loading="lazy"><div class="deliverable-copy"><h3>DSM</h3><p>Modelo digital de superficie con edificios, vegetación y otros elementos visibles del terreno.</p></div></article>
-          <article class="card deliverable"><img src="/ejemplos/mdetif_peq.jpg" alt="Ejemplo de modelo digital del terreno" loading="lazy"><div class="deliverable-copy"><h3>DTM</h3><p>Modelo del terreno filtrado para pendientes, drenajes, explanaciones y estudios topográficos.</p></div></article>
-          <article class="card deliverable"><img src="/ejemplos/Obj_peq.jpg" alt="Ejemplo de modelo 3D texturizado" loading="lazy"><div class="deliverable-copy"><h3>Modelo 3D texturizado</h3><p>Representación visual realista para revisar cubiertas, fachadas, calles, parcelas y elementos constructivos.</p></div></article>
-          <article class="card deliverable"><img src="/ejemplos/curvas_peq.jpg" alt="Ejemplo de curvas de nivel" loading="lazy"><div class="deliverable-copy"><h3>Curvas de nivel</h3><p>Geometría para planos topográficos, análisis de pendientes y documentación del relieve.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/orto_peq.jpg" alt="Ortofoto georreferenciada del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>Ortofoto GeoTIFF</h3><p>Imagen aérea corregida y georreferenciada para medición, inventario, inspección y documentación técnica.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/Nube_peq.jpg" alt="Nube de puntos LAS del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>Nube de puntos LAS</h3><p>Millones de puntos tridimensionales compatibles con herramientas CAD, GIS, topografía y análisis de infraestructuras.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/mde_peq.jpg" alt="DSM del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>DSM</h3><p>Modelo digital de superficie con edificios, vegetación y otros elementos visibles del terreno.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/mdetif_peq.jpg" alt="DTM del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>DTM</h3><p>Modelo del terreno filtrado para pendientes, drenajes, explanaciones y estudios topográficos.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/Obj_peq.jpg" alt="Modelo 3D texturizado del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>Modelo 3D texturizado</h3><p>Representación visual realista para revisar cubiertas, fachadas, calles, parcelas y elementos constructivos.</p></div></article>
+          <article class="card deliverable"><img src="/ejemplos/curvas_peq.jpg" alt="Curvas de nivel del proyecto real de urbanización" loading="lazy"><div class="deliverable-copy"><h3>Curvas de nivel</h3><p>Geometría para planos topográficos, análisis de pendientes y documentación del relieve.</p></div></article>
+        </div>
+
+        <div class="example-output-note">
+          <h3>Entrega del ejemplo real</h3>
+          <p>Además de los seis resultados mostrados, el ZIP final incluía el informe PDF de Metashape y los archivos de textura asociados al modelo 3D OBJ.</p>
+          <div class="hero-points" aria-label="Archivos incluidos en el ejemplo real">
+            <span class="chip">Ortofoto GeoTIFF</span><span class="chip">Nube LAS</span><span class="chip">DSM</span><span class="chip">DTM</span><span class="chip">Curvas DXF</span><span class="chip">Modelo OBJ</span><span class="chip">Texturas</span><span class="chip">Informe PDF</span>
+          </div>
         </div>
       </div>
     </section>
@@ -255,21 +277,6 @@
       </div>
     </section>
 
-    <section id="ejemplo">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">Ejemplo real</span>
-          <h2>Fotogrametría completa de una urbanización</h2>
-          <p>Un conjunto de fotografías de dron procesado para generar productos técnicos y visuales listos para revisión y entrega.</p>
-        </div>
-        <div class="example-stats">
-          <div class="stat"><strong>372</strong><span>fotografías</span></div>
-          <div class="stat"><strong>6+</strong><span>tipos de entregables</span></div>
-          <div class="stat"><strong>1 ZIP</strong><span>entrega final organizada</span></div>
-        </div>
-      </div>
-    </section>
-
     <section id="preguntas">
       <div class="container">
         <div class="section-head"><span class="eyebrow">Preguntas frecuentes</span><h2>Antes de empezar</h2></div>
@@ -277,7 +284,7 @@
           <details><summary>¿Qué fotografías puedo subir?</summary><p>La plataforma admite los formatos de imagen indicados en el área privada y analiza los metadatos disponibles. Para proyectos especiales puedes solicitar un procesado supervisado.</p></details>
           <details><summary>¿Puedo conocer el precio antes de iniciar?</summary><p>Sí. Después de cargar las imágenes y configurar el proyecto, XProces muestra una estimación de tiempo y precio antes de confirmar el trabajo.</p></details>
           <details><summary>¿Cómo sabré que ha terminado?</summary><p>Puedes consultar el progreso desde el área privada y activar avisos privados por Telegram para recibir actualizaciones sobre tus trabajos.</p></details>
-          <details><summary>¿Puedo solicitar archivos concretos?</summary><p>Sí. Los entregables se seleccionan por proyecto. Cuando un producto necesita archivos intermedios asociados, XProces los incluye en el flujo de procesamiento aunque no todos formen parte de la descarga final.</p></details>
+          <details><summary>¿Puedo solicitar archivos concretos?</summary><p>Sí. Puedes seleccionar los resultados disponibles en XProces generados mediante Agisoft Metashape: nube LAS, ortofoto GeoTIFF, DSM, DTM, curvas DXF, modelo 3D OBJ con sus texturas e informe PDF. Cuando un resultado necesita archivos asociados, se incluyen dentro del ZIP final.</p></details>
         </div>
       </div>
     </section>
