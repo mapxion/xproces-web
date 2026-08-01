@@ -8241,6 +8241,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       if (/C:\\|->/.test(detailText)) detailText = cleanLiveStepText(detailText);
       const statusChip = statusValue === "queued" ? "En cola" : statusValue === "running" ? "Procesando" : translateStatus(statusValue || "running");
+      const inviteCodeText = String(job?.invite_code || "").trim().toUpperCase();
 
       /*
        * Los procesos terminados se calculan por la fase real alcanzada, no por
@@ -8340,6 +8341,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
                 <span class="xproces-live-chip">${escapeHtml(statusChip)}</span>
                 <span class="xproces-live-chip">${escapeHtml(qualityText)}</span>
                 <span class="xproces-live-chip">${escapeHtml(photosText)}</span>
+                ${inviteCodeText ? `<span class="xproces-live-chip">Código invitado: ${escapeHtml(inviteCodeText)}</span>` : ""}
               </div>
               <h2 class="xproces-live-title">${escapeHtml(phaseText)}</h2>
               <div class="xproces-live-subtitle">${escapeHtml(projectName)} · ${escapeHtml(phaseHint)}</div>
