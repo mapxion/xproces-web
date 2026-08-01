@@ -6665,7 +6665,7 @@ if (map) {
       await upload();
     });
 
-    async function createJob(selectedQualityMode) {
+    async function createJob(selectedQualityMode, inviteCode = "") {
       const cleanExifSummary = stripNullCharsDeep({
         ...(latestExifSummary || {}),
         _xproces: buildXprocesMeta(selectedQualityMode)
@@ -6690,16 +6690,19 @@ if (map) {
   expected_photos_count: files.length,
   expected_total_bytes: Number(totalSize || 0),
   pricing_quote: lastPreview?.pricing_quote || null,
+  invite_code: String(inviteCode || "").trim().toUpperCase() || null,
   invite_exempt: getStoredUser()?.auth_type === "invite"
 })
       });
 
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`No se pudo crear el job (${response.status}) ${text}`);
+        const error = new Error(data.message || `No se pudo crear el job (${response.status})`);
+        error.code = data.error || "create_job_error";
+        throw error;
       }
 
-      return response.json();
+      return data;
     }
 
     let paypalSdkPromise = null;
@@ -8678,8 +8681,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       const priceText = `${preview.price} €`;
       const isInviteUser = currentUser?.auth_type === "invite";
       const paymentNotice = isInviteUser
-        ? `El precio se muestra solo como referencia. Al acceder con un código invitado, este procesado no tendrá coste y comenzará directamente al confirmar.`
-        : `Al confirmar, se abrirá PayPal. Cuando el pago quede confirmado, comenzará automáticamente la subida de las fotografías y el trabajo entrará en cola para su procesado.`;
+        ? `El precio se muestra solo como referencia. El código invitado de esta sesión se aplicará a este único procesado y comenzará directamente al confirmar.`
+        : `Si dispone de un código invitado, introdúzcalo antes de confirmar. Si lo deja vacío, se abrirá PayPal y, cuando el pago quede confirmado, comenzará automáticamente la subida de las fotografías.`;
 
       const ok = await openModal({
         title: "Confirmar procesado",
@@ -8719,6 +8722,20 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
                 style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white;"
               >
             </div>
+            ${isInviteUser ? "" : `
+            <div class="modal-card full">
+              <div class="modal-label">Código invitado (opcional)</div>
+              <input
+                id="modalInviteCode"
+                type="text"
+                placeholder="Introduzca el código si dispone de uno"
+                autocomplete="off"
+                style="width:100%; min-height:44px; border:1px solid var(--border); border-radius:12px; padding:0 12px; font-size:14px; background:white; text-transform:uppercase;"
+              >
+              <div style="margin-top:7px; color:var(--muted); font-size:12px; line-height:1.4;">
+                Un código válido se utilizará una sola vez y evitará que se abra PayPal para este trabajo.
+              </div>
+            </div>`}
             <div class="modal-card full">
               <div class="modal-note">
                 ${paymentNotice}
@@ -8735,6 +8752,9 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       if (!ok) return;
 
       const projectNameValue = document.getElementById("modalProjectName")?.value?.trim() || "";
+      const inviteCodeValue = isInviteUser
+        ? ""
+        : (document.getElementById("modalInviteCode")?.value?.trim().toUpperCase() || "");
 
       if (!projectNameValue) {
         await showInfoModal(
@@ -8771,12 +8791,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         hideDownloadButton();
 
         console.log("[XPROCES] quality_mode seleccionado:", selectedQualityModeForJob);
-        const createdJob = await createJob(selectedQualityModeForJob);
+        const createdJob = await createJob(selectedQualityModeForJob, inviteCodeValue);
         activeJobId = createdJob.id;
         const jobId = activeJobId;
+        const paymentExempt = String(createdJob.payment_status || "").toLowerCase() === "exempt";
         workflowPhase = "payment";
 
-        if (!isInviteUser) {
+        if (!paymentExempt) {
           const paymentOk = await openPayPalCheckout(jobId, Number(createdJob.price ?? preview.price ?? 0), pendingProjectName);
           if (!paymentOk) {
             await showInfoModal(
@@ -8814,11 +8835,11 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
           progressFill.classList.remove("error");
           progressFill.style.background = "linear-gradient(90deg, var(--accent-2), var(--accent))";
         }
-        if (progressLabel) progressLabel.textContent = isInviteUser
+        if (progressLabel) progressLabel.textContent = paymentExempt
           ? "Código invitado validado. Preparando subida..."
           : "Pago confirmado. Preparando subida...";
         if (progressPercent) progressPercent.textContent = "0%";
-        jobStatusEl.textContent = isInviteUser
+        jobStatusEl.textContent = paymentExempt
           ? "Procesado sin coste. Preparando subida de fotografías..."
           : "Pago confirmado. Preparando subida de fotografías...";
 
@@ -8866,6 +8887,22 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         console.error(error);
 
         const msg = error?.message || "Error durante la subida";
+        const inviteCodeErrors = new Set([
+          "invalid_invite_code",
+          "invite_code_already_used",
+          "invite_session_code_unavailable"
+        ]);
+
+        if (inviteCodeErrors.has(String(error?.code || ""))) {
+          await showInfoModal(
+            "Código invitado no válido",
+            "No se ha creado el trabajo ni se ha abierto PayPal.",
+            msg,
+            "warning"
+          );
+          return;
+        }
+
         const uploadRelatedPhase = ["uploading", "verifying", "submitting"].includes(workflowPhase);
         let reconciliation = null;
 
