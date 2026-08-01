@@ -4849,13 +4849,17 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             const queueEta = await getJobEta(job.id);
             if (queueEta && queueEta.ok) {
               const jobsAhead = Math.max(0, Number(queueEta.jobs_ahead || 0));
+              const queuedJobsAhead = Math.max(0, Number(queueEta.queued_jobs_ahead || 0));
+              const runningJobsAhead = Math.max(0, Number(queueEta.running_jobs_ahead || 0));
               const waitSeconds = Math.max(0, Number(queueEta.queue_wait_seconds || 0));
               const waitText = waitSeconds > 0 ? formatEtaText(waitSeconds) : "Inicio próximo";
-              const aheadText = jobsAhead === 1
-                ? "Hay 1 trabajo antes que el suyo."
-                : jobsAhead > 1
-                  ? `Hay ${jobsAhead} trabajos antes que el suyo.`
-                  : "Su trabajo es el siguiente en procesarse.";
+              const aheadText = runningJobsAhead === 1 && queuedJobsAhead === 0
+                ? "Hay 1 trabajo en proceso antes que el suyo."
+                : jobsAhead === 1
+                  ? "Hay 1 trabajo antes que el suyo."
+                  : jobsAhead > 1
+                    ? `Hay ${jobsAhead} trabajos antes que el suyo.`
+                    : "Primera posición de la cola.";
               queueCardHtml = `
                 <div class="job-card-meta" style="margin-top:8px;font-weight:800;">${escapeHtml(aheadText)}</div>
                 <div class="job-card-meta" style="color:#9a6e08;font-weight:900;">Tiempo estimado para el inicio: ${escapeHtml(waitText)}</div>
@@ -8456,6 +8460,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
     function renderQueuedWaitingSummary(job, eta) {
       const jobsAhead = Math.max(0, Number(eta?.jobs_ahead || 0));
+      const queuedJobsAhead = Math.max(0, Number(eta?.queued_jobs_ahead || 0));
+      const runningJobsAhead = Math.max(0, Number(eta?.running_jobs_ahead || 0));
       const queuePosition = Number(eta?.queue_position || 0);
       const waitSeconds = Math.max(0, Number(eta?.queue_wait_seconds || 0));
       const waitText = waitSeconds > 0
@@ -8463,12 +8469,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
         : "Inicio próximo";
 
       let description = "";
-      if (jobsAhead === 1) {
+      if (runningJobsAhead === 1 && queuedJobsAhead === 0) {
+        description = "Hay 1 trabajo en proceso antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice.";
+      } else if (jobsAhead === 1) {
         description = "Hay 1 trabajo antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice.";
       } else if (jobsAhead > 1) {
         description = `Hay ${jobsAhead} trabajos antes que el suyo. Su procesamiento comenzará automáticamente cuando finalicen.`;
       } else {
-        description = "Su trabajo es el siguiente en procesarse y comenzará automáticamente cuando el sistema quede disponible.";
+        description = "Su trabajo ocupa la primera posición de la cola y comenzará automáticamente en cuanto el sistema quede disponible.";
       }
 
       const positionText = queuePosition > 0
@@ -8494,11 +8502,15 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
 
       if (job.status === "queued") {
         const jobsAhead = Math.max(0, Number(eta.jobs_ahead || 0));
-        const waitingText = jobsAhead === 1
+        const queuedJobsAhead = Math.max(0, Number(eta.queued_jobs_ahead || 0));
+        const runningJobsAhead = Math.max(0, Number(eta.running_jobs_ahead || 0));
+        const waitingText = runningJobsAhead === 1 && queuedJobsAhead === 0
+          ? "Hay 1 trabajo en proceso antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice."
+          : jobsAhead === 1
           ? "Hay 1 trabajo antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice."
           : jobsAhead > 1
             ? `Hay ${jobsAhead} trabajos antes que el suyo. Su procesamiento comenzará automáticamente cuando finalicen.`
-            : "Su trabajo es el siguiente en procesarse y comenzará automáticamente cuando el sistema quede disponible.";
+            : "Su trabajo ocupa la primera posición de la cola y comenzará automáticamente en cuanto el sistema quede disponible.";
 
         return `Job ${job.id}\nTrabajo en espera\n${waitingText}\nTiempo estimado para el inicio: ${eta.queue_wait_human || "pendiente de estimación"}`;
       }
