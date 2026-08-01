@@ -895,14 +895,12 @@
                   <th>Estado</th>
                   <th>Usado por</th>
                   <th>Nombre</th>
-                  <th>Proyecto</th>
-                  <th>Job ID</th>
                   <th>Creado</th>
                   <th>Usado</th>
                 </tr>
               </thead>
               <tbody id="inviteCodesTableBody">
-                <tr><td colspan="8" class="muted">Cargando códigos...</td></tr>
+                <tr><td colspan="6" class="muted">Cargando códigos...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1085,6 +1083,7 @@
     const REFRESH_MS = 5000;
 
     let jobsCache = [];
+    let jobsSummary = null;
     let currentSortField = "created_at";
     let currentSortDirection = "desc";
     let autoRefresh = true;
@@ -1615,26 +1614,20 @@ function translateStage(stage) {
       const rows = Array.isArray(codes) ? codes : [];
 
       if (!rows.length) {
-        inviteCodesTableBody.innerHTML = '<tr><td colspan="8" class="muted">No hay códigos de invitado.</td></tr>';
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="muted">No hay códigos de invitado.</td></tr>';
         return;
       }
 
-      inviteCodesTableBody.innerHTML = rows.map((code) => {
-        const isUsed = Boolean(code.is_used || code.used_job_id);
-
-        return `
+      inviteCodesTableBody.innerHTML = rows.map((code) => `
         <tr>
           <td class="mono">${escapeHtml(code.code || "—")}</td>
-          <td><span class="${isUsed ? "badge badge-done" : "badge badge-info"}">${isUsed ? "Usado" : "Disponible"}</span></td>
+          <td><span class="${code.is_used ? "badge badge-done" : "badge badge-info"}">${code.is_used ? "Usado" : "Disponible"}</span></td>
           <td>${escapeHtml(code.used_by_email || "—")}</td>
           <td>${escapeHtml(code.used_by_name || "—")}</td>
-          <td>${escapeHtml(code.used_project_name || "—")}</td>
-          <td class="mono">${escapeHtml(code.used_job_id || "—")}</td>
           <td>${formatDate(code.created_at)}</td>
           <td>${formatDate(code.used_at)}</td>
         </tr>
-      `;
-      }).join("");
+      `).join("");
     }
 
     async function loadInviteCodes() {
@@ -1645,7 +1638,7 @@ function translateStage(stage) {
         renderInviteCodes(Array.isArray(data.codes) ? data.codes : []);
       } catch (error) {
         console.error("load invite codes error", error);
-        inviteCodesTableBody.innerHTML = '<tr><td colspan="8" class="error-text">No se pudieron cargar los códigos.</td></tr>';
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="error-text">No se pudieron cargar los códigos.</td></tr>';
       }
     }
 
@@ -1871,24 +1864,38 @@ function translateStage(stage) {
     }
 
     function renderStats(rows) {
-      statTotal.textContent = rows.length;
-      statQueued.textContent = rows.filter(j => j.status === "queued").length;
-      statRunning.textContent = rows.filter(j => j.status === "running").length;
-      statDone.textContent = rows.filter(j => j.status === "done" || j.status === "tams_downloaded").length;
-      statFailed.textContent = rows.filter(j => j.status === "failed").length;
+      const summary = jobsSummary && typeof jobsSummary === "object" ? jobsSummary : null;
 
-      const totalPhotos = rows.reduce((acc, j) => acc + Number(j.photos_count || 0), 0);
+      const totalCount = summary ? Number(summary.total_count || 0) : rows.length;
+      const queuedCount = summary ? Number(summary.queued_count || 0) : rows.filter(j => j.status === "queued").length;
+      const runningCount = summary ? Number(summary.running_count || 0) : rows.filter(j => j.status === "running").length;
+      const doneCount = summary ? Number(summary.done_count || 0) : rows.filter(j => j.status === "done" || j.status === "tams_downloaded").length;
+      const failedCount = summary ? Number(summary.failed_count || 0) : rows.filter(j => j.status === "failed").length;
+      const totalPhotos = summary ? Number(summary.photos_count || 0) : rows.reduce((acc, j) => acc + Number(j.photos_count || 0), 0);
+
+      statTotal.textContent = totalCount.toLocaleString("es-ES");
+      statQueued.textContent = queuedCount.toLocaleString("es-ES");
+      statRunning.textContent = runningCount.toLocaleString("es-ES");
+      statDone.textContent = doneCount.toLocaleString("es-ES");
+      statFailed.textContent = failedCount.toLocaleString("es-ES");
       statPhotos.textContent = totalPhotos.toLocaleString("es-ES");
 
-      statTams.textContent = rows.filter(j => getProjectType(j) === "tams").length;
-      statPhotogrammetry.textContent = rows.filter(j => getProjectType(j) === "photogrammetry").length;
-      statModel3d.textContent = rows.filter(j => getProjectType(j) === "3d").length;
+      statTams.textContent = (summary ? Number(summary.tams_count || 0) : rows.filter(j => getProjectType(j) === "tams").length).toLocaleString("es-ES");
+      statPhotogrammetry.textContent = (summary ? Number(summary.photogrammetry_count || 0) : rows.filter(j => getProjectType(j) === "photogrammetry").length).toLocaleString("es-ES");
+      statModel3d.textContent = (summary ? Number(summary.model3d_count || 0) : rows.filter(j => getProjectType(j) === "3d").length).toLocaleString("es-ES");
 
-      const revenueRows = rows.filter(j => normalizedPaymentStatus(j) === "paid");
-      const revenueTotal = revenueRows.reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
-      const revenueMonth = revenueRows
-        .filter(j => isSameMonth(j.payment_date))
-        .reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
+      let revenueTotal;
+      let revenueMonth;
+      if (summary) {
+        revenueTotal = Number(summary.revenue_total || 0);
+        revenueMonth = Number(summary.revenue_month || 0);
+      } else {
+        const revenueRows = rows.filter(j => normalizedPaymentStatus(j) === "paid");
+        revenueTotal = revenueRows.reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
+        revenueMonth = revenueRows
+          .filter(j => isSameMonth(j.payment_date))
+          .reduce((acc, j) => acc + Number(j.payment_amount ?? j.price ?? 0), 0);
+      }
 
       statRevenueTotal.textContent = formatMoney(revenueTotal);
       statRevenueMonth.textContent = formatMoney(revenueMonth);
@@ -2129,6 +2136,9 @@ function translateStage(stage) {
 
         const data = await response.json();
         const rawJobs = Array.isArray(data.jobs) ? data.jobs : [];
+        jobsSummary = data && data.summary && typeof data.summary === "object"
+          ? data.summary
+          : { total_count: Number(data?.total_count || rawJobs.length) };
         jobsCache = await normalizeAdminJobsWithLogs(rawJobs);
         renderTable();
       } catch (error) {
