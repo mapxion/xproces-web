@@ -895,12 +895,14 @@
                   <th>Estado</th>
                   <th>Usado por</th>
                   <th>Nombre</th>
+                  <th>Proyecto</th>
+                  <th>Job ID</th>
                   <th>Creado</th>
                   <th>Usado</th>
                 </tr>
               </thead>
               <tbody id="inviteCodesTableBody">
-                <tr><td colspan="6" class="muted">Cargando códigos...</td></tr>
+                <tr><td colspan="8" class="muted">Cargando códigos...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1613,20 +1615,26 @@ function translateStage(stage) {
       const rows = Array.isArray(codes) ? codes : [];
 
       if (!rows.length) {
-        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="muted">No hay códigos de invitado.</td></tr>';
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="8" class="muted">No hay códigos de invitado.</td></tr>';
         return;
       }
 
-      inviteCodesTableBody.innerHTML = rows.map((code) => `
+      inviteCodesTableBody.innerHTML = rows.map((code) => {
+        const isUsed = Boolean(code.is_used || code.used_job_id);
+
+        return `
         <tr>
           <td class="mono">${escapeHtml(code.code || "—")}</td>
-          <td><span class="${code.is_used ? "badge badge-done" : "badge badge-info"}">${code.is_used ? "Usado" : "Disponible"}</span></td>
+          <td><span class="${isUsed ? "badge badge-done" : "badge badge-info"}">${isUsed ? "Usado" : "Disponible"}</span></td>
           <td>${escapeHtml(code.used_by_email || "—")}</td>
           <td>${escapeHtml(code.used_by_name || "—")}</td>
+          <td>${escapeHtml(code.used_project_name || "—")}</td>
+          <td class="mono">${escapeHtml(code.used_job_id || "—")}</td>
           <td>${formatDate(code.created_at)}</td>
           <td>${formatDate(code.used_at)}</td>
         </tr>
-      `).join("");
+      `;
+      }).join("");
     }
 
     async function loadInviteCodes() {
@@ -1637,7 +1645,7 @@ function translateStage(stage) {
         renderInviteCodes(Array.isArray(data.codes) ? data.codes : []);
       } catch (error) {
         console.error("load invite codes error", error);
-        inviteCodesTableBody.innerHTML = '<tr><td colspan="6" class="error-text">No se pudieron cargar los códigos.</td></tr>';
+        inviteCodesTableBody.innerHTML = '<tr><td colspan="8" class="error-text">No se pudieron cargar los códigos.</td></tr>';
       }
     }
 
