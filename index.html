@@ -4844,29 +4844,6 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           const canRecover = uiStatus.canRecover === true;
           const statusBadgeClass = uiStatus.className;
 
-          let queueCardHtml = "";
-          if (uiStatus.key === "queued") {
-            const queueEta = await getJobEta(job.id);
-            if (queueEta && queueEta.ok) {
-              const jobsAhead = Math.max(0, Number(queueEta.jobs_ahead || 0));
-              const queuedJobsAhead = Math.max(0, Number(queueEta.queued_jobs_ahead || 0));
-              const runningJobsAhead = Math.max(0, Number(queueEta.running_jobs_ahead || 0));
-              const waitSeconds = Math.max(0, Number(queueEta.queue_wait_seconds || 0));
-              const waitText = waitSeconds > 0 ? formatEtaText(waitSeconds) : "Inicio próximo";
-              const aheadText = runningJobsAhead === 1 && queuedJobsAhead === 0
-                ? "Hay 1 trabajo en proceso antes que el suyo."
-                : jobsAhead === 1
-                  ? "Hay 1 trabajo antes que el suyo."
-                  : jobsAhead > 1
-                    ? `Hay ${jobsAhead} trabajos antes que el suyo.`
-                    : "Primera posición de la cola.";
-              queueCardHtml = `
-                <div class="job-card-meta" style="margin-top:8px;font-weight:800;">${escapeHtml(aheadText)}</div>
-                <div class="job-card-meta" style="color:#9a6e08;font-weight:900;">Tiempo estimado para el inicio: ${escapeHtml(waitText)}</div>
-              `;
-            }
-          }
-
           card.innerHTML = `
             <div class="job-card-top">
               <div class="job-card-title">${escapeHtml(job.project_name || "Proyecto sin nombre")}</div>
@@ -4878,7 +4855,6 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             <div class="job-card-meta">Progreso: ${escapeHtml(String(progressValue))}%</div>
             <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
             <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
-            ${queueCardHtml}
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn xproces-download-link" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
             ${String(job.payment_status || "").toLowerCase() === "paid" && Number(job.payment_amount ?? job.price ?? 0) > 0
               ? `<div class="job-card-meta" style="margin-top:8px;"><button class="invoice-request-btn xproces-invoice-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" ${String(job.invoice_status || "").toLowerCase() === "issued" ? "disabled" : ""}>${String(job.invoice_status || "").toLowerCase() === "issued" ? `Factura emitida · ${escapeHtml(job.invoice_number || "")}` : String(job.invoice_status || "").toLowerCase() === "requested" ? "Factura solicitada" : "Solicitar factura"}</button></div>`
@@ -8459,10 +8435,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
     }
 
     function renderQueuedWaitingSummary(job, eta) {
-      const jobsAhead = Math.max(0, Number(eta?.jobs_ahead || 0));
+      const rawJobsAhead = Math.max(0, Number(eta?.jobs_ahead || 0));
       const queuedJobsAhead = Math.max(0, Number(eta?.queued_jobs_ahead || 0));
       const runningJobsAhead = Math.max(0, Number(eta?.running_jobs_ahead || 0));
       const queuePosition = Number(eta?.queue_position || 0);
+      const jobsAhead = queuePosition > 0
+        ? Math.max(0, queuePosition - 1)
+        : rawJobsAhead;
       const waitSeconds = Math.max(0, Number(eta?.queue_wait_seconds || 0));
       const waitText = waitSeconds > 0
         ? formatEtaText(waitSeconds)
@@ -8501,9 +8480,13 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       }
 
       if (job.status === "queued") {
-        const jobsAhead = Math.max(0, Number(eta.jobs_ahead || 0));
+        const rawJobsAhead = Math.max(0, Number(eta.jobs_ahead || 0));
         const queuedJobsAhead = Math.max(0, Number(eta.queued_jobs_ahead || 0));
         const runningJobsAhead = Math.max(0, Number(eta.running_jobs_ahead || 0));
+        const queuePosition = Number(eta.queue_position || 0);
+        const jobsAhead = queuePosition > 0
+          ? Math.max(0, queuePosition - 1)
+          : rawJobsAhead;
         const waitingText = runningJobsAhead === 1 && queuedJobsAhead === 0
           ? "Hay 1 trabajo en proceso antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice."
           : jobsAhead === 1
