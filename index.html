@@ -1156,6 +1156,43 @@
       margin-top: 16px;
     }
 
+    .xproces-queue-card {
+      display: grid;
+      gap: 12px;
+      padding: 20px;
+      border: 1px solid rgba(212,154,17,.30);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,252,242,.98), rgba(255,255,255,.96));
+    }
+    .xproces-queue-card-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+    .xproces-queue-card-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+    .xproces-queue-card-time {
+      padding: 13px 15px;
+      border: 1px solid rgba(212,154,17,.28);
+      border-radius: 14px;
+      background: rgba(212,154,17,.08);
+      color: #9a6e08;
+      font-size: 17px;
+      line-height: 1.35;
+      font-weight: 900;
+    }
+    .xproces-queue-card-position {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
 
     .xproces-live-card {
       display: grid;
@@ -4807,6 +4844,25 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
           const canRecover = uiStatus.canRecover === true;
           const statusBadgeClass = uiStatus.className;
 
+          let queueCardHtml = "";
+          if (uiStatus.key === "queued") {
+            const queueEta = await getJobEta(job.id);
+            if (queueEta && queueEta.ok) {
+              const jobsAhead = Math.max(0, Number(queueEta.jobs_ahead || 0));
+              const waitSeconds = Math.max(0, Number(queueEta.queue_wait_seconds || 0));
+              const waitText = waitSeconds > 0 ? formatEtaText(waitSeconds) : "Inicio próximo";
+              const aheadText = jobsAhead === 1
+                ? "Hay 1 trabajo antes que el suyo."
+                : jobsAhead > 1
+                  ? `Hay ${jobsAhead} trabajos antes que el suyo.`
+                  : "Su trabajo es el siguiente en procesarse.";
+              queueCardHtml = `
+                <div class="job-card-meta" style="margin-top:8px;font-weight:800;">${escapeHtml(aheadText)}</div>
+                <div class="job-card-meta" style="color:#9a6e08;font-weight:900;">Tiempo estimado para el inicio: ${escapeHtml(waitText)}</div>
+              `;
+            }
+          }
+
           card.innerHTML = `
             <div class="job-card-top">
               <div class="job-card-title">${escapeHtml(job.project_name || "Proyecto sin nombre")}</div>
@@ -4818,6 +4874,7 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
             <div class="job-card-meta">Progreso: ${escapeHtml(String(progressValue))}%</div>
             <div class="job-card-meta">Precio: ${escapeHtml(formatJobListPrice(job.price))}</div>
             <div class="job-card-meta">Creado: ${escapeHtml(formatStoredJobDate(job.created_at))}</div>
+            ${queueCardHtml}
             ${canDownload ? `<div class="job-card-meta" style="margin-top:8px;"><a class="process-download-btn xproces-download-link" href="${API_BASE}/jobs/${encodeURIComponent(job.id)}/download" style="min-height:36px; padding:8px 12px; font-size:13px;">Descargar resultados</a></div>` : ""}
             ${String(job.payment_status || "").toLowerCase() === "paid" && Number(job.payment_amount ?? job.price ?? 0) > 0
               ? `<div class="job-card-meta" style="margin-top:8px;"><button class="invoice-request-btn xproces-invoice-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" ${String(job.invoice_status || "").toLowerCase() === "issued" ? "disabled" : ""}>${String(job.invoice_status || "").toLowerCase() === "issued" ? `Factura emitida · ${escapeHtml(job.invoice_number || "")}` : String(job.invoice_status || "").toLowerCase() === "requested" ? "Factura solicitada" : "Solicitar factura"}</button></div>`
@@ -8397,6 +8454,37 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       `;
     }
 
+    function renderQueuedWaitingSummary(job, eta) {
+      const jobsAhead = Math.max(0, Number(eta?.jobs_ahead || 0));
+      const queuePosition = Number(eta?.queue_position || 0);
+      const waitSeconds = Math.max(0, Number(eta?.queue_wait_seconds || 0));
+      const waitText = waitSeconds > 0
+        ? formatEtaText(waitSeconds)
+        : "Inicio próximo";
+
+      let description = "";
+      if (jobsAhead === 1) {
+        description = "Hay 1 trabajo antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice.";
+      } else if (jobsAhead > 1) {
+        description = `Hay ${jobsAhead} trabajos antes que el suyo. Su procesamiento comenzará automáticamente cuando finalicen.`;
+      } else {
+        description = "Su trabajo es el siguiente en procesarse y comenzará automáticamente cuando el sistema quede disponible.";
+      }
+
+      const positionText = queuePosition > 0
+        ? `<div class="xproces-queue-card-position">Posición en la cola: ${escapeHtml(String(queuePosition))}</div>`
+        : "";
+
+      return `
+        <div class="xproces-queue-card">
+          <h3 class="xproces-queue-card-title">Trabajo en espera</h3>
+          <div class="xproces-queue-card-text">${escapeHtml(description)}</div>
+          ${positionText}
+          <div class="xproces-queue-card-time">Tiempo estimado para el inicio: ${escapeHtml(waitText)}</div>
+        </div>
+      `;
+    }
+
     async function buildQueuedOrRunningMessage(job) {
       const eta = await getJobEta(job.id);
 
@@ -8405,7 +8493,14 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
       }
 
       if (job.status === "queued") {
-        return `Job ${job.id}\nEstado: en cola\nSu proyecto está en cola.\nTiempo estimado: ${eta.total_estimated_human}`;
+        const jobsAhead = Math.max(0, Number(eta.jobs_ahead || 0));
+        const waitingText = jobsAhead === 1
+          ? "Hay 1 trabajo antes que el suyo. Su procesamiento comenzará automáticamente cuando finalice."
+          : jobsAhead > 1
+            ? `Hay ${jobsAhead} trabajos antes que el suyo. Su procesamiento comenzará automáticamente cuando finalicen.`
+            : "Su trabajo es el siguiente en procesarse y comenzará automáticamente cuando el sistema quede disponible.";
+
+        return `Job ${job.id}\nTrabajo en espera\n${waitingText}\nTiempo estimado para el inicio: ${eta.queue_wait_human || "pendiente de estimación"}`;
       }
 
       if (job.status === "running") {
@@ -8503,12 +8598,18 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             const eta = await getJobEta(job.id);
 
             if (eta && eta.ok) {
-              etaBig.textContent = eta.total_estimated_human || "No disponible";
+              etaBig.textContent = status === "queued"
+                ? (eta.queue_wait_human || "Inicio próximo")
+                : (eta.own_remaining_service_human || eta.total_estimated_human || "No disponible");
             }
 
-            jobStatusEl.innerHTML = window.XProcesLogRenderer
-              ? window.XProcesLogRenderer.render(job, logText, eta)
-              : renderLiveProcessSummary(job, logText, eta);
+            if (status === "queued") {
+              jobStatusEl.innerHTML = renderQueuedWaitingSummary(job, eta);
+            } else {
+              jobStatusEl.innerHTML = window.XProcesLogRenderer
+                ? window.XProcesLogRenderer.render(job, logText, eta)
+                : renderLiveProcessSummary(job, logText, eta);
+            }
           } else {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
