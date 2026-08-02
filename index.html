@@ -1905,6 +1905,60 @@
       padding:8px 12px;border-radius:12px;background:#fff;color:#7aab39;
       border:1px solid rgba(122,171,57,.38);font-size:13px;font-weight:800;cursor:pointer;
     }
+    .xproces-support-btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:36px;
+      padding:8px 12px;
+      border-radius:12px;
+      background:#fff;
+      color:#365f9c;
+      border:1px solid rgba(54,95,156,.35);
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      text-decoration:none;
+    }
+    .xproces-support-btn:hover {
+      background:rgba(54,95,156,.06);
+      border-color:rgba(54,95,156,.52);
+    }
+    .xproces-support-wrap {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .xproces-support-modal-actions {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    .xproces-support-channel {
+      min-height:46px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .xproces-support-channel.email { color:#365f9c; border-color:rgba(54,95,156,.35); }
+    .xproces-support-channel.telegram { color:#1688bd; border-color:rgba(22,136,189,.35); }
+    .xproces-support-copy-note {
+      display:none;
+      margin-top:10px;
+      color:var(--ok);
+      font-size:13px;
+      line-height:1.45;
+      font-weight:800;
+    }
+    @media(max-width:760px){
+      .xproces-support-modal-actions{grid-template-columns:1fr;}
+    }
     .invoice-request-btn:disabled{cursor:default;opacity:.65}
     .invoice-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .invoice-form-field{display:grid;gap:5px}.invoice-form-field.full{grid-column:1/-1}
@@ -4578,6 +4632,119 @@ function getSelectedQualityMode() {
     }
 
 
+
+    const XPROCES_SUPPORT_EMAIL = "xproces@intelsi.es";
+    const XPROCES_SUPPORT_TELEGRAM = "XProcesBot";
+    let xprocesSupportJob = null;
+
+    function xprocesSupportAllowed(job) {
+      const key = normalizeJobStatus(job).key;
+      return ["running", "completed", "failed", "cancelled"].includes(key);
+    }
+
+    function xprocesSupportStatusLabel(job) {
+      const ui = normalizeJobStatus(job);
+      return ui?.label || String(job?.status || "No disponible");
+    }
+
+    function xprocesSupportMessage(job) {
+      const user = typeof getStoredUser === "function" ? (getStoredUser() || {}) : {};
+      const projectName = String(job?.project_name || "Proyecto sin nombre");
+      const jobId = String(job?.id || "No disponible");
+      const status = xprocesSupportStatusLabel(job);
+      const userEmail = String(user?.email || job?.user_email || job?.email || "");
+
+      return [
+        "Hola:",
+        "",
+        "Necesito ayuda con el siguiente trabajo de XProces.",
+        "",
+        `Trabajo: ${jobId}`,
+        `Proyecto: ${projectName}`,
+        `Estado: ${status}`,
+        userEmail ? `Usuario: ${userEmail}` : "",
+        "",
+        "Descripción de la incidencia:",
+        ""
+      ].filter((line, index, lines) => line !== "" || lines[index - 1] !== "").join("\n");
+    }
+
+    function xprocesSupportMailto(job) {
+      const jobId = String(job?.id || "");
+      const subject = `Incidencia XProces · Trabajo ${jobId}`;
+      const body = xprocesSupportMessage(job);
+      return `mailto:${XPROCES_SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    async function xprocesCopySupportMessage(job) {
+      const text = xprocesSupportMessage(job);
+
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (_) {
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          const ok = document.execCommand("copy");
+          textarea.remove();
+          return ok;
+        } catch (_) {
+          return false;
+        }
+      }
+    }
+
+    function openXProcesSupportModal(job) {
+      if (!job?.id) return;
+      xprocesSupportJob = job;
+
+      const backdrop = document.getElementById("xprocesSupportBackdrop");
+      const jobValue = document.getElementById("xprocesSupportJobValue");
+      const projectValue = document.getElementById("xprocesSupportProjectValue");
+      const statusValue = document.getElementById("xprocesSupportStatusValue");
+      const copyNote = document.getElementById("xprocesSupportCopyNote");
+
+      if (jobValue) jobValue.textContent = String(job.id || "—");
+      if (projectValue) projectValue.textContent = String(job.project_name || "Proyecto sin nombre");
+      if (statusValue) statusValue.textContent = xprocesSupportStatusLabel(job);
+      if (copyNote) copyNote.style.display = "none";
+      if (backdrop) backdrop.classList.add("show");
+    }
+
+    function closeXProcesSupportModal() {
+      const backdrop = document.getElementById("xprocesSupportBackdrop");
+      if (backdrop) backdrop.classList.remove("show");
+      xprocesSupportJob = null;
+    }
+
+    function appendXProcesActiveSupportButton(job) {
+      if (!jobStatusEl || !xprocesSupportAllowed(job)) return;
+
+      const old = jobStatusEl.querySelector(".xproces-active-support-wrap");
+      if (old) old.remove();
+
+      const wrap = document.createElement("div");
+      wrap.className = "xproces-support-wrap xproces-active-support-wrap";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "xproces-support-btn";
+      button.textContent = "Contactar soporte";
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openXProcesSupportModal(job);
+      });
+
+      wrap.appendChild(button);
+      jobStatusEl.appendChild(wrap);
+    }
+
     async function fetchFullJob(jobOrId) {
       const jobId = typeof jobOrId === "string" ? jobOrId : jobOrId?.id;
       if (!jobId) return null;
@@ -4700,6 +4867,8 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
   hideDownloadButton();
 }
       
+      setTimeout(() => appendXProcesActiveSupportButton(job), 0);
+
       if (progressWrap) progressWrap.style.display = "block";
       if (progressFill) {
         const pct = normalizeJobStatus(job).key === "completed"
@@ -4860,9 +5029,18 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
               ? `<div class="job-card-meta" style="margin-top:8px;"><button class="invoice-request-btn xproces-invoice-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" ${String(job.invoice_status || "").toLowerCase() === "issued" ? "disabled" : ""}>${String(job.invoice_status || "").toLowerCase() === "issued" ? `Factura emitida · ${escapeHtml(job.invoice_number || "")}` : String(job.invoice_status || "").toLowerCase() === "requested" ? "Factura solicitada" : "Solicitar factura"}</button></div>`
               : ""}
             ${canRecover ? `<div class="job-card-meta" style="margin-top:8px;"><button class="process-download-btn xproces-recovery-card-btn" type="button" data-job-id="${escapeHtml(job.id || "")}" style="min-height:36px; padding:8px 12px; font-size:13px;">Solicitar recuperación</button></div>` : ""}
+            ${xprocesSupportAllowed(jobView) ? `<div class="job-card-meta" style="margin-top:8px;"><button class="xproces-support-btn xproces-support-card-btn" type="button" data-job-id="${escapeHtml(job.id || "")}">Contactar soporte</button></div>` : ""}
           `;
 
           card.addEventListener("click", async (event) => {
+            const supportBtn = event.target.closest(".xproces-support-card-btn");
+            if (supportBtn) {
+              event.preventDefault();
+              event.stopPropagation();
+              openXProcesSupportModal(jobView);
+              return;
+            }
+
             const recoveryBtn = event.target.closest(".xproces-recovery-card-btn");
             if (recoveryBtn) {
               event.preventDefault();
@@ -8609,6 +8787,8 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
             jobStatusEl.textContent = buildProjectStatusText(job);
           }
 
+          appendXProcesActiveSupportButton(job);
+
           if (normalizeJobStatus(job).canDownload) {
             stopPolling();
             if (progressFill) progressFill.style.width = "100%";
@@ -8627,6 +8807,7 @@ if (/ Cámaras con localizaci[oó]n de referencia disponible/i.test(line)) {
               showDownloadButton(job);
             }
 
+            appendXProcesActiveSupportButton(job);
             return;
           }
 
@@ -9185,6 +9366,97 @@ window.addEventListener("load", () => {
 
 </script>
 
+
+
+<!-- XPROCES SOPORTE -->
+<div class="modal-backdrop" id="xprocesSupportBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="xprocesSupportTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="xprocesSupportTitle">Contactar con soporte</h2>
+      <div class="modal-subtitle">
+        Elija correo o Telegram. Los datos del trabajo se incluirán automáticamente.
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-card full">
+          <div class="modal-label">Trabajo</div>
+          <div class="modal-value" id="xprocesSupportJobValue">—</div>
+        </div>
+        <div class="modal-card">
+          <div class="modal-label">Proyecto</div>
+          <div class="modal-value" id="xprocesSupportProjectValue">—</div>
+        </div>
+        <div class="modal-card">
+          <div class="modal-label">Estado</div>
+          <div class="modal-value" id="xprocesSupportStatusValue">—</div>
+        </div>
+      </div>
+
+      <div class="modal-note">
+        Describa la incidencia con el mayor detalle posible. En Telegram podrá adjuntar capturas, vídeos o archivos.
+      </div>
+
+      <div class="xproces-support-modal-actions">
+        <button type="button" class="xproces-support-channel email" id="xprocesSupportEmailBtn">
+          Contactar por correo
+        </button>
+        <button type="button" class="xproces-support-channel telegram" id="xprocesSupportTelegramBtn">
+          Contactar por Telegram
+        </button>
+      </div>
+
+      <div class="xproces-support-copy-note" id="xprocesSupportCopyNote">
+        Los datos del trabajo se han copiado. Péguelos en el chat de Telegram y añada la descripción de la incidencia.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="xprocesSupportCloseBtn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const backdrop = document.getElementById("xprocesSupportBackdrop");
+  const closeBtn = document.getElementById("xprocesSupportCloseBtn");
+  const emailBtn = document.getElementById("xprocesSupportEmailBtn");
+  const telegramBtn = document.getElementById("xprocesSupportTelegramBtn");
+  const copyNote = document.getElementById("xprocesSupportCopyNote");
+
+  if (closeBtn) closeBtn.addEventListener("click", closeXProcesSupportModal);
+  if (backdrop) {
+    backdrop.addEventListener("click", function (event) {
+      if (event.target === backdrop) closeXProcesSupportModal();
+    });
+  }
+
+  if (emailBtn) {
+    emailBtn.addEventListener("click", function () {
+      if (!xprocesSupportJob) return;
+      window.location.href = xprocesSupportMailto(xprocesSupportJob);
+    });
+  }
+
+  if (telegramBtn) {
+    telegramBtn.addEventListener("click", async function () {
+      if (!xprocesSupportJob) return;
+
+      const copied = await xprocesCopySupportMessage(xprocesSupportJob);
+      if (copyNote) {
+        copyNote.textContent = copied
+          ? "Los datos del trabajo se han copiado. Péguelos en el chat de Telegram y añada la descripción de la incidencia."
+          : "Telegram se abrirá. Copie manualmente el ID del trabajo y describa la incidencia.";
+        copyNote.style.display = "block";
+      }
+
+      const jobId = String(xprocesSupportJob.id || "").replace(/[^A-Za-z0-9_-]/g, "");
+      const startPayload = `incidencia_${jobId}`.slice(0, 64);
+      window.open(`https://t.me/${XPROCES_SUPPORT_TELEGRAM}?start=${encodeURIComponent(startPayload)}`, "_blank", "noopener");
+    });
+  }
+});
+</script>
 
 <!-- XPROCES RECUPERACION -->
 <div class="modal-backdrop" id="recoveryBackdrop" style="display:none;">
