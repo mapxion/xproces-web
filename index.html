@@ -6085,11 +6085,28 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       fileInput.value = "";
       datasetCanUpload = false;
 
-      dropTitle.textContent = "Sube tus fotos aquí.";
-      dropSubtitle.textContent =
-        "para analizarlas y calcular tiempo y precio antes de registrarte.";
+      // Reset completo del estado visual del dataset.
+      if (drop) {
+        drop.classList.remove("dataset-invalid", "dataset-warning", "dragover");
+      }
+      if (datasetStatusBox) {
+        datasetStatusBox.className = "dataset-status-box";
+        datasetStatusBox.innerHTML = "";
+      }
 
-      if (uploadValid) uploadValid.style.display = "none";
+      dropTitle.textContent = "Selecciona tus fotos aquí";
+      dropTitle.style.color = "";
+
+      dropSubtitle.textContent =
+        "se analizarán en el navegador para calcular tiempo y precio antes de registrarte.";
+      dropSubtitle.style.color = "";
+      dropSubtitle.style.fontWeight = "";
+
+      if (uploadValid) {
+        uploadValid.style.display = "none";
+        uploadValid.textContent = "";
+        uploadValid.style.color = "";
+      }
       if (uploadMeta) uploadMeta.style.display = "none";
       if (uploadPhotosMeta) uploadPhotosMeta.textContent = "Fotos analizadas: 0";
       if (uploadGpsMeta) uploadGpsMeta.textContent = "Extensión GPS: 0 m";
@@ -6138,9 +6155,20 @@ if (uiStatusNow.canDownload || uiStatusNow.canRecover) {
       fileInput.value = "";
       datasetCanUpload = false;
 
-      dropTitle.textContent = "Sube tus fotos aquí";
+      if (drop) {
+        drop.classList.remove("dataset-invalid", "dataset-warning", "dragover");
+      }
+      if (datasetStatusBox) {
+        datasetStatusBox.className = "dataset-status-box";
+        datasetStatusBox.innerHTML = "";
+      }
+
+      dropTitle.textContent = "Selecciona tus fotos aquí";
+      dropTitle.style.color = "";
       dropSubtitle.textContent =
-        "para analizarlas, calcular tiempo y precio antes de procesar.";
+        "se analizarán en el navegador para calcular tiempo y precio antes de registrarte.";
+      dropSubtitle.style.color = "";
+      dropSubtitle.style.fontWeight = "";
 
       if (mainLayout) mainLayout.classList.remove("with-data");
       if (uploadPanel) uploadPanel.style.display = "block";
