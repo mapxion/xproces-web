@@ -2557,7 +2557,8 @@
     display: none !important;
   }
 
-  /* Sin sesión: solo se muestra una pantalla limpia de acceso. */
+  /* Sin sesión: permitimos probar el configurador y calcular precio/tiempo.
+     El registro sigue siendo obligatorio para iniciar realmente el procesado. */
   #privateAccessGate {
     display: none;
   }
@@ -2567,11 +2568,20 @@
   }
 
   body.xproces-auth-view #mainLayout {
-    display: none !important;
+    display: grid;
   }
 
   body.xproces-private-view #privateAccessGate {
     display: none !important;
+  }
+
+  body.xproces-auth-view .xproces-private-gate {
+    min-height: auto;
+    padding: 22px 16px 10px;
+  }
+
+  body.xproces-auth-view .xproces-private-gate-card {
+    max-width: 980px;
   }
 
   .xproces-private-gate {
@@ -2669,7 +2679,7 @@
 </style>
 
 </head>
-<body class="xproces-auth-view" data-xproces-build="area-privada-v3-centered-20260726">
+<body class="xproces-auth-view" data-xproces-build="area-privada-v4-free-preview-before-register-20260905">
   <div class="app">
     <div class="xproces-preview-banner" id="xprocesPreviewBanner">
       <span id="xprocesPreviewText">Vista como cliente — solo lectura</span>
@@ -2705,18 +2715,18 @@
 
     <section class="xproces-private-gate" id="privateAccessGate" aria-labelledby="privateAccessTitle">
       <div class="xproces-private-gate-card">
-        <div class="xproces-private-gate-kicker">Área privada</div>
-        <h1 id="privateAccessTitle">Accede para iniciar tu procesamiento</h1>
+        <div class="xproces-private-gate-kicker">Cálculo gratuito · sin registro</div>
+        <h1 id="privateAccessTitle">Sube tus fotos y calcula el procesado antes de registrarte</h1>
         <p>
-          Crea una cuenta para subir tus fotografías, calcular el precio, iniciar el trabajo
-          y consultar todos tus procesados desde un único lugar.
+          Selecciona las fotografías, deja que XProces analice el dataset y configura la calidad
+          y los resultados que necesitas. Verás el tiempo estimado y el precio antes de crear una cuenta.
+          <strong>Las fotografías no se enviarán al servidor hasta que decidas iniciar el procesado.</strong>
         </p>
         <div class="xproces-private-gate-actions">
-          <button class="btn btn-primary" id="privateRegisterBtn" type="button">Crear cuenta</button>
           <button class="btn btn-secondary" id="privateLoginBtn" type="button">Ya tengo cuenta</button>
           <button class="btn btn-secondary" id="privateInviteBtn" type="button">Tengo un código invitado</button>
+          <button class="btn btn-secondary" id="privateRegisterBtn" type="button">Registrarme ahora</button>
         </div>
-        <a class="xproces-private-gate-home" href="/">← Volver a la página principal</a>
       </div>
     </section>
 
@@ -2729,7 +2739,7 @@
                 <div class="drop-title" id="dropTitle">Sube tus fotos aquí</div>
 
                 <div class="drop-subtitle" id="dropSubtitle">
-                  para analizarlas, calcular tiempo y precio antes de procesar.
+                  para analizarlas y calcular tiempo y precio antes de registrarte.
                 </div>
 
                 
@@ -6917,12 +6927,11 @@ if (map) {
       const currentUser = getStoredUser();
 
       if (!currentUser || !currentUser.email) {
-        await showInfoModal(
-          "Debe iniciar sesión",
-          "Acceso requerido",
-          "Debe iniciar sesión antes de proseguir.",
-          "warning"
-        );
+        openAuthModal("register");
+        if (authSubtitle) {
+          authSubtitle.textContent =
+            "El cálculo ya está hecho. Crea tu cuenta para conservar este proyecto e iniciar el procesado.";
+        }
         return;
       }
 
