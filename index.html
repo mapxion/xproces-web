@@ -280,6 +280,61 @@
       
     }
 
+    .drop.dataset-invalid {
+      border-color: rgba(220, 38, 38, 0.62);
+      background:
+        linear-gradient(180deg, rgba(220, 38, 38, 0.075), rgba(220, 38, 38, 0.025)),
+        #fffafa;
+    }
+
+    .drop.dataset-invalid .drop-title {
+      color: #b91c1c;
+    }
+
+    .drop.dataset-warning {
+      border-color: rgba(202, 138, 4, 0.50);
+      background:
+        linear-gradient(180deg, rgba(245, 158, 11, 0.07), rgba(245, 158, 11, 0.02)),
+        #fffdf7;
+    }
+
+    .dataset-status-box {
+      display: none;
+      max-width: 760px;
+      margin: 10px auto 4px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .dataset-status-box.invalid {
+      display: block;
+      color: #991b1b;
+      background: rgba(254, 226, 226, 0.86);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+    }
+
+    .dataset-status-box.warning {
+      display: block;
+      color: #92400e;
+      background: rgba(254, 243, 199, 0.82);
+      border: 1px solid rgba(202, 138, 4, 0.24);
+    }
+
+    .dataset-status-box strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .dataset-status-list {
+      margin: 4px 0 0 18px;
+      padding: 0;
+    }
+
+
     .drop-content {
       width: 100%;
       max-width: 860px;
@@ -2742,6 +2797,8 @@
                   se analizarán en el navegador para calcular tiempo y precio antes de registrarte.
                 </div>
 
+                <div class="dataset-status-box" id="datasetStatusBox" aria-live="polite"></div>
+
                 
                 <div class="upload-actions" id="uploadActions">
                   <button class="btn btn-danger" id="clearBtn" type="button">Eliminar fotos</button>
@@ -3656,6 +3713,8 @@ Espere a que termine la subida. Otros clientes y otros navegadores pueden subir 
     const uploadPanel = document.getElementById("uploadPanel");
     const dropTitle = document.getElementById("dropTitle");
     const dropSubtitle = document.getElementById("dropSubtitle");
+    const dropEl = document.getElementById("drop");
+    const datasetStatusBox = document.getElementById("datasetStatusBox");
     const uploadValid = document.getElementById("uploadValid");
     const uploadMeta = document.getElementById("uploadMeta");
     const uploadPhotosMeta = document.getElementById("uploadPhotosMeta");
@@ -6153,13 +6212,50 @@ if (map) {
     }
 
     function applyDatasetVisualState(dataset) {
+      if (dropEl) {
+        dropEl.classList.remove("dataset-invalid", "dataset-warning");
+      }
+      if (datasetStatusBox) {
+        datasetStatusBox.className = "dataset-status-box";
+        datasetStatusBox.innerHTML = "";
+      }
+
       if (dataset.missingExifCore || dataset.blockers.length > 0) {
         hideDatasetHighlight();
+
+        const reasons = Array.isArray(dataset.blockers) && dataset.blockers.length
+          ? [...new Set(dataset.blockers)]
+          : ["Las imágenes no contienen información suficiente para validar el dataset."];
+
+        if (dropEl) dropEl.classList.add("dataset-invalid");
+
+        if (dropTitle) {
+          dropTitle.textContent = `${files.length} archivos seleccionados · dataset no válido`;
+        }
+
+        if (dropSubtitle) {
+          dropSubtitle.textContent = "XProces ha detectado incidencias que impiden iniciar el procesado.";
+          dropSubtitle.style.color = "#991b1b";
+          dropSubtitle.style.fontWeight = "700";
+        }
+
+        if (datasetStatusBox) {
+          datasetStatusBox.className = "dataset-status-box invalid";
+          datasetStatusBox.innerHTML = `
+            <strong>¿Por qué no se puede procesar?</strong>
+            <ul class="dataset-status-list">
+              ${reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}
+            </ul>
+            <div style="margin-top:6px;">Selecciona otro conjunto de fotografías o corrige las incidencias indicadas.</div>
+          `;
+        }
+
         if (uploadValid) {
           uploadValid.style.display = "flex";
           uploadValid.style.color = "var(--danger)";
           uploadValid.textContent = "Dataset no válido para procesado";
         }
+
         datasetCanUpload = false;
         updateStartButtonState();
         return;
@@ -6167,27 +6263,61 @@ if (map) {
 
       if (dataset.warnings.length > 0) {
         hideDatasetHighlight();
+
+        const warnings = [...new Set(dataset.warnings)];
+
+        if (dropEl) dropEl.classList.add("dataset-warning");
+
+        if (dropTitle) {
+          dropTitle.textContent = `${files.length} archivos seleccionados`;
+        }
+
+        if (dropSubtitle) {
+          dropSubtitle.textContent = "Las imágenes son procesables, pero se han detectado algunas advertencias.";
+          dropSubtitle.style.color = "";
+          dropSubtitle.style.fontWeight = "";
+        }
+
+        if (datasetStatusBox) {
+          datasetStatusBox.className = "dataset-status-box warning";
+          datasetStatusBox.innerHTML = `
+            <strong>Advertencias detectadas</strong>
+            <ul class="dataset-status-list">
+              ${warnings.map(warning => `<li>${escapeHtml(warning)}</li>`).join("")}
+            </ul>
+            <div style="margin-top:6px;">Estas advertencias no impiden continuar con el procesado.</div>
+          `;
+        }
+
         if (uploadValid) {
           uploadValid.style.display = "flex";
           uploadValid.style.color = "var(--warning)";
           uploadValid.textContent = "Dataset con advertencias";
         }
+
         datasetCanUpload = true;
         updateStartButtonState();
         return;
       }
 
       hideDatasetHighlight();
+
+      if (dropTitle) {
+        dropTitle.textContent = `${files.length} archivos seleccionados`;
+      }
+
+      if (dropSubtitle) {
+        dropSubtitle.textContent = "Las imágenes se han analizado correctamente.";
+        dropSubtitle.style.color = "";
+        dropSubtitle.style.fontWeight = "";
+      }
+
       if (uploadValid) {
         uploadValid.style.display = "flex";
         uploadValid.style.color = "var(--ok)";
         uploadValid.textContent = "Dataset válido para fotogrametría";
       }
 
-      // Xproces: el botón de iniciar procesado ya no depende solo de que
-      // el dataset sea válido. También depende del tipo de proyecto, calidad
-      // y entregables seleccionados. Marcamos el dataset como apto y dejamos
-      // que updateStartButtonState() decida si puede activarse.
       datasetCanUpload = true;
       updateStartButtonState();
     }
@@ -6234,7 +6364,6 @@ if (map) {
         fillDatasetGrid(dataset, missionType);
         applyDatasetVisualState(dataset);
 
-        dropSubtitle.textContent = "Las imágenes se han analizado correctamente.";
         if (uploadMeta) uploadMeta.style.display = "flex";
         if (uploadPhotosMeta) uploadPhotosMeta.textContent = `Fotos analizadas: ${Math.min(files.length, DATASET_SAMPLE_SIZE)}`;
         if (uploadGpsMeta) uploadGpsMeta.textContent = `Extensión GPS: ${dataset.gpsSpread?.maxDistanceMeters || 0} m`;
