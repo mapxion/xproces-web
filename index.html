@@ -6211,6 +6211,31 @@ if (map) {
       if (progressPercent) progressPercent.textContent = "0%";
     }
 
+    function resetDatasetVisualState() {
+      if (dropEl) {
+        dropEl.classList.remove("dataset-invalid", "dataset-warning", "dragover");
+      }
+      if (datasetStatusBox) {
+        datasetStatusBox.className = "dataset-status-box";
+        datasetStatusBox.innerHTML = "";
+      }
+      if (dropTitle) {
+        dropTitle.textContent = "Selecciona tus fotos aquí";
+        dropTitle.style.color = "";
+      }
+      if (dropSubtitle) {
+        dropSubtitle.textContent =
+          "se analizarán en el navegador para calcular tiempo y precio antes de registrarte.";
+        dropSubtitle.style.color = "";
+        dropSubtitle.style.fontWeight = "";
+      }
+      if (uploadValid) {
+        uploadValid.style.display = "none";
+        uploadValid.textContent = "";
+        uploadValid.style.color = "";
+      }
+    }
+
     function applyDatasetVisualState(dataset) {
       if (dropEl) {
         dropEl.classList.remove("dataset-invalid", "dataset-warning");
