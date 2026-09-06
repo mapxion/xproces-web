@@ -179,6 +179,48 @@
     .footer-links{display:flex;gap:16px;flex-wrap:wrap}.footer-links a{text-decoration:none;font-weight:800}
     @media(max-width:900px){.nav a:not(.button){display:none}.hero-grid,.split{grid-template-columns:1fr}.grid-3,.deliverables{grid-template-columns:1fr 1fr}.hero{padding-top:48px}}
     @media(max-width:640px){.container{width:min(100% - 22px,1180px)}.site-header .button{padding:0 13px}.logo img{height:40px}.hero{padding:38px 0}.grid-3,.deliverables,.example-stats{grid-template-columns:1fr}.cta{padding:26px;align-items:flex-start;flex-direction:column}.footer-inner{align-items:flex-start;flex-direction:column}h1{font-size:42px}}
+  
+    .xproces-info-links{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+    }
+    .xproces-info-link{
+      display:block;
+      padding:20px 22px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:rgba(255,255,255,.78);
+      text-decoration:none;
+      color:inherit;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .xproces-info-link:hover{
+      transform:translateY(-2px);
+      box-shadow:0 12px 28px rgba(15,23,42,.08);
+      border-color:rgba(122,171,57,.38);
+    }
+    .xproces-info-link h3{
+      margin:0 0 8px;
+      font-size:20px;
+      line-height:1.2;
+    }
+    .xproces-info-link p{
+      margin:0 0 12px;
+      font-size:15px;
+      line-height:1.5;
+      color:var(--muted);
+    }
+    .xproces-info-link span{
+      font-size:14px;
+      font-weight:800;
+      color:#5f8f24;
+    }
+    @media (max-width:800px){
+      .xproces-info-links{grid-template-columns:1fr;}
+      .xproces-info-link{padding:18px;}
+    }
+
   </style>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FV4TSWPXP"></script>
@@ -265,30 +307,30 @@
 
     <section id="servicios">
       <div class="container">
-        <div class="section-head">
-          <span class="eyebrow">Servicios de fotogrametría online</span>
-          <h2>Procesa tus fotografías según el resultado que necesitas</h2>
-          <p>Accede directamente al servicio adecuado para tu proyecto de dron y consulta el flujo, los entregables y el ejemplo de resultados antes de procesar.</p>
+        <div class="section-head" style="margin-bottom:22px;">
+          <span class="eyebrow">Aprende antes de procesar</span>
+          <h2>Fotogrametría, procesamiento y ortofotos</h2>
+          <p>Información práctica para entender qué hacemos con tus fotografías y qué resultados puedes obtener.</p>
         </div>
-        <div class="grid-3">
-          <article class="card">
-            <div class="process-icon">📐</div>
-            <h3><a href="/fotogrametria-online/" style="text-decoration:none;">Fotogrametría online</a></h3>
-            <p>Del vuelo a ortofoto, nube LAS, DSM, DTM, curvas y modelo 3D desde una misma plataforma.</p>
-            <div class="hero-actions"><a class="button button-secondary" href="/fotogrametria-online/">Ver servicio</a></div>
-          </article>
-          <article class="card">
-            <div class="process-icon">🚁</div>
-            <h3><a href="/procesar-fotos-dron-online/" style="text-decoration:none;">Procesar fotos de dron online</a></h3>
-            <p>Sube el vuelo, revisa el proyecto, selecciona la calidad y conoce tiempo y precio antes de confirmar.</p>
-            <div class="hero-actions"><a class="button button-secondary" href="/procesar-fotos-dron-online/">Ver servicio</a></div>
-          </article>
-          <article class="card">
-            <div class="process-icon">🗺️</div>
-            <h3><a href="/ortofoto-dron-online/" style="text-decoration:none;">Ortofoto de dron online</a></h3>
-            <p>Genera una ortofoto GeoTIFF a partir de fotografías aéreas y recibe también los productos complementarios seleccionados.</p>
-            <div class="hero-actions"><a class="button button-secondary" href="/ortofoto-dron-online/">Ver servicio</a></div>
-          </article>
+
+        <div class="xproces-info-links">
+          <a class="xproces-info-link" href="/fotogrametria-online/">
+            <h3>¿Qué es la fotogrametría?</h3>
+            <p>Qué es, para qué sirve y qué productos pueden generarse a partir de fotografías.</p>
+            <span>Leer guía →</span>
+          </a>
+
+          <a class="xproces-info-link" href="/procesar-fotos-dron-online/">
+            <h3>¿Cómo funciona el procesamiento?</h3>
+            <p>Desde la selección de imágenes hasta la nube de puntos, modelos de elevación, malla y resultados finales.</p>
+            <span>Ver el proceso →</span>
+          </a>
+
+          <a class="xproces-info-link" href="/ortofoto-dron-online/">
+            <h3>¿Qué es una ortofoto?</h3>
+            <p>Qué diferencia una ortofoto de una fotografía aérea normal y para qué se utiliza un GeoTIFF.</p>
+            <span>Leer sobre ortofotos →</span>
+          </a>
         </div>
       </div>
     </section>
